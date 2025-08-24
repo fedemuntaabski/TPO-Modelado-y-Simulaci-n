@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Lanzador mejorado del Simulador Matemático Avanzado
-Versión 2.0 con mejoras visuales y funcionalidades avanzadas
+Simulador Matemático Avanzado
+Sistema integrado para métodos numéricos con interfaz gráfica moderna
+
+Autores: Equipo TPO Modelado y Simulación
+Fecha: 2025
 """
 
 import sys
@@ -10,7 +13,7 @@ import importlib
 import os
 from pathlib import Path
 
-# Lista de dependencias requeridas (mismas que antes)
+# Lista de dependencias requeridas
 REQUIRED_PACKAGES = [
     'PyQt6',
     'numpy',
@@ -19,23 +22,10 @@ REQUIRED_PACKAGES = [
     'sympy'
 ]
 
-def show_startup_banner():
-    """Muestra el banner de inicio mejorado"""
-    print("=" * 70)
-    print("🎨 SIMULADOR MATEMÁTICO AVANZADO - VERSIÓN 2.0")
-    print("   Interfaz Renovada • Nuevas Funcionalidades • Mejor Rendimiento")
-    print("=" * 70)
-    print()
-    print("🆕 NUEVAS CARACTERÍSTICAS:")
-    print("   ✨ Tema oscuro moderno con mejor contraste")
-    print("   🎯 Teclado virtual simplificado (solo funciones matemáticas)")
-    print("   📊 Comparación avanzada entre métodos numéricos")
-    print("   🔄 Animaciones suaves y efectos visuales")
-    print("   🚀 Interfaz más intuitiva y profesional")
-    print()
-
 def check_and_install_dependencies():
-    """Verifica e instala las dependencias necesarias"""
+    """
+    Verifica e instala las dependencias necesarias si no están disponibles
+    """
     print("🔍 Verificando dependencias...")
     
     missing_packages = []
@@ -56,7 +46,7 @@ def check_and_install_dependencies():
         for package in missing_packages:
             try:
                 subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", package, "--quiet"
+                    sys.executable, "-m", "pip", "install", package
                 ])
                 print(f"✅ {package} instalado correctamente")
             except subprocess.CalledProcessError as e:
@@ -67,13 +57,17 @@ def check_and_install_dependencies():
     return True
 
 def main():
-    """Función principal mejorada"""
-    show_startup_banner()
+    """
+    Función principal del programa
+    """
+    print("=" * 60)
+    print("🧮 SIMULADOR MATEMÁTICO AVANZADO")
+    print("   Métodos Numéricos con Interfaz Gráfica")
+    print("=" * 60)
     
     # Verificar e instalar dependencias
     if not check_and_install_dependencies():
         print("❌ Error en la instalación de dependencias. Abortando...")
-        input("Presione Enter para salir...")
         sys.exit(1)
     
     # Importar módulos después de verificar dependencias
@@ -81,48 +75,33 @@ def main():
         from gui.main_window import MathSimulatorApp
         from PyQt6.QtWidgets import QApplication
         from PyQt6.QtCore import Qt
-        from PyQt6.QtGui import QIcon, QFont
+        from PyQt6.QtGui import QIcon
         
         # Crear la aplicación Qt
         app = QApplication(sys.argv)
-        app.setApplicationName("Simulador Matemático Avanzado v2.0")
-        app.setApplicationVersion("2.0")
-        app.setOrganizationName("Simulador Matemático")
-        
-        # Configurar fuente global para mejor legibilidad
-        font = QFont("Segoe UI", 9)
-        app.setFont(font)
+        app.setApplicationName("Simulador Matemático Avanzado")
+        app.setApplicationVersion("1.0")
+        app.setOrganizationName("TPO Modelado y Simulación")
         
         # Configurar estilo moderno
         app.setStyle('Fusion')
         
         # Crear y mostrar la ventana principal
-        print("🎨 Inicializando interfaz gráfica moderna...")
         window = MathSimulatorApp()
         window.show()
         
         print("🚀 Aplicación iniciada correctamente!")
-        print("📱 Interfaz gráfica disponible en ventana principal")
-        print("🎯 Nuevas funciones disponibles en todas las pestañas")
-        print("\n" + "=" * 50)
-        print("INSTRUCCIONES DE USO:")
-        print("• Use el teclado virtual simplificado para funciones")
-        print("• Explore la nueva pestaña '🔄 Comparación'")
-        print("• Disfrute del tema oscuro profesional")
-        print("• Observe las nuevas animaciones y efectos")
-        print("=" * 50 + "\n")
+        print("📱 Interfaz gráfica disponible en ventana principal\n")
         
         # Ejecutar el bucle de eventos
         sys.exit(app.exec())
         
     except ImportError as e:
         print(f"❌ Error importando módulos de la GUI: {e}")
-        print("🔧 Verifique que todos los archivos estén en su lugar")
-        input("Presione Enter para salir...")
+        print("🔧 Asegúrate de que todos los archivos estén en su lugar")
         sys.exit(1)
     except Exception as e:
         print(f"❌ Error inesperado: {e}")
-        input("Presione Enter para salir...")
         sys.exit(1)
 
 if __name__ == "__main__":

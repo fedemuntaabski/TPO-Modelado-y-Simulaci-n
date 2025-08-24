@@ -13,6 +13,8 @@ Características:
 import sys
 from typing import Optional, Callable
 import numpy as np
+import matplotlib
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -43,34 +45,37 @@ class MathKeyboard(QWidget):
     
     def init_ui(self):
         layout = QGridLayout()
+        layout.setSpacing(6)  # Espaciado entre botones
+        layout.setContentsMargins(10, 10, 10, 10)
         
-        # Botones de funciones matemáticas únicamente
+        # Importar tema una vez para eficiencia
+        from gui.themes import DarkTheme
+        
+        # Botones de funciones matemáticas únicamente con mejor organización
         buttons = [
-            # Fila 1: Funciones trigonométricas
+            # Fila 1: Funciones trigonométricas básicas
             ['sin', 'cos', 'tan', 'Clear'],
             # Fila 2: Funciones exponenciales y logarítmicas  
             ['exp', 'log', 'sqrt', '+'],
-            # Fila 3: Constantes y operadores
+            # Fila 3: Constantes matemáticas y operadores
             ['pi', 'e', '^', '-'],
-            # Fila 4: Operadores restantes
+            # Fila 4: Operadores aritméticos básicos
             ['*', '/', '.', '='],
         ]
         
         for row, button_row in enumerate(buttons):
             for col, text in enumerate(button_row):
                 button = QPushButton(text)
-                button.setMinimumSize(70, 45)
+                button.setMinimumSize(80, 50)  # Botones más grandes
+                button.setMaximumSize(120, 60)  # Límite máximo
                 button.clicked.connect(lambda checked, t=text: self.button_clicked(t))
                 
-                # Aplicar estilos según el tipo de botón
+                # Aplicar estilos según el tipo de botón (optimizado)
                 if text == 'Clear':
-                    from gui.themes import DarkTheme
                     button.setStyleSheet(DarkTheme.get_keyboard_button_style("clear"))
                 elif text in ['+', '-', '*', '/', '^', '=', '.']:
-                    from gui.themes import DarkTheme
                     button.setStyleSheet(DarkTheme.get_keyboard_button_style("operator"))
-                else:  # Funciones matemáticas
-                    from gui.themes import DarkTheme
+                else:  # Funciones matemáticas y constantes
                     button.setStyleSheet(DarkTheme.get_keyboard_button_style("function"))
                 
                 layout.addWidget(button, row, col)
@@ -749,52 +754,55 @@ class MathSimulatorApp(QMainWindow):
         self.apply_style()
     
     def create_title_frame(self):
-        """Crea el frame del título con diseño moderno"""
+        """Crea el frame del título con diseño moderno y optimizado"""
         frame = QFrame()
         frame.setFrameStyle(QFrame.Shape.Box)
         frame.setStyleSheet(f"""
             QFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #3498db, stop:1 #2980b9);
-                border: 2px solid #34495e;
-                border-radius: 12px;
-                margin: 8px;
+                    stop:0 #34495e, stop:1 #2c3e50);
+                border: 1px solid #34495e;
+                border-radius: 8px;
+                margin: 5px;
             }}
         """)
         
         layout = QVBoxLayout()
+        layout.setSpacing(8)
+        layout.setContentsMargins(20, 15, 20, 15)
         
-        # Título principal con mejor espaciado
-        title_label = QLabel("🧮  SIMULADOR  MATEMÁTICO  AVANZADO")
+        # Título principal con espaciado optimizado
+        title_label = QLabel("🧮 SIMULADOR MATEMÁTICO AVANZADO")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("""
             color: #ecf0f1;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             font-family: 'Segoe UI', Arial, sans-serif;
-            letter-spacing: 3px;
-            margin: 15px;
-            padding: 10px;
+            letter-spacing: 1px;
+            margin: 0px;
+            padding: 8px 0px;
         """)
         
         # Subtítulo con información técnica
-        subtitle_label = QLabel("Métodos Numéricos • Interfaz Gráfica Moderna")
+        subtitle_label = QLabel("Métodos Numéricos • Interfaz Gráfica Moderna • Versión 3.0")
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle_label.setStyleSheet("""
-            color: #bdc3c7;
-            font-size: 14px;
+            color: #95a5a6;
+            font-size: 13px;
             font-weight: normal;
             font-style: italic;
-            margin: 5px;
-            padding: 5px;
+            letter-spacing: 0.5px;
+            margin: 0px;
+            padding: 4px 0px;
         """)
         
         layout.addWidget(title_label)
         layout.addWidget(subtitle_label)
         
         frame.setLayout(layout)
-        frame.setMaximumHeight(120)
-        frame.setMinimumHeight(120)
+        frame.setMaximumHeight(140)
+        frame.setMinimumHeight(140)
         
         return frame
     

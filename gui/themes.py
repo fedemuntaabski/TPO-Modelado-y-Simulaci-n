@@ -252,57 +252,77 @@ class DarkTheme:
     
     @staticmethod
     def get_keyboard_button_style(button_type="function"):
-        """Estilos específicos para botones del teclado virtual"""
+        """Estilos específicos para botones del teclado virtual con mejor contraste"""
+        base_style = f"""
+            QPushButton {{
+                border: 2px solid transparent;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 12px;
+                min-width: 70px;
+                min-height: 45px;
+                max-width: 110px;
+                max-height: 55px;
+                margin: 2px;
+            }}
+        """
+        
         if button_type == "function":
-            return f"""
+            return base_style + f"""
             QPushButton {{
                 background-color: {DarkTheme.BUTTON_INFO};
                 color: {DarkTheme.TEXT_PRIMARY};
-                border: 2px solid {DarkTheme.BORDER_LIGHT};
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 11px;
-                min-width: 60px;
-                min-height: 35px;
+                border-color: #2980b9;
             }}
             
             QPushButton:hover {{
-                background-color: {DarkTheme.HOVER_ACCENT};
+                background-color: #2980b9;
                 border-color: {DarkTheme.BUTTON_PRIMARY};
             }}
             
             QPushButton:pressed {{
-                background-color: {DarkTheme.BORDER_DARK};
+                background-color: #1f618d;
             }}
             """
         elif button_type == "clear":
-            return f"""
+            return base_style + f"""
             QPushButton {{
                 background-color: {DarkTheme.BUTTON_DANGER};
                 color: {DarkTheme.TEXT_PRIMARY};
-                border: 2px solid {DarkTheme.BORDER_LIGHT};
-                border-radius: 8px;
-                font-weight: bold;
+                border-color: #c0392b;
+                font-size: 11px;
             }}
             
             QPushButton:hover {{
                 background-color: #c0392b;
+                border-color: #e74c3c;
+            }}
+            
+            QPushButton:pressed {{
+                background-color: #a93226;
             }}
             """
         elif button_type == "operator":
-            return f"""
+            return base_style + f"""
             QPushButton {{
                 background-color: {DarkTheme.BUTTON_WARNING};
                 color: {DarkTheme.TEXT_PRIMARY};
-                border: 2px solid {DarkTheme.BORDER_LIGHT};
-                border-radius: 8px;
-                font-weight: bold;
+                border-color: #d68910;
+                font-size: 14px;
+                font-weight: 900;
             }}
             
             QPushButton:hover {{
                 background-color: #d68910;
+                border-color: #f39c12;
+            }}
+            
+            QPushButton:pressed {{
+                background-color: #b7950b;
             }}
             """
+        
+        return base_style
 
 class AnimationUtils:
     """
