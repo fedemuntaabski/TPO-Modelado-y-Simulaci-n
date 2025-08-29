@@ -256,6 +256,55 @@ class NumericalMethods:
         return accelerated
     
     @staticmethod
+    def aitken_method(g, x0: float, tol: float = 1e-6, max_iter: int = 100):
+        """
+        Método de Aitken para encontrar raíces usando función de iteración
+        
+        Args:
+            g: Función de iteración g(x)
+            x0: Aproximación inicial
+            tol: Tolerancia para convergencia
+            max_iter: Máximo número de iteraciones
+            
+        Returns:
+            Tupla: (raíz, iteraciones, historial)
+        """
+        history = [x0]
+        x = x0
+        
+        for iteration in range(max_iter):
+            # Generar secuencia usando g(x)
+            x_new = g(x)
+            history.append(x_new)
+            
+            # Aplicar aceleración de Aitken si tenemos suficientes puntos
+            if len(history) >= 3:
+                # Aplicar Aitken a los últimos 3 puntos
+                last_three = history[-3:]
+                accelerated = NumericalMethods.aitken_acceleration(last_three)
+                
+                if accelerated:
+                    x_acc = accelerated[-1]  # Último valor acelerado
+                    
+                    # Verificar convergencia con el valor acelerado
+                    if abs(x_acc - x) < tol:
+                        return x_acc, iteration + 1, history
+                    
+                    x = x_acc
+                    history.append(x_acc)
+                else:
+                    x = x_new
+            else:
+                x = x_new
+            
+            # Verificar convergencia sin aceleración
+            if abs(x - history[-2]) < tol and len(history) > 1:
+                return x, iteration + 1, history
+        
+        # Si no converge, devolver el último valor
+        return x, max_iter, history
+    
+    @staticmethod
     def lagrange_interpolation(x_points: np.ndarray, y_points: np.ndarray, x: float) -> float:
         """
         Interpolación de Lagrange

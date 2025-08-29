@@ -258,11 +258,11 @@ class DarkTheme:
                 border: 2px solid transparent;
                 border-radius: 10px;
                 font-weight: bold;
-                font-size: 12px;
-                min-width: 70px;
-                min-height: 45px;
-                max-width: 110px;
-                max-height: 55px;
+                font-size: 14px;
+                min-width: 51px;
+                min-height: 34px;
+                max-width: 77px;
+                max-height: 43px;
                 margin: 2px;
             }}
         """
