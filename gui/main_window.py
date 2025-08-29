@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QLineEdit, QLabel, QTextEdit, QGridLayout,
     QGroupBox, QSpinBox, QDoubleSpinBox, QComboBox, QSplitter,
     QMessageBox, QProgressBar, QStatusBar, QScrollArea,
-    QFrame, QApplication
+    QFrame, QApplication, QTableWidget, QTableWidgetItem
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QPalette, QColor, QPixmap, QIcon
@@ -307,8 +307,13 @@ class RootsTab(QWidget):
         self.init_ui()
     
     def init_ui(self):
-        layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        # Layout principal con splitter para mejor organización
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        
+        # Panel izquierdo: Controles de entrada
+        left_panel = QWidget()
+        left_layout = QVBoxLayout()
+        left_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         
         # Panel de entrada
         input_panel = QGroupBox("Búsqueda de Raíces")
@@ -376,21 +381,43 @@ class RootsTab(QWidget):
         
         # Área de resultados
         self.results_text = QTextEdit()
-        self.results_text.setMaximumHeight(200)
+        self.results_text.setMaximumHeight(150)
         input_layout.addWidget(QLabel("Resultados:"))
         input_layout.addWidget(self.results_text)
         
         input_panel.setLayout(input_layout)
-        input_panel.setMaximumWidth(420)  # Aumentar ancho para campos más grandes
-        input_panel.setMinimumWidth(380)  # Ancho mínimo para mantener usabilidad
+        input_panel.setMaximumWidth(420)
+        input_panel.setMinimumWidth(380)
         
-        layout.addWidget(input_panel)
-        layout.addWidget(self.plot_widget)
+        left_layout.addWidget(input_panel)
+        left_panel.setLayout(left_layout)
         
-        # Configurar alineación a la izquierda
-        layout.setAlignment(input_panel, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        # Panel derecho: Tabla y gráfico
+        right_panel = QWidget()
+        right_layout = QVBoxLayout()
         
-        self.setLayout(layout)
+        # Tabla de resultados detallados
+        table_panel = QGroupBox("Tabla de Iteraciones")
+        table_layout = QVBoxLayout()
+        self.results_table = QTableWidget()
+        self.results_table.setMaximumHeight(400)  # Aumentar altura para mejor visibilidad
+        table_layout.addWidget(self.results_table)
+        table_panel.setLayout(table_layout)
+        
+        right_layout.addWidget(table_panel)
+        right_layout.addWidget(self.plot_widget)
+        
+        right_panel.setLayout(right_layout)
+        
+        # Agregar paneles al splitter
+        main_splitter.addWidget(left_panel)
+        main_splitter.addWidget(right_panel)
+        main_splitter.setSizes([400, 800])  # Tamaños iniciales
+        
+        # Layout principal
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(main_splitter)
+        self.setLayout(main_layout)
         
         # Inicializar parámetros del método
         self.on_method_changed()
@@ -538,7 +565,11 @@ f(x) ≈ {f(root):.2e}
 Iteraciones: {iterations}
 Tolerancia: {tol:.2e}
                 """.strip()
-            
+                
+                # Llenar tabla con detalles de iteraciones
+                self.populate_results_table(history, root, f, method)
+                self.results_text.setText(results)
+                
             elif method == "Newton-Raphson":
                 derivative_str = self.derivative_input.text().strip()
                 if not derivative_str:
@@ -567,7 +598,11 @@ f(x) ≈ {f(root):.2e}
 Iteraciones: {iterations}
 Tolerancia: {tol:.2e}
                 """.strip()
-            
+                
+                # Llenar tabla con detalles de iteraciones
+                self.populate_results_table(history, root, f, method)
+                self.results_text.setText(results)
+                
             elif method == "Punto Fijo":
                 g_str = self.g_function_input.text().strip()
                 if not g_str:
@@ -596,7 +631,11 @@ g(x) ≈ {g(root):.8f}
 Iteraciones: {iterations}
 Tolerancia: {tol:.2e}
                 """.strip()
-            
+                
+                # Llenar tabla con detalles de iteraciones
+                self.populate_results_table(history, root, f, method)
+                self.results_text.setText(results)
+                
             elif method == "Aitken":
                 g_str = self.g_function_input.text().strip()
                 if not g_str:
@@ -610,8 +649,8 @@ Tolerancia: {tol:.2e}
                     QMessageBox.warning(self, "Error", "La aproximación inicial debe ser un número válido")
                     return
                 
-                root, iterations, history = NumericalMethods.aitken_method(g, x0, tol, max_iter)
-                
+                root, iterations, history, accelerated_history, detailed_steps = NumericalMethods.aitken_method(g, x0, tol, max_iter)
+
                 # Graficar función y convergencia
                 self.plot_function_and_convergence(f, function_str, history, root, method, x0=x0, g_function=g_str)
                 
@@ -626,11 +665,121 @@ Iteraciones: {iterations}
 Tolerancia: {tol:.2e}
 Nota: Método con aceleración de convergencia
                 """.strip()
-            
-            self.results_text.setText(results)
+                
+                # Llenar tabla con detalles de iteraciones
+                self.populate_results_table(history, root, f, method, detailed_steps=detailed_steps)
+                self.results_text.setText(results)
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error encontrando raíz: {str(e)}")
+    
+    def populate_results_table(self, history, root, f, method, detailed_steps=None):
+        """Llena la tabla con los detalles de las iteraciones"""
+        if not history:
+            return
+
+        # Para Aitken, usar información detallada si está disponible
+        if method == "Aitken" and detailed_steps:
+            self._populate_aitken_table(detailed_steps, root, f)
+            return
+
+        # Configuración normal para otros métodos
+        num_rows = len(history)
+        self.results_table.setRowCount(num_rows)
+        self.results_table.setColumnCount(5)
+        self.results_table.setHorizontalHeaderLabels([
+            'Iteración', 'xᵢ', 'f(xᵢ)', 'Error Absoluto', 'Error Relativo (%)'
+        ])
+        
+        # Llenar tabla con datos de cada iteración
+        for i, x_i in enumerate(history):
+            f_x_i = f(x_i)
+            abs_error = abs(x_i - root) if i < len(history) - 1 else abs(f_x_i)  # Error absoluto
+            rel_error = abs_error / abs(root) if root != 0 else abs_error  # Error relativo
+            
+            self.results_table.setItem(i, 0, QTableWidgetItem(str(i + 1)))
+            self.results_table.setItem(i, 1, QTableWidgetItem(f"{x_i:.8f}"))
+            self.results_table.setItem(i, 2, QTableWidgetItem(f"{f_x_i:.6f}"))
+            self.results_table.setItem(i, 3, QTableWidgetItem(self._format_error(abs_error, False)))
+            self.results_table.setItem(i, 4, QTableWidgetItem(self._format_error(rel_error, True)))
+        
+        # Ajustar columnas al contenido
+        self.results_table.resizeColumnsToContents()
+        self.results_table.setMaximumHeight(400)  # Aumentar altura para mejor visibilidad
+    
+    def _format_error(self, error_value, is_relative=False):
+        """
+        Formatea un error para que sea más fácil de entender
+        
+        Args:
+            error_value: Valor del error
+            is_relative: Si es error relativo (se multiplica por 100)
+            
+        Returns:
+            str: Error formateado de manera amigable
+        """
+        if error_value is None:
+            return "-"
+        
+        # Convertir a porcentaje si es error relativo
+        if is_relative:
+            error_value = error_value * 100
+        
+        # Casos especiales para errores muy pequeños
+        if abs(error_value) < 1e-12:
+            return "≈ 0 (Convergente)" if not is_relative else "≈ 0% (Convergente)"
+        elif abs(error_value) < 1e-8:
+            return f"{error_value:.2e}" if not is_relative else f"{error_value:.2e}%"
+        elif abs(error_value) < 1e-4:
+            return f"{error_value:.6f}" if not is_relative else f"{error_value:.4f}%"
+        elif abs(error_value) < 1e-2:
+            return f"{error_value:.4f}" if not is_relative else f"{error_value:.2f}%"
+        else:
+            # Para errores grandes, usar notación científica
+            return f"{error_value:.2e}" if not is_relative else f"{error_value:.2e}%"
+    
+    def _populate_aitken_table(self, detailed_steps, root, f):
+        """Llena la tabla con información detallada del método de Aitken"""
+        if not detailed_steps:
+            return
+        
+        # Configurar tabla para Aitken con más columnas
+        num_rows = len(detailed_steps)
+        self.results_table.setRowCount(num_rows)
+        self.results_table.setColumnCount(7)
+        self.results_table.setHorizontalHeaderLabels([
+            'Iter', 'x₍ᵢ₋₁₎', 'g(x₍ᵢ₋₁₎)', 'x₀,x₁,x₂', 'x*_acelerado', 'Error Abs', 'Error Rel'
+        ])
+        
+        # Llenar tabla con datos detallados de cada paso
+        for i, step in enumerate(detailed_steps):
+            iter_num = step['iteracion']
+            x_anterior = step['x_anterior']
+            g_x_anterior = step['g_x_anterior']
+            
+            # Formatear x0,x1,x2 si existe
+            x0_x1_x2 = ""
+            if step['x0_x1_x2']:
+                x0_x1_x2 = f"[{step['x0_x1_x2'][0]:.4f}, {step['x0_x1_x2'][1]:.4f}, {step['x0_x1_x2'][2]:.4f}]"
+            
+            # Valor acelerado
+            x_acelerado = f"{step['x_acelerado']:.8f}" if step['x_acelerado'] is not None else "-"
+            
+            # Errores
+            error_abs = self._format_error(step['error_abs'], False) if step['error_abs'] is not None else "-"
+            error_rel = self._format_error(step['error_rel'], True) if step['error_rel'] is not None else "-"
+            
+            self.results_table.setItem(i, 0, QTableWidgetItem(str(iter_num)))
+            self.results_table.setItem(i, 1, QTableWidgetItem(f"{x_anterior:.8f}"))
+            self.results_table.setItem(i, 2, QTableWidgetItem(f"{g_x_anterior:.8f}"))
+            self.results_table.setItem(i, 3, QTableWidgetItem(x0_x1_x2))
+            self.results_table.setItem(i, 4, QTableWidgetItem(x_acelerado))
+            self.results_table.setItem(i, 5, QTableWidgetItem(error_abs))
+            self.results_table.setItem(i, 6, QTableWidgetItem(error_rel))
+        
+        # Ajustar columnas al contenido
+        self.results_table.resizeColumnsToContents()
+        self.results_table.setMaximumHeight(400)
     
     def plot_function_and_convergence(self, f, function_str, history, root, method, a=None, b=None, x0=None, g_function=None):
         """Grafica la función, el proceso de convergencia y elementos visuales mejorados con raíces finales detalladas"""
@@ -1151,24 +1300,36 @@ class MathSimulatorApp(QMainWindow):
         # Importar pestañas avanzadas
         try:
             from gui.advanced_tabs import InterpolationTab, DerivativesTab
-            from gui.comparison_tab import ComparisonTab
             
             self.interpolation_tab = InterpolationTab(self.keyboard, self.plot_widget)
             self.derivatives_tab = DerivativesTab(self.keyboard, self.plot_widget)
-            self.comparison_tab = ComparisonTab(self.keyboard, self.plot_widget)
             
             self.tab_widget.addTab(self.roots_tab, "🎯 Búsqueda de Raíces")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
             self.tab_widget.addTab(self.interpolation_tab, "📊 Interpolación")
             self.tab_widget.addTab(self.derivatives_tab, "🔢 Derivadas")
-            self.tab_widget.addTab(self.comparison_tab, "🔄 Comparación")
         except ImportError as e:
             # Si no se pueden importar las pestañas avanzadas, usar solo las básicas
             print(f"Warning: No se pudieron cargar pestañas avanzadas: {e}")
             self.tab_widget.addTab(self.roots_tab, "🎯 Búsqueda de Raíces")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
+            
+            # Intentar cargar interpolación y derivadas por separado
+            try:
+                from gui.advanced_tabs import InterpolationTab
+                self.interpolation_tab = InterpolationTab(self.keyboard, self.plot_widget)
+                self.tab_widget.addTab(self.interpolation_tab, "📊 Interpolación")
+            except ImportError:
+                pass
+                
+            try:
+                from gui.advanced_tabs import DerivativesTab
+                self.derivatives_tab = DerivativesTab(self.keyboard, self.plot_widget)
+                self.tab_widget.addTab(self.derivatives_tab, "🔢 Derivadas")
+            except ImportError:
+                pass
         
         right_layout.addWidget(self.tab_widget)
         right_panel.setLayout(right_layout)

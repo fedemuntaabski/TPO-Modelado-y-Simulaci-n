@@ -35,7 +35,6 @@ class TestImports:
         from gui.main_window import MathSimulatorApp, MathKeyboard, PlotWidget
         from gui.themes import DarkTheme
         from gui.animations import FadeAnimation, ButtonHoverEffect
-        from gui.comparison_tab import ComparisonTab
         
         assert MathSimulatorApp is not None
         assert MathKeyboard is not None
@@ -43,7 +42,6 @@ class TestImports:
         assert DarkTheme is not None
         assert FadeAnimation is not None
         assert ButtonHoverEffect is not None
-        assert ComparisonTab is not None
 
 class TestNumericalMethods:
     """Tests de métodos numéricos."""
@@ -229,34 +227,6 @@ class TestMathParser:
             result = parser.evaluate_expression(expression)
             assert abs(result - expected) < 1e-10, f"Error en {expression}: {result} != {expected}"
 
-class TestComparison:
-    """Tests de funcionalidad de comparación."""
-    
-    def test_method_comparison(self):
-        """Test de comparación entre métodos."""
-        from gui.comparison_tab import ComparisonTab
-        from numerics.methods import NumericalMethods
-        
-        methods = NumericalMethods()
-        
-        # Función de prueba: f(x) = x^2 - 4
-        def test_function(x):
-            return x**2 - 4
-        
-        def test_derivative(x):
-            return 2*x
-        
-        # Comparar métodos de búsqueda de raíces
-        bisection_result = methods.bisection(test_function, 0, 5, tolerance=1e-6)
-        newton_result = methods.newton_raphson(test_function, test_derivative, 1.0, tolerance=1e-6)
-        secant_result = methods.secant(test_function, 1.0, 3.0, tolerance=1e-6)
-        
-        # Verificar que todos convergen a la misma raíz
-        roots = [bisection_result[0], newton_result[0], secant_result[0]]
-        
-        for root in roots:
-            assert abs(root - 2.0) < 1e-5, f"Raíz incorrecta: {root}"
-
 class TestErrorHandling:
     """Tests de manejo de errores."""
     
@@ -343,7 +313,6 @@ if __name__ == "__main__":
             TestAdvancedMethods,
             TestUIComponents,
             TestMathParser,
-            TestComparison,
             TestErrorHandling,
             TestPerformance
         ]

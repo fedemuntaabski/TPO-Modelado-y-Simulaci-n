@@ -7,7 +7,7 @@ Características:
 - Interfaz PyQt6 con tema oscuro profesional
 - Métodos numéricos completos (raíces, integración, EDO, etc.)
 - Teclado virtual optimizado para funciones matemáticas
-- Comparación de métodos y visualización avanzada
+- Visualización avanzada y análisis detallado
 - Arquitectura modular y extensible
 
 Autores: Equipo TPO Modelado y Simulación
@@ -54,7 +54,7 @@ def show_startup_banner() -> None:
 🚀 CARACTERÍSTICAS PRINCIPALES:
    ✨ Interfaz PyQt6 con tema oscuro profesional
    🎯 Teclado virtual optimizado (funciones matemáticas)
-   📊 Comparación avanzada entre métodos numéricos  
+   📊 Análisis detallado y visualización avanzada
    🔄 Animaciones suaves y efectos visuales
    📈 Visualización interactiva con matplotlib
    🔧 Arquitectura modular y extensible
@@ -202,7 +202,7 @@ def launch_application() -> int:
         print("INSTRUCCIONES DE USO:")
         print("• Use el teclado virtual para ingresar funciones")
         print("• Explore las pestañas para diferentes métodos")
-        print("• Visite la pestaña '🔄 Comparación' para análisis")
+        print("• Utilice las herramientas de análisis en cada pestaña")
         print("• Disfrute del tema oscuro profesional")
         print("="*50)
         
