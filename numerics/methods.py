@@ -73,11 +73,181 @@ class NumericalMethods:
                        t_eval=t_eval, method='RK45')
         return sol.t, sol.y[0]
     
+    # ================================ MÉTODOS ECUACIONES DIFERENCIALES ================================
+    
+    @staticmethod
+    def euler(f: Callable, t_span: Tuple[float, float], y0: float, 
+             n_points: int = 100) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Método de Euler para ecuaciones diferenciales
+        
+        Args:
+            f: Función f(t, y) que define dy/dt = f(t, y)
+            t_span: Tupla (t0, tf) con el intervalo de tiempo
+            y0: Condición inicial y(t0) = y0
+            n_points: Número de puntos de evaluación
+            
+        Returns:
+            Tupla (t, y) con los puntos de la solución
+        """
+        t0, tf = t_span
+        h = (tf - t0) / (n_points - 1)
+        t = np.linspace(t0, tf, n_points)
+        y = np.zeros(n_points)
+        y[0] = y0
+        
+        for i in range(n_points - 1):
+            y[i + 1] = y[i] + h * f(t[i], y[i])
+        
+        return t, y
+    
+    @staticmethod
+    def euler_ode(f: Callable, x0: float, y0: float, xf: float, n_points: int = 100) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Método de Euler para EDO con signature alternativa
+        
+        Args:
+            f: Función f(x, y) que define dy/dx = f(x, y)
+            x0: Valor inicial de x
+            y0: Condición inicial y(x0) = y0
+            xf: Valor final de x
+            n_points: Número de puntos de evaluación
+            
+        Returns:
+            Tupla (x, y) con los puntos de la solución
+        """
+        h = (xf - x0) / n_points
+        x = np.linspace(x0, xf, n_points + 1)
+        y = np.zeros(n_points + 1)
+        y[0] = y0
+        
+        for i in range(n_points):
+            y[i + 1] = y[i] + h * f(x[i], y[i])
+        
+        return x, y
+    
+    @staticmethod
+    def rk2(f: Callable, t_span: Tuple[float, float], y0: float, 
+           n_points: int = 100) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Runge-Kutta de 2do orden (RK2)
+        
+        Args:
+            f: Función f(t, y) que define dy/dt = f(t, y)
+            t_span: Tupla (t0, tf) con el intervalo de tiempo
+            y0: Condición inicial y(t0) = y0
+            n_points: Número de puntos de evaluación
+            
+        Returns:
+            Tupla (t, y) con los puntos de la solución
+        """
+        t0, tf = t_span
+        h = (tf - t0) / (n_points - 1)
+        t = np.linspace(t0, tf, n_points)
+        y = np.zeros(n_points)
+        y[0] = y0
+        
+        for i in range(n_points - 1):
+            k1 = h * f(t[i], y[i])
+            k2 = h * f(t[i] + h, y[i] + k1)
+            
+            y[i + 1] = y[i] + (k1 + k2) / 2
+        
+        return t, y
+    
+    @staticmethod
+    def rk4(f: Callable, t_span: Tuple[float, float], y0: float, 
+           n_points: int = 100) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Runge-Kutta de 4to orden (RK4) - alias de runge_kutta_4
+        
+        Args:
+            f: Función f(t, y) que define dy/dt = f(t, y)
+            t_span: Tupla (t0, tf) con el intervalo de tiempo
+            y0: Condición inicial y(t0) = y0
+            n_points: Número de puntos de evaluación
+            
+        Returns:
+            Tupla (t, y) con los puntos de la solución
+        """
+        return NumericalMethods.runge_kutta_4(f, t_span, y0, n_points)
+    
+    # ================================ MÉTODOS DE INTEGRACIÓN ================================
+    
+    @staticmethod
+    def trapezoid(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Regla del Trapecio para integración numérica
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        h = (b - a) / n
+        x = np.linspace(a, b, n + 1)
+        y = np.array([f(xi) for xi in x])
+        
+        # Regla del trapecio: h/2 * (y0 + 2*(y1 + y2 + ... + yn-1) + yn)
+        integral = h/2 * (y[0] + 2*np.sum(y[1:-1]) + y[-1])
+        return integral
+    
+    @staticmethod
+    def simpson_13(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Regla de Simpson 1/3 para integración numérica
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones (debe ser par)
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        if n % 2 != 0:
+            n += 1  # Asegurar que n sea par
+        
+        h = (b - a) / n
+        x = np.linspace(a, b, n + 1)
+        y = np.array([f(xi) for xi in x])
+        
+        # Regla de Simpson 1/3
+        integral = h/3 * (y[0] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]) + y[-1])
+        return integral
+    
+    @staticmethod
+    def simpson_38(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Regla de Simpson 3/8 para integración numérica
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones (debe ser múltiplo de 3)
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        if n % 3 != 0:
+            n = ((n // 3) + 1) * 3  # Asegurar que n sea múltiplo de 3
+        
+        h = (b - a) / n
+        x = np.linspace(a, b, n + 1)
+        y = np.array([f(xi) for xi in x])
+        
+        # Regla de Simpson 3/8
+        integral = 3*h/8 * (y[0] + 3*np.sum(y[1:-1:3]) + 3*np.sum(y[2:-1:3]) + 2*np.sum(y[3:-1:3]) + y[-1])
+        return integral
+    
     @staticmethod
     def newton_cotes_integration(f: Callable, a: float, b: float, 
                                n: int = 100) -> float:
         """
-        Integración numérica usando reglas de Newton-Cotes
+        Integración numérica usando reglas de Newton-Cotes (Simpson 1/3)
         
         Args:
             f: Función a integrar
@@ -87,16 +257,86 @@ class NumericalMethods:
         Returns:
             Valor de la integral aproximada
         """
-        if n % 2 != 0:
-            n += 1  # Asegurar que n sea par para regla de Simpson
+        return NumericalMethods.simpson_13(f, a, b, n)
+    
+    @staticmethod
+    def trapezoidal_integration(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Integración usando regla del trapecio - alias de trapezoid
+        """
+        return NumericalMethods.trapezoid(f, a, b, n)
+    
+    @staticmethod
+    def simpson_integration(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Integración usando regla de Simpson - alias de simpson_13
+        """
+        return NumericalMethods.simpson_13(f, a, b, n)
+    
+    # ================================ ALIASES PARA COMPATIBILIDAD CON TESTS ================================
+    
+    @staticmethod
+    def bisection(f: Callable, a: float, b: float, tolerance: float = 1e-6, max_iterations: int = 100):
+        """
+        Alias para bisection_method con signature compatible con tests
+        """
+        root, iterations, history = NumericalMethods.bisection_method(f, a, b, tolerance, max_iterations)
+        return root, iterations, history
+    
+    @staticmethod
+    def newton_raphson(f: Callable, df: Callable, x0: float, tolerance: float = 1e-6, max_iterations: int = 100):
+        """
+        Alias para newton_raphson_method con signature compatible con tests
+        """
+        root, iterations, history = NumericalMethods.newton_raphson_method(f, df, x0, tolerance, max_iterations)
+        return root, iterations, history
+    
+    # ================================ MÉTODOS DE DIFERENCIAS FINITAS ================================
+    
+    @staticmethod
+    def forward(f: Callable, x: float, h: float = 1e-5) -> float:
+        """
+        Diferencias hacia adelante para derivadas
         
-        h = (b - a) / n
-        x = np.linspace(a, b, n + 1)
-        y = np.array([f(xi) for xi in x])
+        Args:
+            f: Función a derivar
+            x: Punto donde evaluar la derivada
+            h: Paso para la diferencia finita
+            
+        Returns:
+            Aproximación de f'(x) usando diferencias hacia adelante
+        """
+        return (f(x + h) - f(x)) / h
+    
+    @staticmethod
+    def backward(f: Callable, x: float, h: float = 1e-5) -> float:
+        """
+        Diferencias hacia atrás para derivadas
         
-        # Regla de Simpson 1/3
-        integral = h/3 * (y[0] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]) + y[-1])
-        return integral
+        Args:
+            f: Función a derivar
+            x: Punto donde evaluar la derivada
+            h: Paso para la diferencia finita
+            
+        Returns:
+            Aproximación de f'(x) usando diferencias hacia atrás
+        """
+        return (f(x) - f(x - h)) / h
+    
+    @staticmethod
+    def central(f: Callable, x: float, h: float = 1e-5) -> float:
+        """
+        Diferencias centrales para derivadas - alias de central_difference_derivative
+        
+        Args:
+            f: Función a derivar
+            x: Punto donde evaluar la derivada
+            h: Paso para la diferencia finita
+            
+        Returns:
+            Aproximación de f'(x) usando diferencias centrales
+        """
+        return NumericalMethods.central_difference_derivative(f, x, h)
     
     @staticmethod
     def central_difference_derivative(f: Callable, x: float, h: float = 1e-5) -> float:
