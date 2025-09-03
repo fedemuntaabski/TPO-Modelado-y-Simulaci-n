@@ -14,7 +14,7 @@ import sys
 from typing import Optional, Callable
 import numpy as np
 import matplotlib
-matplotlib.use('Qt5Agg')
+matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure

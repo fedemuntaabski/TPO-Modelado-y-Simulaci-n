@@ -100,6 +100,24 @@ class FunctionParser:
         return func
     
     @staticmethod
+    def evaluate_expression(expression: str, x: float = 0) -> float:
+        """
+        Evalúa una expresión matemática en un punto dado
+        
+        Args:
+            expression: Expresión como string
+            x: Valor donde evaluar la expresión
+            
+        Returns:
+            Resultado numérico de la evaluación
+        """
+        try:
+            func = FunctionParser.parse_function(expression)
+            return func(x)
+        except Exception as e:
+            raise ValueError(f"Error evaluando expresión: {e}")
+    
+    @staticmethod
     def parse_ode_function(expression: str) -> Callable:
         """
         Parsea una función para ecuaciones diferenciales dy/dt = f(t, y)
@@ -225,3 +243,6 @@ class FunctionParser:
         for name, value in constants.items():
             result = result.replace(name, str(value))
         return result
+
+# Alias para compatibilidad con tests
+MathParser = FunctionParser

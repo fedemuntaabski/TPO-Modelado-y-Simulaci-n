@@ -572,6 +572,37 @@ class NumericalMethods:
         return x, max_iter, history, accelerated_history, detailed_steps
     
     @staticmethod
+    def parse_function(expression: str) -> Callable:
+        """
+        Parsea una función matemática f(x)
+        
+        Args:
+            expression: Expresión como string (ej: "x**2", "sin(x)", "x**2 - 4")
+            
+        Returns:
+            Función f(x) evaluable
+        """
+        expression = expression.replace('^', '**')
+        
+        def func(x):
+            # Crear un namespace seguro con numpy y math
+            import math
+            safe_dict = {
+                'sin': math.sin,
+                'cos': math.cos,
+                'tan': math.tan,
+                'exp': math.exp,
+                'log': math.log,
+                'sqrt': math.sqrt,
+                'pi': math.pi,
+                'e': math.e,
+                'x': x
+            }
+            return eval(expression, {"__builtins__": {}}, safe_dict)
+        
+        return func
+    
+    @staticmethod
     def lagrange_interpolation(x_points: np.ndarray, y_points: np.ndarray, x: float) -> float:
         """
         Interpolación de Lagrange
@@ -673,3 +704,39 @@ class MathParser:
             return eval(expression, {"np": np, "t": t, "y": y})
         
         return func
+
+class MathParser:
+    """
+    Parser matemático para evaluar expresiones
+    """
+    
+    @staticmethod
+    def evaluate_expression(expression: str, x: float = 0) -> float:
+        """
+        Evalúa una expresión matemática en un punto dado
+        
+        Args:
+            expression: Expresión como string
+            x: Valor donde evaluar la expresión
+            
+        Returns:
+            Resultado numérico de la evaluación
+        """
+        try:
+            func = NumericalMethods.parse_function(expression)
+            return func(x)
+        except Exception as e:
+            raise ValueError(f"Error evaluando expresión: {e}")
+    
+    @staticmethod
+    def parse_function(expression: str) -> Callable:
+        """
+        Parsea una función matemática
+        
+        Args:
+            expression: Expresión como string
+            
+        Returns:
+            Función evaluable
+        """
+        return NumericalMethods.parse_function(expression)

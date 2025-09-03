@@ -319,3 +319,100 @@ class LoadingSpinner:
         self.angle = (self.angle + 30) % 360
         # Aquí se implementaría la rotación visual del spinner
         # (requiere implementación específica según el widget)
+
+class AnimationUtils:
+    """
+    Utilidades estáticas para animaciones y efectos visuales
+    """
+    
+    @staticmethod
+    def get_animation_duration(speed: str) -> int:
+        """
+        Obtiene la duración de animación según la velocidad especificada
+        
+        Args:
+            speed: Velocidad ('slow', 'normal', 'fast')
+            
+        Returns:
+            Duración en milliseconds
+        """
+        durations = {
+            'slow': 800,
+            'normal': 400,
+            'fast': 200
+        }
+        return durations.get(speed, 400)  # Default to normal
+    
+    @staticmethod
+    def get_easing_curve(curve_name: str):
+        """
+        Obtiene la curva de animación según el nombre especificado
+        
+        Args:
+            curve_name: Nombre de la curva ('linear', 'ease_in_out', etc.)
+            
+        Returns:
+            QEasingCurve correspondiente
+        """
+        from PyQt6.QtCore import QEasingCurve
+        
+        curves = {
+            'linear': QEasingCurve.Type.Linear,
+            'ease_in_out': QEasingCurve.Type.InOutQuad,
+            'ease_in': QEasingCurve.Type.InQuad,
+            'ease_out': QEasingCurve.Type.OutQuad,
+            'bounce': QEasingCurve.Type.OutBounce
+        }
+        return curves.get(curve_name, QEasingCurve.Type.InOutQuad)
+    
+    @staticmethod
+    def create_smooth_animation(widget, property_name: str, start_value, end_value, duration: int = 300):
+        """
+        Crea una animación suave para una propiedad de widget
+        
+        Args:
+            widget: Widget a animar
+            property_name: Nombre de la propiedad (ej: 'geometry', 'opacity')
+            start_value: Valor inicial
+            end_value: Valor final
+            duration: Duración en milliseconds
+            
+        Returns:
+            QPropertyAnimation configurada
+        """
+        from PyQt6.QtCore import QPropertyAnimation, QEasingCurve
+        animation = QPropertyAnimation(widget, property_name.encode())
+        animation.setDuration(duration)
+        animation.setStartValue(start_value)
+        animation.setEndValue(end_value)
+        animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        return animation
+    
+    @staticmethod
+    def animate_color_change(widget, start_color, end_color, duration: int = 300):
+        """
+        Anima un cambio de color en un widget
+        
+        Args:
+            widget: Widget a animar
+            start_color: Color inicial
+            end_color: Color final
+            duration: Duración en milliseconds
+        """
+        # Implementación básica de cambio de color
+        # En una implementación completa, esto requeriría un QPropertyAnimation personalizado
+        pass
+    
+    @staticmethod
+    def create_bounce_effect(widget, amplitude: int = 10, duration: int = 500):
+        """
+        Crea un efecto de rebote para un widget
+        
+        Args:
+            widget: Widget a animar
+            amplitude: Amplitud del rebote en pixels
+            duration: Duración total en milliseconds
+        """
+        # Implementación básica del efecto de rebote
+        # En una implementación completa, esto usaría una secuencia de animaciones
+        pass

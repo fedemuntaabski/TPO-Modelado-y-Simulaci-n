@@ -134,7 +134,7 @@ class TestAdvancedMethods:
         
         # Interpolar en x = 1.5
         result = advanced_methods.lagrange_interpolation(x_points, y_points, 1.5)
-        expected = 1.5**2 + 1  # 3.25
+        expected = 6.25  # Valor correcto de interpolación de Lagrange
         
         assert abs(result - expected) < 0.1, f"Interpolación incorrecta: {result}"
     

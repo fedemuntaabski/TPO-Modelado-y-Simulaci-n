@@ -300,6 +300,81 @@ class AdvancedNumericalMethods:
         
         return y_eval
 
+class AdvancedNumericalMethods:
+    """
+    Métodos numéricos avanzados para análisis y resolución
+    """
+    
+    @staticmethod
+    def lagrange_interpolation(x_points: np.ndarray, y_points: np.ndarray, x: float) -> float:
+        """
+        Interpolación de Lagrange
+        
+        Args:
+            x_points: Puntos x conocidos
+            y_points: Puntos y conocidos
+            x: Punto donde evaluar la interpolación
+            
+        Returns:
+            Valor interpolado en x
+        """
+        n = len(x_points)
+        result = 0
+        
+        for i in range(n):
+            # Calcular el polinomio base de Lagrange L_i(x)
+            Li = 1
+            for j in range(n):
+                if i != j:
+                    Li *= (x - x_points[j]) / (x_points[i] - x_points[j])
+            
+            result += y_points[i] * Li
+        
+        return result
+    
+    @staticmethod
+    def gaussian_elimination(A: List[List[float]], b: List[float]) -> List[float]:
+        """
+        Eliminación gaussiana para resolver sistemas lineales
+        
+        Args:
+            A: Matriz de coeficientes
+            b: Vector de términos independientes
+            
+        Returns:
+            Vector solución
+        """
+        n = len(A)
+        # Crear matriz aumentada
+        augmented = [row[:] + [b[i]] for i, row in enumerate(A)]
+        
+        # Eliminación hacia adelante
+        for i in range(n):
+            # Encontrar pivote
+            pivot_row = i
+            for j in range(i + 1, n):
+                if abs(augmented[j][i]) > abs(augmented[pivot_row][i]):
+                    pivot_row = j
+            
+            # Intercambiar filas
+            augmented[i], augmented[pivot_row] = augmented[pivot_row], augmented[i]
+            
+            # Hacer ceros debajo del pivote
+            for j in range(i + 1, n):
+                factor = augmented[j][i] / augmented[i][i]
+                for k in range(i, n + 1):
+                    augmented[j][k] -= factor * augmented[i][k]
+        
+        # Sustitución hacia atrás
+        x = [0] * n
+        for i in range(n - 1, -1, -1):
+            x[i] = augmented[i][n]
+            for j in range(i + 1, n):
+                x[i] -= augmented[i][j] * x[j]
+            x[i] /= augmented[i][i]
+        
+        return x
+
 # Funciones de utilidad para análisis de errores
 class ErrorAnalysis:
     """
