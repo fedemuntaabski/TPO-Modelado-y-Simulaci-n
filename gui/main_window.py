@@ -51,29 +51,21 @@ class MathKeyboard(QWidget):
         # Importar tema una vez para eficiencia
         from gui.themes import DarkTheme
         
-        # Botones de funciones matemáticas organizados en 2 columnas
+        # Botones de funciones matemáticas organizados en 1 columna
         buttons = [
-            # Fila 1: Funciones trigonométricas
-            ['sin', 'cos'],
-            # Fila 2: Más funciones trigonométricas
-            ['tan', 'log'],
-            # Fila 3: Funciones exponenciales y raíces
-            ['exp', 'sqrt'],
-            # Fila 4: Constantes matemáticas
-            ['pi', 'e'],
+            'sin', 'cos', 'tan', 'log', 'exp', 'sqrt', 'pi', 'e'
         ]
         
-        for row, button_row in enumerate(buttons):
-            for col, text in enumerate(button_row):
-                button = QPushButton(text)
-                button.setMinimumSize(51, 34)  # Botones 15% más pequeños
-                button.setMaximumSize(77, 43)  # Límite máximo ajustado (15% más pequeño)
-                button.clicked.connect(lambda checked, t=text: self.button_clicked(t))
-                
-                # Aplicar estilos para funciones matemáticas y constantes
-                button.setStyleSheet(DarkTheme.get_keyboard_button_style("function"))
-                
-                layout.addWidget(button, row, col)
+        for row, text in enumerate(buttons):
+            button = QPushButton(text)
+            button.setMinimumSize(26, 18)  # Botones 20% más pequeños
+            button.setMaximumSize(38, 22)  # Límite máximo reducido
+            button.clicked.connect(lambda checked, t=text: self.button_clicked(t))
+            
+            # Aplicar estilos para funciones matemáticas y constantes
+            button.setStyleSheet(DarkTheme.get_keyboard_button_style("function"))
+            
+            layout.addWidget(button, row, 0)
         
         self.setLayout(layout)
     
@@ -1273,14 +1265,14 @@ class MathSimulatorApp(QMainWindow):
         main_splitter = QSplitter(Qt.Orientation.Horizontal)
         
         # Panel izquierdo: Teclado virtual
-        left_panel = QGroupBox("🔢 Teclado Virtual")
+        left_panel = QGroupBox("")
         left_layout = QVBoxLayout()
         
         self.keyboard = MathKeyboard()
         left_layout.addWidget(self.keyboard)
         
         left_panel.setLayout(left_layout)
-        left_panel.setMaximumWidth(220)  # Ajustado para 2 botones por fila con mejor espaciado
+        left_panel.setMaximumWidth(120)  # Reducido para layout de 1 columna más compacto
         
         # Panel derecho: Pestañas y gráficos
         right_panel = QWidget()
@@ -1371,35 +1363,39 @@ class MathSimulatorApp(QMainWindow):
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("""
             color: #ecf0f1;
-            font-size: 26px;
+            font-size: 22px;
             font-weight: bold;
             font-family: 'Segoe UI', Arial, sans-serif;
             letter-spacing: 1px;
             margin: 0px;
-            padding: 8px 0px;
-        """)
-        
-        # Subtítulo con información técnica
-        subtitle_label = QLabel("Métodos Numéricos • Interfaz Gráfica Moderna • Versión 3.0")
-        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle_label.setStyleSheet("""
-            color: #95a5a6;
-            font-size: 13px;
-            font-weight: normal;
-            font-style: italic;
-            letter-spacing: 0.5px;
-            margin: 0px;
-            padding: 4px 0px;
+            padding: 6px 0px;
         """)
         
         layout.addWidget(title_label)
-        layout.addWidget(subtitle_label)
         
         frame.setLayout(layout)
-        frame.setMaximumHeight(140)
-        frame.setMinimumHeight(140)
+        frame.setMaximumHeight(80)
+        frame.setMinimumHeight(80)
         
         return frame
+    
+    def keyPressEvent(self, event):
+        """Maneja atajos de teclado para mejorar la usabilidad"""
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+                # Ctrl+Enter: Ejecutar cálculo en la pestaña actual
+                current_tab = self.tab_widget.currentWidget()
+                if hasattr(current_tab, 'solve'):
+                    current_tab.solve()
+                event.accept()
+            elif event.key() == Qt.Key.Key_R:
+                # Ctrl+R: Limpiar resultados
+                current_tab = self.tab_widget.currentWidget()
+                if hasattr(current_tab, 'clear_results'):
+                    current_tab.clear_results()
+                event.accept()
+        else:
+            super().keyPressEvent(event)
     
     def apply_style(self):
         """Aplica el tema oscuro moderno a la aplicación"""

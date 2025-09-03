@@ -47,8 +47,8 @@ def show_startup_banner() -> None:
     """Muestra el banner de inicio optimizado."""
     banner = """
 ╔══════════════════════════════════════════════════════════════════════════╗
-║                 🧮 SIMULADOR MATEMÁTICO AVANZADO v3.0                   ║
-║          Métodos Numéricos • Interfaz Moderna • Análisis Avanzado       ║
+║                 🧮 Análisis Avanzado y Simulación Numérica               ║
+║                                                                          ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 
 🚀 CARACTERÍSTICAS PRINCIPALES:
