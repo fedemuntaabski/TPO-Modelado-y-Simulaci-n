@@ -466,6 +466,62 @@ class NumericalMethods:
         
         return x, max_iter, history
     
+    # Alias para compatibilidad
+    fixed_point = fixed_point_method
+    
+    @staticmethod
+    def parse_function(expression: str) -> Callable:
+        """
+        Convierte una expresión string en una función evaluable
+        
+        Args:
+            expression: Expresión matemática como string (ej: "x**2 + 2*x + 1")
+            
+        Returns:
+            Función que puede ser evaluada
+        """
+        # Reemplazar funciones comunes por sus equivalentes numpy
+        expression = expression.replace('^', '**')
+        expression = expression.replace('sin', 'np.sin')
+        expression = expression.replace('cos', 'np.cos')
+        expression = expression.replace('tan', 'np.tan')
+        expression = expression.replace('exp', 'np.exp')
+        expression = expression.replace('log', 'np.log')
+        expression = expression.replace('sqrt', 'np.sqrt')
+        expression = expression.replace('pi', 'np.pi')
+        expression = expression.replace('e', 'np.e')
+        
+        def func(x):
+            return eval(expression, {"np": np, "x": x})
+        
+        return func
+    
+    @staticmethod
+    def parse_ode_function(expression: str) -> Callable:
+        """
+        Parsea una función para ecuaciones diferenciales dy/dt = f(t, y)
+        
+        Args:
+            expression: Expresión como string (ej: "t + y", "-y + t**2")
+            
+        Returns:
+            Función f(t, y)
+        """
+        expression = expression.replace('^', '**')
+        expression = expression.replace('sin', 'np.sin')
+        expression = expression.replace('cos', 'np.cos')
+        expression = expression.replace('tan', 'np.tan')
+        expression = expression.replace('exp', 'np.exp')
+        expression = expression.replace('log', 'np.log')
+        expression = expression.replace('sqrt', 'np.sqrt')
+        expression = expression.replace('pi', 'np.pi')
+        expression = expression.replace('e', 'np.e')
+        
+        def func(t, y):
+            return eval(expression, {"np": np, "t": t, "y": y})
+        
+        return func
+    
     @staticmethod
     def aitken_acceleration(sequence: List[float]) -> List[float]:
         """
@@ -593,6 +649,7 @@ class NumericalMethods:
                 'tan': math.tan,
                 'exp': math.exp,
                 'log': math.log,
+                'log10': math.log10,
                 'sqrt': math.sqrt,
                 'pi': math.pi,
                 'e': math.e,
@@ -740,3 +797,16 @@ class MathParser:
             Función evaluable
         """
         return NumericalMethods.parse_function(expression)
+    
+    @staticmethod
+    def parse_ode_function(expression: str) -> Callable:
+        """
+        Parsea una función para ecuaciones diferenciales
+        
+        Args:
+            expression: Expresión como string
+            
+        Returns:
+            Función f(t, y)
+        """
+        return NumericalMethods.parse_ode_function(expression)

@@ -251,6 +251,29 @@ class DarkTheme:
         """
     
     @staticmethod
+    def get_input_style():
+        """Retorna estilos para campos de entrada"""
+        return f"""
+        QLineEdit {{
+            background-color: {DarkTheme.BACKGROUND_SECONDARY};
+            color: {DarkTheme.TEXT_PRIMARY};
+            border: 2px solid {DarkTheme.BORDER_LIGHT};
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 14px;
+        }}
+        
+        QLineEdit:focus {{
+            border-color: {DarkTheme.BUTTON_PRIMARY};
+            background-color: {DarkTheme.BACKGROUND_LIGHT};
+        }}
+        
+        QLineEdit:hover {{
+            border-color: {DarkTheme.HOVER_ACCENT};
+        }}
+        """
+    
+    @staticmethod
     def get_keyboard_button_style(button_type="function"):
         """Estilos específicos para botones del teclado virtual con mejor contraste"""
         base_style = f"""

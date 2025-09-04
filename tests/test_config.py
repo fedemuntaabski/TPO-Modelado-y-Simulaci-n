@@ -12,6 +12,7 @@ import os
 import json
 import pytest
 import tempfile
+import numpy as np
 
 # Agregar el directorio principal al path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -34,11 +35,12 @@ class SettingsManager:
         )
         self._config = self.load_settings()
 
-    def load_settings(self):
+    def load_settings(self, config_path=None):
         """Carga configuración desde archivo JSON."""
+        path = config_path or self.config_path
         try:
-            if os.path.exists(self.config_path):
-                with open(self.config_path, 'r', encoding='utf-8') as f:
+            if os.path.exists(path):
+                with open(path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             else:
                 return self.get_default_config()
@@ -106,14 +108,16 @@ class SettingsManager:
 
     def validate_setting(self, key, value):
         """Valida un setting individual."""
-        if key == "numerical.default_tolerance":
-            return isinstance(value, (int, float)) and value > 0
-        elif key == "numerical.max_iterations":
+        if key in ["numerical.default_tolerance", "precision", "tolerance"]:
+            return isinstance(value, (int, float)) and value > 0 and np.isfinite(value)
+        elif key in ["numerical.max_iterations", "max_iterations"]:
             return isinstance(value, int) and value > 0
         elif key == "ui.animations.enabled":
             return isinstance(value, bool)
         elif key == "application.theme":
             return value in ["dark", "light"]
+        elif key == "step_size":
+            return isinstance(value, (int, float)) and value > 0 and np.isfinite(value)
         else:
             return True  # Para otros settings, aceptar cualquier valor válido
 
@@ -130,6 +134,19 @@ class SettingsManager:
                 self._deep_update(base_dict[key], value)
             else:
                 base_dict[key] = value
+
+    def __getattr__(self, name):
+        """Permite acceder a configuraciones como atributos."""
+        if name in self._config:
+            return self._config[name]
+        # Para nested keys como theme
+        if name == 'theme':
+            return self._config.get('application', {}).get('theme')
+        elif name == 'precision':
+            return self._config.get('numerical', {}).get('default_tolerance', 1e-6)
+        elif name == 'max_iterations':
+            return self._config.get('numerical', {}).get('max_iterations', 1000)
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
 
 class TestSettingsManager:

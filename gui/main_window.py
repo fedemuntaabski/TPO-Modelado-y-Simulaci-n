@@ -51,20 +51,19 @@ class MathKeyboard(QWidget):
         # Importar tema una vez para eficiencia
         from gui.themes import DarkTheme
         
-        # Botones de funciones matemáticas organizados en 1 columna
-        buttons = [
-            'sin', 'cos', 'tan', 'log', 'exp', 'sqrt', 'pi', 'e'
-        ]
+        self.function_buttons = []
+        self.operator_buttons = []
+        self.number_buttons = []
         
-        for row, text in enumerate(buttons):
+        # Botones de funciones matemáticas
+        functions = ['sin', 'cos', 'tan', 'log', 'exp', 'sqrt', 'pi', 'e']
+        for row, text in enumerate(functions):
             button = QPushButton(text)
-            button.setMinimumSize(26, 18)  # Botones 20% más pequeños
-            button.setMaximumSize(38, 22)  # Límite máximo reducido
+            button.setMinimumSize(26, 18)
+            button.setMaximumSize(38, 22)
             button.clicked.connect(lambda checked, t=text: self.button_clicked(t))
-            
-            # Aplicar estilos para funciones matemáticas y constantes
             button.setStyleSheet(DarkTheme.get_keyboard_button_style("function"))
-            
+            self.function_buttons.append(button)
             layout.addWidget(button, row, 0)
         
         self.setLayout(layout)

@@ -59,6 +59,33 @@ class InterpolationMethods:
         return y_eval, polynomial
     
     @staticmethod
+    def lagrange_interpolation(x_points: np.ndarray, y_points: np.ndarray, x: float) -> float:
+        """
+        Interpolación de Lagrange
+        
+        Args:
+            x_points: Puntos x conocidos
+            y_points: Puntos y conocidos
+            x: Punto donde evaluar la interpolación
+            
+        Returns:
+            Valor interpolado en x
+        """
+        n = len(x_points)
+        result = 0
+        
+        for i in range(n):
+            # Calcular el polinomio base de Lagrange L_i(x)
+            Li = 1
+            for j in range(n):
+                if i != j:
+                    Li *= (x - x_points[j]) / (x_points[i] - x_points[j])
+            
+            result += y_points[i] * Li
+        
+        return result
+    
+    @staticmethod
     def finite_differences_table(x_points: np.ndarray, y_points: np.ndarray) -> np.ndarray:
         """
         Construye una tabla de diferencias finitas
@@ -359,6 +386,10 @@ class AdvancedNumericalMethods:
             # Intercambiar filas
             augmented[i], augmented[pivot_row] = augmented[pivot_row], augmented[i]
             
+            # Verificar si el pivote es cero (matriz singular)
+            if abs(augmented[i][i]) < 1e-14:
+                raise ValueError("La matriz es singular o casi singular")
+            
             # Hacer ceros debajo del pivote
             for j in range(i + 1, n):
                 factor = augmented[j][i] / augmented[i][i]
@@ -374,6 +405,37 @@ class AdvancedNumericalMethods:
             x[i] /= augmented[i][i]
         
         return x
+    
+    @staticmethod
+    def aitken_acceleration(sequence: List[float]) -> List[float]:
+        """
+        Aplica aceleración de Aitken a una secuencia
+        
+        Args:
+            sequence: Secuencia original
+            
+        Returns:
+            Secuencia acelerada
+        """
+        if len(sequence) < 3:
+            return sequence
+        
+        accelerated = []
+        
+        for i in range(len(sequence) - 2):
+            x_n = sequence[i]
+            x_n1 = sequence[i + 1]
+            x_n2 = sequence[i + 2]
+            
+            denominator = x_n2 - 2*x_n1 + x_n
+            
+            if abs(denominator) > 1e-14:
+                x_acc = x_n - (x_n1 - x_n)**2 / denominator
+                accelerated.append(x_acc)
+            else:
+                accelerated.append(x_n2)
+        
+        return accelerated
 
 # Funciones de utilidad para análisis de errores
 class ErrorAnalysis:
@@ -415,3 +477,86 @@ class ErrorAnalysis:
         # Ajuste lineal
         coeffs = np.polyfit(log_h, log_errors, 1)
         return coeffs[0]  # El coeficiente de log(h) es el orden
+    
+    @staticmethod
+    def estimate_bisection_error(a: float, b: float) -> float:
+        """
+        Estima el error en el método de bisección
+        
+        Args:
+            a: Límite inferior
+            b: Límite superior
+            
+        Returns:
+            Error estimado
+        """
+        return abs(b - a) / 2
+    
+    @staticmethod
+    def analyze_convergence_rate(errors: List[float]) -> float:
+        """
+        Analiza la tasa de convergencia de una secuencia de errores
+        Asume que h se reduce a la mitad cada vez
+        
+        Args:
+            errors: Lista de errores
+            
+        Returns:
+            Orden de convergencia estimado
+        """
+        if len(errors) < 2:
+            return 0
+        
+        ratios = []
+        for i in range(1, len(errors)):
+            if errors[i-1] != 0:
+                ratios.append(errors[i] / errors[i-1])
+        
+        if not ratios:
+            return 0
+        
+        avg_ratio = np.mean(ratios)
+        if avg_ratio <= 0 or avg_ratio >= 1:
+            return 0
+        
+        # Asumiendo h_{n+1}/h_n = 0.5
+        h_ratio = 0.5
+        if abs(np.log(h_ratio)) > 1e-14:
+            order = np.log(avg_ratio) / np.log(h_ratio)
+            return order
+        return 0
+    
+    @staticmethod
+    def check_numerical_stability(f: Callable, x: float, h: float = 1e-5) -> float:
+        """
+        Verifica la estabilidad numérica de una función en un punto
+        Retorna un score de estabilidad (mayor es mejor)
+        
+        Args:
+            f: Función a evaluar
+            x: Punto de evaluación
+            h: Paso pequeño
+            
+        Returns:
+            Score de estabilidad (0 a 1)
+        """
+        try:
+            f_x = f(x)
+            f_x_plus_h = f(x + h)
+            f_x_minus_h = f(x - h)
+            
+            # Verificar que no hay NaN o inf
+            if not (np.isfinite(f_x) and np.isfinite(f_x_plus_h) and np.isfinite(f_x_minus_h)):
+                return 0.0
+            
+            # Calcular derivada
+            derivative = (f_x_plus_h - f_x_minus_h) / (2 * h)
+            if not np.isfinite(derivative):
+                return 0.0
+            
+            # Score basado en la magnitud de la derivada
+            # Mayor derivada = menor estabilidad
+            stability = 1.0 / (1.0 + abs(derivative))
+            return stability
+        except:
+            return 0.0

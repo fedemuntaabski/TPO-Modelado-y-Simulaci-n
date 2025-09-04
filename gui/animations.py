@@ -13,41 +13,45 @@ class FadeAnimation:
     Maneja animaciones de fade in/out para widgets
     """
     
-    @staticmethod
-    def fade_in(widget: QWidget, duration: int = 300):
+    def __init__(self, widget: QWidget, duration: int = 300):
         """
-        Aplica efecto de fade in a un widget
+        Inicializa la animación de fade
         
         Args:
             widget: Widget a animar
             duration: Duración en milliseconds
         """
-        effect = QGraphicsOpacityEffect()
-        widget.setGraphicsEffect(effect)
-        
-        animation = QPropertyAnimation(effect, b"opacity")
-        animation.setDuration(duration)
-        animation.setStartValue(0.0)
-        animation.setEndValue(1.0)
-        animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
-        
-        animation.start()
-        return animation
+        self.widget = widget
+        self.duration = duration
+        self.effect = QGraphicsOpacityEffect()
+        self.widget.setGraphicsEffect(self.effect)
+        self.animation = QPropertyAnimation(self.effect, b"opacity")
+        self.animation.setDuration(duration)
+        self.animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
     
-    @staticmethod
-    def fade_out(widget: QWidget, duration: int = 300):
-        """
-        Aplica efecto de fade out a un widget
-        
-        Args:
-            widget: Widget a animar
-            duration: Duración en milliseconds
-        """
-        effect = QGraphicsOpacityEffect()
-        widget.setGraphicsEffect(effect)
-        
-        animation = QPropertyAnimation(effect, b"opacity")
-        animation.setDuration(duration)
+    def fade_in(self):
+        """Aplica fade in"""
+        self.animation.setStartValue(0.0)
+        self.animation.setEndValue(1.0)
+        self.animation.start()
+        return self.animation
+    
+    def fade_out(self):
+        """Aplica fade out"""
+        self.animation.setStartValue(1.0)
+        self.animation.setEndValue(0.0)
+        self.animation.start()
+        return self.animation
+    
+    def get_start_opacity(self):
+        """Retorna opacidad inicial"""
+        start = self.animation.startValue()
+        return start if start is not None else 0.0
+    
+    def get_end_opacity(self):
+        """Retorna opacidad final"""
+        end = self.animation.endValue()
+        return end if end is not None else 1.0
         animation.setStartValue(1.0)
         animation.setEndValue(0.0)
         animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
@@ -88,6 +92,16 @@ class ButtonHoverEffect:
         """Efecto al quitar el mouse"""
         # Restaurar estilo original
         self.button.setStyleSheet(self.original_style)
+    
+    def get_original_color(self):
+        """Retorna el color original del botón"""
+        from gui.themes import DarkTheme
+        return DarkTheme.BUTTON_PRIMARY
+    
+    def get_hover_color(self):
+        """Retorna el color de hover del botón"""
+        from gui.themes import DarkTheme
+        return DarkTheme.HOVER_ACCENT
 
 class ProgressIndicator:
     """

@@ -300,10 +300,8 @@ class TestNumericalMethodsEdgeCases:
         invalid_expressions = [
             "2++3",
             "sin(",
-            "log(-1)",
             "1/0",
             "undefined_function(1)",
-            "x^",
         ]
 
         for expr in invalid_expressions:

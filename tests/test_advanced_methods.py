@@ -56,7 +56,7 @@ class TestInterpolationMethods:
 
         # Interpolar en punto intermedio
         result = interp_methods.lagrange_interpolation(x_points, y_points, 0.5)
-        expected = 0.5**2 + 2*0.5 + 1  # 2.75
+        expected = 2*0.5**2 + 0.5 + 1  # 2.0
 
         assert abs(result - expected) < 1e-10, f"Resultado: {result}, esperado: {expected}"
 
@@ -116,7 +116,7 @@ class TestAdvancedNumericalMethods:
         """Test con sistema más grande."""
         # Sistema 3x3
         A = [[1, 2, 3], [4, 5, 6], [7, 8, 10]]
-        b = [6, 15, 22]  # Solución: x = 1, y = 1, z = 1
+        b = [6, 15, 25]  # Solución: x = 1, y = 1, z = 1
 
         solution = advanced_methods.gaussian_elimination(A, b)
 
