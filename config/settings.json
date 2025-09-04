@@ -1,49 +1,5 @@
 {
-    "application": {
-        "name": "Simulador Matemático Avanzado",
-        "version": "3.0",
-        "organization": "TPO Modelado y Simulación",
-        "theme": "dark"
-    },
-    "ui": {
-        "window": {
-            "min_width": 800,
-            "min_height": 600,
-            "default_width": 1200,
-            "default_height": 800
-        },
-        "keyboard": {
-            "button_size": {
-                "width": 80,
-                "height": 50
-            },
-            "spacing": 6,
-            "margins": 10
-        },
-        "animations": {
-            "enabled": true,
-            "fade_duration": 250,
-            "hover_duration": 150
-        }
-    },
-    "numerical": {
-        "default_tolerance": 1e-6,
-        "max_iterations": 1000,
-        "integration_points": 1000,
-        "ode_points": 100
-    },
-    "plotting": {
-        "backend": "Qt5Agg",
-        "figure_size": [8, 6],
-        "dpi": 100,
-        "grid": true,
-        "alpha": 0.3
-    },
-    "logging": {
-        "level": "INFO",
-        "file": "simulator.log",
-        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        "max_file_size": "10MB",
-        "backup_count": 5
-    }
+    "theme": "light",
+    "language": "en",
+    "precision": 4
 }

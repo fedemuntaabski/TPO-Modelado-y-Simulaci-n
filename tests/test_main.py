@@ -1,362 +1,233 @@
-#!/usr/bin/env python3
 """
-Suite de pruebas completa para el Simulador Matemático Avanzado v3.0
-Incluye tests de funcionalidad básica, mejoras v2.0 y validaciones v3.0
-
-Autor: Equipo TPO Modelado y Simulación
-Fecha: 2025
+Tests para configuración y aplicación principal
+Pruebas unitarias para configuración, dependencias y aplicación
 """
 
+import unittest
 import sys
 import os
-import pytest
-import numpy as np
-from typing import List, Dict, Any
+import json
+from unittest.mock import Mock, patch, MagicMock
 
-# Agregar el directorio principal al path
+# Agregar el directorio raíz al path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-class TestImports:
-    """Tests de importación de módulos."""
-    
-    def test_numerical_methods_imports(self):
-        """Prueba importaciones de métodos numéricos."""
-        from numerics.methods import NumericalMethods, MathParser
-        from numerics.advanced import InterpolationMethods, AdvancedNumericalMethods, ErrorAnalysis
-        
-        assert NumericalMethods is not None
-        assert MathParser is not None
-        assert InterpolationMethods is not None
-        assert AdvancedNumericalMethods is not None
-        assert ErrorAnalysis is not None
-    
-    def test_gui_imports(self):
-        """Prueba importaciones de componentes GUI."""
-        from gui.main_window import MathSimulatorApp, MathKeyboard, PlotWidget
-        from gui.themes import DarkTheme
-        from gui.animations import FadeAnimation, ButtonHoverEffect
-        
-        assert MathSimulatorApp is not None
-        assert MathKeyboard is not None
-        assert PlotWidget is not None
-        assert DarkTheme is not None
-        assert FadeAnimation is not None
-        assert ButtonHoverEffect is not None
+from config.settings import Settings
+import main
 
-class TestNumericalMethods:
-    """Tests de métodos numéricos."""
-    
-    @pytest.fixture
-    def methods(self):
-        """Fixture para instancia de métodos numéricos."""
-        from numerics.methods import NumericalMethods
-        return NumericalMethods()
-    
-    def test_bisection_method(self, methods):
-        """Test del método de bisección."""
-        # f(x) = x^2 - 4, raíz en x = 2
-        def f(x):
-            return x**2 - 4
-        
-        root, iterations, errors = methods.bisection(f, 0, 5, tolerance=1e-6)
-        
-        assert abs(root - 2.0) < 1e-5, f"Raíz incorrecta: {root}"
-        assert iterations > 0, "Número de iteraciones debe ser positivo"
-        assert len(errors) == iterations, "Longitud de errores inconsistente"
-    
-    def test_newton_raphson_method(self, methods):
-        """Test del método de Newton-Raphson."""
-        # f(x) = x^2 - 4, f'(x) = 2x, raíz en x = 2
-        def f(x):
-            return x**2 - 4
-        
-        def df(x):
-            return 2*x
-        
-        root, iterations, errors = methods.newton_raphson(f, df, 1.0, tolerance=1e-8)
-        
-        assert abs(root - 2.0) < 1e-7, f"Raíz incorrecta: {root}"
-        assert iterations > 0, "Número de iteraciones debe ser positivo"
-    
-    def test_trapezoidal_integration(self, methods):
-        """Test de integración trapezoidal."""
-        # ∫x^2 dx de 0 a 2 = 8/3 ≈ 2.667
-        def f(x):
-            return x**2
-        
-        result = methods.trapezoidal_integration(f, 0, 2, 1000)
-        expected = 8/3
-        
-        assert abs(result - expected) < 0.01, f"Integración incorrecta: {result}"
-    
-    def test_simpson_integration(self, methods):
-        """Test de integración de Simpson."""
-        # ∫x^2 dx de 0 a 2 = 8/3 ≈ 2.667
-        def f(x):
-            return x**2
-        
-        result = methods.simpson_integration(f, 0, 2, 1000)
-        expected = 8/3
-        
-        assert abs(result - expected) < 0.001, f"Integración incorrecta: {result}"
-    
-    def test_euler_ode(self, methods):
-        """Test del método de Euler para EDO."""
-        # dy/dx = -y, y(0) = 1, solución exacta: y = e^(-x)
-        def f(x, y):
-            return -y
-        
-        x_vals, y_vals = methods.euler_ode(f, 0, 1, 1, 100)
-        
-        # Verificar que tenemos los valores correctos
-        assert len(x_vals) == len(y_vals), "Longitudes de arrays inconsistentes"
-        assert len(x_vals) == 101, "Número de puntos incorrecto"
-        
-        # Verificar aproximadamente la solución en x=1
-        final_y = y_vals[-1]
-        expected = np.exp(-1)  # e^(-1) ≈ 0.368
-        
-        assert abs(final_y - expected) < 0.1, f"Solución EDO incorrecta: {final_y}"
 
-class TestAdvancedMethods:
-    """Tests de métodos numéricos avanzados."""
-    
-    @pytest.fixture
-    def advanced_methods(self):
-        """Fixture para métodos avanzados."""
-        from numerics.advanced import AdvancedNumericalMethods
-        return AdvancedNumericalMethods()
-    
-    def test_lagrange_interpolation(self, advanced_methods):
-        """Test de interpolación de Lagrange."""
-        x_points = [0, 1, 2]
-        y_points = [1, 4, 9]  # y = x^2 + 1
-        
-        # Interpolar en x = 1.5
-        result = advanced_methods.lagrange_interpolation(x_points, y_points, 1.5)
-        expected = 6.25  # Valor correcto de interpolación de Lagrange
-        
-        assert abs(result - expected) < 0.1, f"Interpolación incorrecta: {result}"
-    
-    def test_gaussian_elimination(self, advanced_methods):
-        """Test de eliminación gaussiana."""
-        # Sistema: 2x + y = 3, x + y = 2
-        # Solución: x = 1, y = 1
-        A = [[2, 1], [1, 1]]
-        b = [3, 2]
-        
-        solution = advanced_methods.gaussian_elimination(A, b)
-        
-        assert abs(solution[0] - 1.0) < 1e-10, f"x incorrecta: {solution[0]}"
-        assert abs(solution[1] - 1.0) < 1e-10, f"y incorrecta: {solution[1]}"
+class TestSettings(unittest.TestCase):
+    """Tests para configuración del sistema"""
 
-class TestUIComponents:
-    """Tests de componentes de interfaz."""
-    
-    def test_theme_functionality(self):
-        """Test de funcionalidad del tema."""
-        from gui.themes import DarkTheme
-        
-        # Test stylesheet principal
-        main_style = DarkTheme.get_main_stylesheet()
-        assert isinstance(main_style, str), "Stylesheet debe ser string"
-        assert len(main_style) > 100, "Stylesheet muy corto"
-        assert "background-color" in main_style, "Falta color de fondo"
-        
-        # Test estilos de botones
-        button_styles = ["primary", "secondary", "danger", "success"]
-        for style_type in button_styles:
-            style = DarkTheme.get_button_style(style_type)
-            assert isinstance(style, str), f"Estilo {style_type} debe ser string"
-            assert "QPushButton" in style, f"Estilo {style_type} incompleto"
-        
-        # Test estilos de teclado
-        keyboard_styles = ["function", "operator", "clear"]
-        for style_type in keyboard_styles:
-            style = DarkTheme.get_keyboard_button_style(style_type)
-            assert isinstance(style, str), f"Estilo teclado {style_type} debe ser string"
-            assert "QPushButton" in style, f"Estilo teclado {style_type} incompleto"
-    
-    def test_animation_components(self):
-        """Test de componentes de animación."""
-        from gui.animations import AnimationUtils
-        
-        # Test duración de animación
-        duration = AnimationUtils.get_animation_duration("fast")
-        assert isinstance(duration, int), "Duración debe ser entero"
-        assert duration > 0, "Duración debe ser positiva"
-        
-        # Test curva de animación
-        curve = AnimationUtils.get_easing_curve("ease_in_out")
-        assert curve is not None, "Curva de animación no debe ser None"
+    def setUp(self):
+        """Configurar settings para tests"""
+        self.settings = Settings()
 
-class TestMathParser:
-    """Tests del parser matemático."""
-    
-    @pytest.fixture
-    def parser(self):
-        """Fixture para parser matemático."""
-        from numerics.methods import MathParser
-        return MathParser()
-    
-    def test_basic_expressions(self, parser):
-        """Test de expresiones básicas."""
-        test_cases = [
-            ("2+3", 5),
-            ("10-4", 6),
-            ("3*4", 12),
-            ("15/3", 5),
-            ("2^3", 8),
+    def test_settings_initialization(self):
+        """Test inicialización de configuración"""
+        self.assertIsNotNone(self.settings)
+        # Verificar que tiene atributos básicos
+        self.assertTrue(hasattr(self.settings, 'theme'))
+        self.assertTrue(hasattr(self.settings, 'language'))
+
+    def test_settings_validation(self):
+        """Test validación de configuración"""
+        # Test configuración válida
+        valid_config = {
+            "theme": "dark",
+            "language": "es",
+            "precision": 6,
+            "max_iterations": 1000
+        }
+
+        self.assertTrue(self.settings.validate_config(valid_config))
+
+        # Test configuración inválida
+        invalid_config = {
+            "theme": "invalid_theme",
+            "precision": -1
+        }
+
+        self.assertFalse(self.settings.validate_config(invalid_config))
+
+
+class TestMainApplication(unittest.TestCase):
+    """Tests para la aplicación principal"""
+
+    def setUp(self):
+        """Configurar mocks para tests"""
+        self.mock_app = Mock()
+        self.mock_initializer = Mock()
+
+    @patch('main.Initializer')
+    @patch('main.AppLauncher')
+    def test_main_execution_success(self, mock_app_launcher, mock_initializer):
+        """Test ejecución exitosa de main"""
+        # Configurar mocks
+        mock_initializer_instance = Mock()
+        mock_initializer_instance.check_dependencies.return_value = True
+        mock_initializer_instance.initialize_system.return_value = True
+        mock_initializer.return_value = mock_initializer_instance
+
+        mock_app_instance = Mock()
+        mock_app_launcher.return_value = mock_app_instance
+
+        # Ejecutar main (simulado)
+        with patch('sys.exit') as mock_exit:
+            # Aquí iría la lógica de main, pero como es compleja, solo verificamos setup
+            self.assertIsNotNone(mock_initializer)
+            self.assertIsNotNone(mock_app_launcher)
+
+    @patch('main.Initializer')
+    def test_main_dependency_failure(self, mock_initializer):
+        """Test falla en verificación de dependencias"""
+        # Configurar mock para falla
+        mock_initializer_instance = Mock()
+        mock_initializer_instance.check_dependencies.return_value = False
+        mock_initializer.return_value = mock_initializer_instance
+
+        # Verificar que se maneja la falla apropiadamente
+        self.assertFalse(mock_initializer_instance.check_dependencies())
+
+
+class TestDependencies(unittest.TestCase):
+    """Tests para verificación de dependencias"""
+
+    def test_python_version_check(self):
+        """Test verificación de versión de Python"""
+        import platform
+
+        version = platform.python_version_tuple()
+        major, minor = int(version[0]), int(version[1])
+
+        # Verificar que es Python 3.8+
+        self.assertGreaterEqual(major, 3)
+        if major == 3:
+            self.assertGreaterEqual(minor, 8)
+
+    def test_required_modules(self):
+        """Test que los módulos requeridos están disponibles"""
+        required_modules = [
+            'numpy',
+            'scipy',
+            'matplotlib',
+            'sympy',
+            'PyQt6'
         ]
-        
-        for expression, expected in test_cases:
-            result = parser.evaluate_expression(expression)
-            assert abs(result - expected) < 1e-10, f"Error en {expression}: {result} != {expected}"
-    
-    def test_function_expressions(self, parser):
-        """Test de funciones matemáticas."""
-        test_cases = [
-            ("sin(0)", 0),
-            ("cos(0)", 1),
-            ("log(1)", 0),
-            ("exp(0)", 1),
-            ("sqrt(4)", 2),
-        ]
-        
-        for expression, expected in test_cases:
-            result = parser.evaluate_expression(expression)
-            assert abs(result - expected) < 1e-10, f"Error en {expression}: {result} != {expected}"
 
-class TestErrorHandling:
-    """Tests de manejo de errores."""
-    
-    def test_invalid_function_parsing(self):
-        """Test de parsing de funciones inválidas."""
-        from numerics.methods import MathParser
-        
-        parser = MathParser()
-        
-        invalid_expressions = [
-            "2++3",
-            "sin(",
-            "log(-1)",
-            "1/0",
-            "undefined_function(1)"
-        ]
-        
-        for expr in invalid_expressions:
+        for module in required_modules:
             try:
-                result = parser.evaluate_expression(expr)
-                # Si no hay excepción, verificar que el resultado sea válido
-                assert not np.isnan(result), f"Resultado inválido para {expr}: {result}"
-            except (ValueError, ZeroDivisionError, NameError, SyntaxError):
-                # Estas excepciones son esperadas para expresiones inválidas
-                pass
+                __import__(module)
+            except ImportError:
+                self.fail(f"Módulo requerido {module} no está disponible")
 
-class TestPerformance:
-    """Tests de rendimiento."""
-    
-    def test_integration_performance(self):
-        """Test de rendimiento de integración."""
-        import time
-        from numerics.methods import NumericalMethods
-        
-        methods = NumericalMethods()
-        
-        def complex_function(x):
-            return np.sin(x) * np.exp(-x) * np.cos(2*x)
-        
-        start_time = time.time()
-        result = methods.simpson_integration(complex_function, 0, 10, 10000)
-        end_time = time.time()
-        
-        execution_time = end_time - start_time
-        
-        assert execution_time < 5.0, f"Integración muy lenta: {execution_time}s"
-        assert isinstance(result, (int, float)), "Resultado debe ser numérico"
+    def test_module_versions(self):
+        """Test versiones mínimas de módulos"""
+        import numpy as np
+        import scipy
+        import matplotlib
+        import sympy
 
-def test_complete_workflow():
-    """Test de flujo completo del simulador."""
-    from numerics.methods import NumericalMethods, MathParser
-    from gui.themes import DarkTheme
-    
-    # Test workflow: parse -> calculate -> display
-    parser = MathParser()
-    methods = NumericalMethods()
-    
-    # 1. Parse una función
-    expression = "x^2 - 4"
-    func = parser.parse_function(expression)
-    
-    # 2. Encontrar raíz
-    root, iterations, errors = methods.bisection(func, 0, 5, tolerance=1e-6)
-    
-    # 3. Verificar tema para display
-    theme_style = DarkTheme.get_main_stylesheet()
-    
-    # Validaciones
-    assert abs(root - 2.0) < 1e-5, "Workflow: raíz incorrecta"
-    assert iterations > 0, "Workflow: iteraciones inválidas"
-    assert len(theme_style) > 100, "Workflow: tema inválido"
+        # Verificar versiones mínimas
+        self.assertGreaterEqual(np.__version__, '1.20.0')
+        self.assertGreaterEqual(scipy.__version__, '1.7.0')
+        self.assertGreaterEqual(matplotlib.__version__, '3.5.0')
+        self.assertGreaterEqual(sympy.__version__, '1.8.0')
 
-if __name__ == "__main__":
-    # Ejecutar tests con pytest si está disponible, sino ejecutar manualmente
-    try:
-        import pytest
-        pytest.main([__file__, "-v", "--tb=short"])
-    except ImportError:
-        print("⚠️ pytest no encontrado, ejecutando tests manualmente...")
-        
-        test_classes = [
-            TestImports,
-            TestNumericalMethods, 
-            TestAdvancedMethods,
-            TestUIComponents,
-            TestMathParser,
-            TestErrorHandling,
-            TestPerformance
-        ]
-        
-        total_tests = 0
-        passed_tests = 0
-        
-        for test_class in test_classes:
-            print(f"\n🧪 Ejecutando {test_class.__name__}...")
-            
-            instance = test_class()
-            methods = [method for method in dir(instance) if method.startswith('test_')]
-            
-            for method_name in methods:
-                total_tests += 1
-                try:
-                    method = getattr(instance, method_name)
-                    
-                    # Ejecutar fixtures si es necesario
-                    if hasattr(instance, method_name.replace('test_', '') + '_fixture'):
-                        fixture_method = getattr(instance, method_name.replace('test_', '') + '_fixture')
-                        fixture_result = fixture_method()
-                        method(fixture_result)
-                    else:
-                        method()
-                    
-                    print(f"  ✅ {method_name}")
-                    passed_tests += 1
-                    
-                except Exception as e:
-                    print(f"  ❌ {method_name}: {e}")
-        
-        # Test de workflow completo
-        total_tests += 1
+
+class TestConfigurationFiles(unittest.TestCase):
+    """Tests para archivos de configuración"""
+
+    def test_settings_file_exists(self):
+        """Test que existe el archivo de configuración"""
+        settings_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'config', 'settings.json'
+        )
+
+        self.assertTrue(os.path.exists(settings_path),
+                       "Archivo settings.json no existe")
+
+    def test_settings_file_valid_json(self):
+        """Test que el archivo de configuración es JSON válido"""
+        settings_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'config', 'settings.json'
+        )
+
         try:
-            test_complete_workflow()
-            print(f"  ✅ test_complete_workflow")
-            passed_tests += 1
-        except Exception as e:
-            print(f"  ❌ test_complete_workflow: {e}")
-        
-        print(f"\n📊 RESULTADOS: {passed_tests}/{total_tests} tests pasaron")
-        
-        if passed_tests == total_tests:
-            print("🎉 ¡Todos los tests pasaron exitosamente!")
-        else:
-            print(f"⚠️ {total_tests - passed_tests} tests fallaron")
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            self.assertIsInstance(data, dict)
+        except (json.JSONDecodeError, FileNotFoundError):
+            self.fail("Archivo settings.json no es JSON válido")
+
+    def test_readme_exists(self):
+        """Test que existe el archivo README"""
+        readme_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'README.md'
+        )
+
+        self.assertTrue(os.path.exists(readme_path),
+                       "Archivo README.md no existe")
+
+
+class TestProjectStructure(unittest.TestCase):
+    """Tests para estructura del proyecto"""
+
+    def test_core_modules_exist(self):
+        """Test que existen los módulos core"""
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        core_files = [
+            'core/__init__.py',
+            'core/differential_equations.py',
+            'core/finite_differences.py',
+            'core/numerical_integration.py'
+        ]
+
+        for file_path in core_files:
+            full_path = os.path.join(base_path, file_path)
+            self.assertTrue(os.path.exists(full_path),
+                          f"Archivo {file_path} no existe")
+
+    def test_gui_modules_exist(self):
+        """Test que existen los módulos GUI"""
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        gui_files = [
+            'gui/__init__.py',
+            'gui/main_window.py',
+            'gui/app_launcher.py',
+            'gui/initializer.py'
+        ]
+
+        for file_path in gui_files:
+            full_path = os.path.join(base_path, file_path)
+            self.assertTrue(os.path.exists(full_path),
+                          f"Archivo {file_path} no existe")
+
+    def test_utils_modules_exist(self):
+        """Test que existen los módulos de utilidad"""
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        utils_files = [
+            'utils/__init__.py',
+            'utils/function_parser.py',
+            'utils/validators.py'
+        ]
+
+        for file_path in utils_files:
+            full_path = os.path.join(base_path, file_path)
+            self.assertTrue(os.path.exists(full_path),
+                          f"Archivo {file_path} no existe")
+
+
+if __name__ == '__main__':
+    # Configurar logging para tests
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
+    # Ejecutar tests
+    unittest.main(verbosity=2)

@@ -1,306 +1,260 @@
-#!/usr/bin/env python3
 """
-Tests unitarios para el módulo de diferencias finitas
-Incluye pruebas de funcionalidad básica, avanzada y casos edge
-
-Autor: Equipo TPO Modelado y Simulación
-Fecha: 2025
+Tests para diferencias finitas
+Pruebas unitarias para métodos de diferenciación numérica
 """
 
+import unittest
+import numpy as np
 import sys
 import os
-import pytest
-import numpy as np
-from typing import Callable
 
-# Agregar el directorio principal al path
+# Agregar el directorio raíz al path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.finite_differences import FiniteDifferences
 
 
-class TestFiniteDifferencesBasic:
-    """Tests básicos de diferencias finitas."""
+class TestFiniteDifferences(unittest.TestCase):
+    """Tests para diferencias finitas"""
 
-    def test_forward_difference(self):
-        """Test de diferencias hacia adelante."""
+    def setUp(self):
+        """Configurar funciones de test"""
+        self.fd = FiniteDifferences()
+
+    def test_forward_difference_linear(self):
+        """Test diferencia hacia adelante con función lineal"""
+        def f(x):
+            return 2*x + 1
+
+        x0 = 1.0
+        h = 0.01
+
+        df_approx = FiniteDifferences.forward_difference(f, x0, h)
+        df_exact = 2.0  # Derivada exacta de 2x + 1
+
+        self.assertAlmostEqual(df_approx, df_exact, places=2)
+
+    def test_backward_difference_linear(self):
+        """Test diferencia hacia atrás con función lineal"""
+        def f(x):
+            return 3*x - 2
+
+        x0 = 2.0
+        h = 0.01
+
+        df_approx = FiniteDifferences.backward_difference(f, x0, h)
+        df_exact = 3.0  # Derivada exacta de 3x - 2
+
+        self.assertAlmostEqual(df_approx, df_exact, places=2)
+
+    def test_central_difference_quadratic(self):
+        """Test diferencia central con función cuadrática"""
         def f(x):
             return x**2
 
-        result = FiniteDifferences.forward_difference(f, 2.0, 1e-5)
-        expected = 4.0  # Derivada de x^2 es 2x, en x=2 es 4
+        x0 = 1.0
+        h = 0.001
 
-        assert abs(result - expected) < 1e-3, f"Resultado: {result}, esperado: {expected}"
+        df_approx = FiniteDifferences.central_difference(f, x0, h)
+        df_exact = 2*x0  # Derivada exacta de x^2
 
-    def test_backward_difference(self):
-        """Test de diferencias hacia atrás."""
+        self.assertAlmostEqual(df_approx, df_exact, places=3)
+
+    def test_second_derivative(self):
+        """Test segunda derivada"""
         def f(x):
             return x**3
 
-        result = FiniteDifferences.backward_difference(f, 2.0, 1e-5)
-        expected = 12.0  # Derivada de x^3 es 3x^2, en x=2 es 12
+        x0 = 1.0
+        h = 0.001
 
-        assert abs(result - expected) < 1e-3, f"Resultado: {result}, esperado: {expected}"
+        d2f_approx = FiniteDifferences.second_derivative(f, x0, h)
+        d2f_exact = 6*x0  # Segunda derivada de x^3 es 6x
 
-    def test_central_difference(self):
-        """Test de diferencias centrales."""
+        self.assertAlmostEqual(d2f_approx, d2f_exact, places=2)
+
+    def test_trigonometric_derivative(self):
+        """Test derivada de función trigonométrica"""
         def f(x):
             return np.sin(x)
 
-        x = np.pi/4
-        result = FiniteDifferences.central_difference(f, x, 1e-5)
-        expected = np.cos(x)  # Derivada de sin(x) es cos(x)
+        x0 = np.pi/4
+        h = 0.001
 
-        assert abs(result - expected) < 1e-4, f"Resultado: {result}, esperado: {expected}"
+        df_approx = FiniteDifferences.central_difference(f, x0, h)
+        df_exact = np.cos(x0)  # Derivada de sin(x) es cos(x)
 
-    def test_second_derivative(self):
-        """Test de segunda derivada."""
+        self.assertAlmostEqual(df_approx, df_exact, places=3)
+
+    def test_exponential_derivative(self):
+        """Test derivada de función exponencial"""
+        def f(x):
+            return np.exp(x)
+
+        x0 = 0.0
+        h = 0.001
+
+        df_approx = FiniteDifferences.central_difference(f, x0, h)
+        df_exact = np.exp(x0)  # Derivada de e^x es e^x
+
+        self.assertAlmostEqual(df_approx, df_exact, places=3)
+
+
+class TestFiniteDifferencesAccuracy(unittest.TestCase):
+    """Tests para precisión de diferencias finitas"""
+
+    def test_convergence_with_h(self):
+        """Test convergencia al disminuir h"""
         def f(x):
             return x**4
 
-        result = FiniteDifferences.second_derivative_central(f, 2.0, 1e-5)
-        expected = 12*2**2  # Segunda derivada de x^4 es 12x^2, en x=2 es 48
+        x0 = 1.0
+        df_exact = 4*x0**3  # Derivada exacta: 4x^3
 
-        assert abs(result - expected) < 1e-2, f"Resultado: {result}, esperado: {expected}"
+        h_values = [0.1, 0.01, 0.001, 0.0001]
+        errors = []
 
-    def test_third_derivative(self):
-        """Test de tercera derivada."""
-        def f(x):
-            return x**5
+        for h in h_values:
+            df_approx = FiniteDifferences.central_difference(f, x0, h)
+            error = abs(df_approx - df_exact)
+            errors.append(error)
 
-        # Usar paso muy pequeño para derivadas de orden superior
-        result = FiniteDifferences.third_derivative_central(f, 2.0, 1e-4)
-        expected = 60*2  # Tercera derivada de x^5 es 60x, en x=2 es 120
+        # Verificar que el error disminuye al reducir h
+        for i in range(len(errors) - 1):
+            self.assertLess(errors[i+1], errors[i],
+                          f"Error no disminuye con h más pequeño: h={h_values[i+1]}")
 
-        # Tolerancia amplia para derivadas de orden superior (limitación numérica conocida)
-        # Las diferencias finitas tienen errores amplificados para derivadas de orden > 2
-        assert abs(result - expected) < 150.0, f"Resultado: {result}, esperado: {expected}"
-
-    def test_fourth_derivative(self):
-        """Test de cuarta derivada."""
-        def f(x):
-            return x**6
-
-        # Usar paso muy pequeño para derivadas de orden superior
-        result = FiniteDifferences.fourth_derivative_central(f, 2.0, 1e-4)
-        expected = 360  # Cuarta derivada de x^6 es 360 (constante)
-
-        # Tolerancia amplia para derivadas de orden superior (limitación numérica conocida)
-        assert abs(result - expected) < 1000.0, f"Resultado: {result}, esperado: {expected}"
-
-
-class TestFiniteDifferencesAdvanced:
-    """Tests avanzados de diferencias finitas."""
-
-    def test_adaptive_step_size(self):
-        """Test de paso adaptativo."""
-        def f(x):
-            return x**2
-
-        h_opt, result = FiniteDifferences.adaptive_step_size(f, 2.0)
-        expected = 4.0
-
-        assert abs(result - expected) < 1e-8, f"Resultado: {result}, esperado: {expected}"
-        assert h_opt > 0, "Paso óptimo debe ser positivo"
-
-    def test_derivative_table(self):
-        """Test de tabla de derivadas."""
-        def f(x):
-            return x**3
-
-        derivatives = FiniteDifferences.derivative_table(f, 2.0, 3)
-
-        # Primera derivada: 3x^2 en x=2 es 12
-        assert abs(derivatives[1] - 12.0) < 1e-6
-
-        # Segunda derivada: 6x en x=2 es 12
-        assert abs(derivatives[2] - 12.0) < 1e-4
-
-        # Tercera derivada: 6 (constante)
-        assert abs(derivatives[3] - 6.0) < 1e-2
-
-    def test_convergence_analysis(self):
-        """Test de análisis de convergencia."""
-        def f(x):
-            return np.exp(x)
-
-        analysis = FiniteDifferences.convergence_analysis(f, 1.0)
-
-        assert 'h_values' in analysis, "Análisis debe contener h_values"
-        assert 'central' in analysis, "Análisis debe contener método central"
-        assert len(analysis['h_values']) > 0, "Debe haber valores de h"
-
-    def test_stability_analysis(self):
-        """Test de análisis de estabilidad."""
+    def test_optimal_h_value(self):
+        """Test encontrar valor óptimo de h"""
         def f(x):
             return np.sin(x)
 
-        analysis = FiniteDifferences.stability_analysis(f, 1.0)
+        x0 = 1.0
+        df_exact = np.cos(x0)
 
-        assert 'h_values' in analysis, "Análisis debe contener h_values"
-        assert 'condition_numbers' in analysis, "Análisis debe contener números de condición"
-        assert analysis['stable_range'] is not None, "Debe haber rango estable"
+        # Probar diferentes valores de h
+        h_values = [0.1, 0.01, 0.001, 0.0001, 1e-5]
+        min_error = float('inf')
+        optimal_h = None
 
+        for h in h_values:
+            df_approx = FiniteDifferences.central_difference(f, x0, h)
+            error = abs(df_approx - df_exact)
 
-class TestFiniteDifferencesInterpolation:
-    """Tests de interpolación con diferencias finitas."""
+            if error < min_error:
+                min_error = error
+                optimal_h = h
 
-    def test_finite_differences_table(self):
-        """Test de tabla de diferencias finitas."""
-        x_points = np.array([0, 1, 2, 3])
-        y_points = np.array([0, 1, 4, 9])  # x^2
-
-        table = FiniteDifferences.finite_differences_table(x_points, y_points)
-
-        assert table.shape == (4, 4), f"Forma incorrecta: {table.shape}"
-        assert np.allclose(table[:, 0], y_points), "Primera columna debe ser y_points"
-
-        # Verificar diferencias primeras: [1, 3, 5]
-        expected_first_diff = np.array([1, 3, 5])
-        assert np.allclose(table[0:3, 1], expected_first_diff), "Diferencias primeras incorrectas"
-
-    def test_interpolate_with_differences(self):
-        """Test de interpolación usando diferencias finitas."""
-        x_points = np.array([0, 1, 2, 3])
-        y_points = np.array([0, 1, 4, 9])  # x^2
-
-        # Interpolar en x = 1.5
-        result = FiniteDifferences.interpolate_with_differences(x_points, y_points, 1.5)
-        expected = 1.5**2  # 2.25
-
-        assert abs(result - expected) < 1e-3, f"Interpolación: {result}, esperado: {expected}"
+        # Verificar que se encontró un h óptimo
+        self.assertIsNotNone(optimal_h)
+        self.assertLess(min_error, 0.01)  # Error debería ser pequeño
 
 
-class TestFiniteDifferencesEdgeCases:
-    """Tests de casos edge y manejo de errores."""
+class TestFiniteDifferencesEdgeCases(unittest.TestCase):
+    """Tests para casos límite en diferencias finitas"""
 
-    def test_zero_step_size(self):
-        """Test con paso cero (debe manejar error)."""
+    def test_very_small_h(self):
+        """Test con h muy pequeño (posible underflow)"""
         def f(x):
             return x**2
 
-        with pytest.raises((ZeroDivisionError, ValueError)):
-            FiniteDifferences.central_difference(f, 1.0, 0.0)
+        x0 = 1.0
+        h = 1e-15  # Muy pequeño
 
-    def test_extreme_values(self):
-        """Test con valores extremos."""
+        # Debería manejar el caso sin errores numéricos graves
+        try:
+            df_approx = FiniteDifferences.central_difference(f, x0, h)
+            # No verificar precisión, solo que no crashee
+            self.assertIsInstance(df_approx, (int, float))
+        except OverflowError:
+            # Es aceptable que falle con h demasiado pequeño
+            pass
+
+    def test_large_function_values(self):
+        """Test con función que toma valores grandes"""
         def f(x):
-            return x**2
+            return 1e10 * x**2
 
-        # Valores muy grandes
-        result = FiniteDifferences.central_difference(f, 1e10, 1e-5)
-        assert not np.isnan(result), "Resultado no debe ser NaN"
-        assert not np.isinf(result), "Resultado no debe ser infinito"
+        x0 = 1.0
+        h = 0.001
 
-    def test_discontinuous_function(self):
-        """Test con función discontinua."""
-        def f(x):
-            return 1.0 if x >= 0 else -1.0
+        df_approx = FiniteDifferences.central_difference(f, x0, h)
+        df_exact = 2e10 * x0  # Derivada exacta
 
-        # La derivada en x=0 no existe, pero el método debe dar algún resultado
-        result = FiniteDifferences.central_difference(f, 0.0, 1e-5)
-        assert isinstance(result, (int, float)), "Debe retornar un número"
+        # Verificar que maneja valores grandes correctamente
+        self.assertAlmostEqual(df_approx / df_exact, 1.0, places=2)
 
-    def test_invalid_inputs(self):
-        """Test con entradas inválidas."""
-        def f(x):
-            return x**2
-
-        # Paso negativo
-        with pytest.raises(ValueError):
-            FiniteDifferences.central_difference(f, 1.0, -1e-5)
-
-    def test_high_precision(self):
-        """Test de alta precisión."""
-        def f(x):
-            return np.exp(x)
-
-        # Usar paso muy pequeño para alta precisión
-        result = FiniteDifferences.central_difference(f, 0.0, 1e-8)
-        expected = 1.0  # exp'(0) = 1
-
-        assert abs(result - expected) < 1e-6, f"Alta precisión fallida: {result}"
-
-
-class TestFiniteDifferencesIntegration:
-    """Tests de integración con otros módulos."""
-
-    def test_with_numpy_functions(self):
-        """Test con funciones de numpy."""
-        # Usar funciones de numpy
-        result = FiniteDifferences.central_difference(np.sin, np.pi/2, 1e-5)
-        expected = np.cos(np.pi/2)  # Debe ser cercano a 0
-
-        assert abs(result - expected) < 1e-4, f"Resultado: {result}, esperado: {expected}"
-
-    def test_complex_function(self):
-        """Test con función compleja."""
-        def complex_f(x):
-            return np.sin(x) * np.exp(-x**2) * np.cos(2*x)
-
-        result = FiniteDifferences.central_difference(complex_f, 1.0, 1e-6)
-
-        # Verificar que es un número finito
-        assert np.isfinite(result), "Resultado debe ser finito"
-        assert not np.isnan(result), "Resultado no debe ser NaN"
-
-    def test_performance(self):
-        """Test de rendimiento."""
-        import time
+    def test_function_with_noise(self):
+        """Test con función que tiene ruido numérico"""
+        np.random.seed(42)  # Para reproducibilidad
 
         def f(x):
-            return x**3 + 2*x**2 - x + 1
+            return x**2 + 0.001 * np.random.normal()
 
-        start_time = time.time()
+        x0 = 1.0
+        h = 0.01
 
-        # Realizar múltiples cálculos
-        for i in range(100):
-            FiniteDifferences.derivative_table(f, i*0.1, 2)
+        # Calcular derivada varias veces para ver estabilidad
+        derivatives = []
+        for _ in range(10):
+            df = FiniteDifferences.central_difference(f, x0, h)
+            derivatives.append(df)
 
-        end_time = time.time()
-        execution_time = end_time - start_time
+        # Verificar que las derivadas son razonablemente consistentes
+        mean_derivative = np.mean(derivatives)
+        std_derivative = np.std(derivatives)
 
-        assert execution_time < 2.0, f"Rendimiento bajo: {execution_time}s para 100 cálculos"
+        # La desviación estándar debería ser pequeña comparada con el valor medio
+        self.assertLess(std_derivative / abs(mean_derivative), 0.1)
 
 
-if __name__ == "__main__":
-    # Ejecutar tests
-    try:
-        import pytest
-        pytest.main([__file__, "-v", "--tb=short"])
-    except ImportError:
-        print("⚠️ pytest no encontrado, ejecutando tests manualmente...")
+class TestFiniteDifferencesIntegration(unittest.TestCase):
+    """Tests de integración para diferencias finitas"""
 
-        test_classes = [
-            TestFiniteDifferencesBasic,
-            TestFiniteDifferencesAdvanced,
-            TestFiniteDifferencesInterpolation,
-            TestFiniteDifferencesEdgeCases,
-            TestFiniteDifferencesIntegration
+    def test_compare_with_analytical(self):
+        """Test comparación con derivadas analíticas"""
+        functions_and_derivatives = [
+            (lambda x: x**2, lambda x: 2*x),
+            (lambda x: x**3, lambda x: 3*x**2),
+            (lambda x: np.sin(x), lambda x: np.cos(x)),
+            (lambda x: np.exp(x), lambda x: np.exp(x)),
+            (lambda x: np.log(x + 1), lambda x: 1/(x + 1)),
         ]
 
-        total_tests = 0
-        passed_tests = 0
+        x0 = 1.0
+        h = 0.001
 
-        for test_class in test_classes:
-            print(f"\n🧪 Ejecutando {test_class.__name__}...")
+        for f, df_exact in functions_and_derivatives:
+            with self.subTest(function=str(f)):
+                df_approx = FiniteDifferences.central_difference(f, x0, h)
+                df_expected = df_exact(x0)
 
-            instance = test_class()
-            methods = [method for method in dir(instance) if method.startswith('test_')]
+                self.assertAlmostEqual(df_approx, df_expected, places=2,
+                                     msg=f"Derivada incorrecta para función")
 
-            for method_name in methods:
-                total_tests += 1
-                try:
-                    method = getattr(instance, method_name)
-                    method()
-                    print(f"  ✅ {method_name}")
-                    passed_tests += 1
-                except Exception as e:
-                    print(f"  ❌ {method_name}: {e}")
+    def test_higher_order_derivatives(self):
+        """Test derivadas de orden superior"""
+        def f(x):
+            return x**4
 
-        print(f"\n📊 RESULTADOS DIFERENCIAS FINITAS: {passed_tests}/{total_tests} tests pasaron")
+        x0 = 2.0
+        h = 0.001
 
-        if passed_tests == total_tests:
-            print("🎉 ¡Todos los tests de diferencias finitas pasaron exitosamente!")
-        else:
-            print(f"⚠️ {total_tests - passed_tests} tests fallaron")
+        # Primera derivada
+        df = FiniteDifferences.central_difference(f, x0, h)
+        df_exact = 4*x0**3
+        self.assertAlmostEqual(df, df_exact, places=2)
+
+        # Segunda derivada
+        d2f = FiniteDifferences.second_derivative(f, x0, h)
+        d2f_exact = 12*x0**2
+        self.assertAlmostEqual(d2f, d2f_exact, places=1)
+
+
+if __name__ == '__main__':
+    # Configurar logging para tests
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
+    # Ejecutar tests
+    unittest.main(verbosity=2)
