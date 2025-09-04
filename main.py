@@ -19,13 +19,13 @@ import sys
 import logging
 
 # Importar módulos modulares
-from initializer import (
+from gui.initializer import (
     show_startup_banner,
     check_and_install_dependencies,
     validate_python_version,
     setup_environment
 )
-from app_launcher import launch_application
+from gui.app_launcher import launch_application
 
 logger = logging.getLogger(__name__)
 
