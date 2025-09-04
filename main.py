@@ -182,7 +182,7 @@ def launch_application() -> int:
         logger.info("Iniciando aplicación GUI")
         
         from PyQt6.QtWidgets import QApplication
-        from gui.main_window import MathSimulatorApp
+        from gui.components import MathSimulatorApp
         
         # Crear aplicación Qt
         app = QApplication(sys.argv)
