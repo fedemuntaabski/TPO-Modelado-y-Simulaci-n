@@ -49,11 +49,14 @@ class InputValidator:
         if expression.strip().startswith(('*', '/', '^')):
             return False, "La expresión no puede empezar con ese operador"
         
-        # Verificar operadores consecutivos
+        # Verificar operadores consecutivos (ignorando espacios)
+        expr_no_spaces = expression.replace(' ', '')
         operators = ['+', '-', '*', '/', '^']
-        for i in range(len(expression) - 1):
-            if expression[i] in operators and expression[i+1] in operators:
-                if not (expression[i] in '+-' and expression[i+1] in '+-'):
+        for i in range(len(expr_no_spaces) - 1):
+            if expr_no_spaces[i] in operators and expr_no_spaces[i+1] in operators:
+                # Solo permitir -- (que puede ser negativo) o +- (resta)
+                if not ((expr_no_spaces[i] == '-' and expr_no_spaces[i+1] == '-') or 
+                        (expr_no_spaces[i] == '+' and expr_no_spaces[i+1] == '-')):
                     return False, "No se permiten operadores consecutivos"
         
         return True, ""

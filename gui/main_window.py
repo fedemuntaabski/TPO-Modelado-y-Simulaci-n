@@ -1291,37 +1291,20 @@ class MathSimulatorApp(QMainWindow):
         
         # Importar pestañas avanzadas
         try:
-            from gui.advanced_tabs import InterpolationTab, DerivativesTab
+            from gui.advanced_tabs import FiniteDifferencesTab
             
-            self.interpolation_tab = InterpolationTab(self.keyboard, self.plot_widget)
-            self.derivatives_tab = DerivativesTab(self.keyboard, self.plot_widget)
+            self.finite_differences_tab = FiniteDifferencesTab(self.keyboard, self.plot_widget)
             
             self.tab_widget.addTab(self.roots_tab, "🎯 Búsqueda de Raíces")
+            self.tab_widget.addTab(self.finite_differences_tab, "� Diferencias Finitas")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
-            self.tab_widget.addTab(self.interpolation_tab, "📊 Interpolación")
-            self.tab_widget.addTab(self.derivatives_tab, "🔢 Derivadas")
         except ImportError as e:
             # Si no se pueden importar las pestañas avanzadas, usar solo las básicas
             print(f"Warning: No se pudieron cargar pestañas avanzadas: {e}")
             self.tab_widget.addTab(self.roots_tab, "🎯 Búsqueda de Raíces")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
-            
-            # Intentar cargar interpolación y derivadas por separado
-            try:
-                from gui.advanced_tabs import InterpolationTab
-                self.interpolation_tab = InterpolationTab(self.keyboard, self.plot_widget)
-                self.tab_widget.addTab(self.interpolation_tab, "📊 Interpolación")
-            except ImportError:
-                pass
-                
-            try:
-                from gui.advanced_tabs import DerivativesTab
-                self.derivatives_tab = DerivativesTab(self.keyboard, self.plot_widget)
-                self.tab_widget.addTab(self.derivatives_tab, "🔢 Derivadas")
-            except ImportError:
-                pass
         
         right_layout.addWidget(self.tab_widget)
         right_panel.setLayout(right_layout)

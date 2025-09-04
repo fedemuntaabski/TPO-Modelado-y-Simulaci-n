@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-09-04 11:12:54",
+  "summary": {
+    "total_files": 7,
+    "total_tests": 159,
+    "passed_tests": 99,
+    "failed_tests": 60,
+    "success_rate": 62.264150943396224,
+    "total_time": 25.15
+  },
+  "file_results": {
+    "test_advanced_methods.py": {
+      "passed": 5,
+      "total": 31,
+      "success_rate": 16.13,
+      "execution_time": 3.55
+    },
+    "test_config.py": {
+      "passed": 10,
+      "total": 26,
+      "success_rate": 38.46,
+      "execution_time": 2.69
+    },
+    "test_finite_differences.py": {
+      "passed": 20,
+      "total": 20,
+      "success_rate": 100.0,
+      "execution_time": 2.43
+    },
+    "test_gui.py": {
+      "passed": 12,
+      "total": 22,
+      "success_rate": 54.55,
+      "execution_time": 5.57
+    },
+    "test_main.py": {
+      "passed": 16,
+      "total": 16,
+      "success_rate": 100.0,
+      "execution_time": 4.3
+    },
+    "test_numerical_methods.py": {
+      "passed": 20,
+      "total": 28,
+      "success_rate": 71.43,
+      "execution_time": 3.9
+    },
+    "test_utils.py": {
+      "passed": 16,
+      "total": 16,
+      "success_rate": 100.0,
+      "execution_time": 2.71
+    }
+  },
+  "recommendations": [
+    "⚠️ 60 tests fallaron - revisar implementación",
+    "Ejecutar tests individuales para debugging detallado",
+    "Archivos con problemas: test_advanced_methods.py, test_config.py, test_gui.py, test_numerical_methods.py"
+  ]
+}

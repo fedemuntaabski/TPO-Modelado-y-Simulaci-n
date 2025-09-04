@@ -68,11 +68,11 @@ class FunctionParser:
                          'sqrt', 'abs']
         
         for func in math_functions:
-            expr = re.sub(rf'\\b{func}\\b', f'np.{func}', expr)
+            expr = re.sub(r'\b' + func + r'\b', f'np.{func}', expr)
         
         # Reemplazar constantes
-        expr = re.sub(r'\\bpi\\b', 'np.pi', expr)
-        expr = re.sub(r'\\be\\b', 'np.e', expr)
+        expr = re.sub(r'\bpi\b', 'np.pi', expr)
+        expr = re.sub(r'\be\b', 'np.e', expr)
         
         return expr
     
