@@ -1,180 +1,224 @@
-# Simulador de Métodos Numéricos 
+# 🧮 Simulador Matemático Avanzado v4.0
 
-Un simulador interactivo para métodos numéricos con interfaz gráfica moderna, completamente modularizado siguiendo principios de ingeniería de software.
+Un simulador interactivo completo para métodos numéricos con interfaz gráfica moderna, completamente modularizado siguiendo principios SOLID y DRY.
 
-## 🚀 Características
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CustomTkinter](https://img.shields.io/badge/UI-CustomTkinter-orange.svg)](https://github.com/TomSchimansky/CustomTkinter)
 
-- **Búsqueda de Raíces**: Bisección, Newton-Raphson, Punto Fijo
-- **Integración Numérica**: Trapecio, Simpson 1/3, Simpson 3/8, métodos adaptativos
-- **Resolución de ODEs**: Euler, Runge-Kutta (2º y 4º orden), Heun, RK45 adaptativo
-- **Diferencias Finitas**: Adelante, atrás, central, 5 puntos, Richardson, paso adaptativo
-- **Interfaz Moderna**: CustomTkinter con diseño responsivo
-- **Visualización**: Gráficos interactivos con Matplotlib
-- **Tests Completos**: Suite de pruebas unitarias para todos los módulos
+## 🚀 Características Principales
+
+### ✅ **Funcionalidades Completas**
+- 🎯 **Búsqueda de Raíces**: Bisección, Newton-Raphson, Punto Fijo
+- ∫ **Integración Numérica**: Trapecio, Simpson 1/3, Simpson 3/8, Newton-Cotes completo
+- 📊 **Newton-Cotes Avanzado**: 8 métodos con tabla de iteraciones detallada
+- 📈 **EDOs**: Euler, Runge-Kutta (2º y 4º orden), Heun, RK45 adaptativo
+- 🔢 **Diferencias Finitas**: Adelante, atrás, central, 5 puntos, Richardson
+- 📋 **Tabla de Iteraciones**: Vista paso a paso de todos los cálculos
+- 🎨 **Interfaz Moderna**: CustomTkinter con diseño responsivo y oscuro
+- 📊 **Visualización**: Gráficos interactivos con Matplotlib
+- ✅ **Tests Completos**: Suite de pruebas unitarias para validación
+
+### 🆕 **Novedades v4.0**
+- ✨ **Newton-Cotes Completo**: Interfaz dedicada con 8 métodos
+- 📋 **Tabla de Iteraciones**: Visualización detallada de cada paso
+- 🔧 **Parser Seguro**: Evaluación segura de funciones con AST
+- ✅ **Validaciones Avanzadas**: Manejo robusto de errores
+- 🎯 **Ejemplos Interactivos**: Biblioteca de casos de prueba
+- 📊 **Información Detallada**: Coeficientes, fórmulas y estadísticas
 
 ## 📁 Estructura del Proyecto
 
 ```
-├── main.py                 # Punto de entrada principal
-├── src/
-│   ├── core/              # Algoritmos matemáticos
-│   │   ├── root_finding.py
-│   │   ├── integration.py
-│   │   ├── ode_solver.py
-│   │   └── finite_differences.py
-│   └── ui/                # Interfaz gráfica
-│       ├── main_app.py    # Aplicación principal
-│       ├── components/    # Componentes base
-│       │   └── base_tab.py
-│       └── tabs/          # Pestañas específicas
-│           ├── roots_tab.py
-│           ├── integration_tab.py
-│           ├── ode_tab.py
-│           └── finite_diff_tab.py
+├── main_simple.py                 # 🚀 Punto de entrada principal (recomendado)
+├── README.md                      # 📖 Documentación del proyecto
+├── requirements_minimal.txt       # 📦 Dependencias mínimas
 ├── config/
-│   └── settings.py        # Configuración global
-├── tests/                 # Tests unitarios
-│   ├── test_root_finding.py
-│   ├── test_integration.py
-│   ├── test_ode_solver.py
-│   ├── test_finite_differences.py
-│   └── run_tests.py      # Ejecutor de tests
-└── requirements_minimal.txt
+│   └── settings.py               # ⚙️ Configuración global
+├── src/
+│   ├── core/                     # 🧮 Algoritmos matemáticos
+│   │   ├── newton_cotes.py       # ✨ Newton-Cotes completo
+│   │   ├── function_parser.py    # 🔒 Parser seguro de funciones
+│   │   ├── integration_validators.py # ✅ Validaciones de integración
+│   │   ├── root_finding.py       # 🎯 Búsqueda de raíces
+│   │   ├── integration.py        # ∫ Integración básica
+│   │   ├── ode_solver.py         # 📈 Resolución de EDOs
+│   │   ├── finite_differences.py # 🔢 Diferencias finitas
+│   │   └── __init__.py
+│   └── ui/                       # 🎨 Interfaz gráfica
+│       ├── main_app.py           # 🏠 Aplicación principal
+│       ├── components/
+│       │   ├── base_tab.py       # 🏗️ Componente base para pestañas
+│       │   └── __init__.py
+│       └── tabs/                 # 📑 Pestañas específicas
+│           ├── newton_cotes_tab.py    # ✨ Newton-Cotes UI
+│           ├── roots_tab.py           # 🎯 Raíces UI
+│           ├── integration_tab.py     # ∫ Integración UI
+│           ├── ode_tab.py            # 📈 EDOs UI
+│           ├── finite_diff_tab.py    # 🔢 Diferencias UI
+│           └── __init__.py
+└── tests/                        # 🧪 Tests unitarios
+    ├── test_newton_cotes.py     # ✨ Tests Newton-Cotes
+    ├── test_root_finding.py     # 🎯 Tests raíces
+    ├── test_ode_solver.py       # 📈 Tests EDOs
+    ├── test_finite_differences.py # 🔢 Tests diferencias
+    ├── run_tests.py            # ▶️ Ejecutor de tests
+    └── __init__.py
 ```
 
-## 🛠️ Instalación
+## 🛠️ Instalación y Ejecución
+
+### 📋 Requisitos Previos
+- **Python 3.8+**
+- **pip** (viene con Python)
+
+### 🚀 Instalación Rápida
 
 1. **Clonar el repositorio**:
    ```bash
-   git clone <url-del-repositorio>
+   git clone https://github.com/fedemuntaabski/TPO-Modelado-y-Simulaci-n.git
    cd TPO-Modelado-y-Simulaci-n
    ```
 
-2. **Instalar dependencias**:
+2. **Ejecutar la aplicación** (automático):
    ```bash
-   pip install -r requirements_minimal.txt
+   python main_simple.py
    ```
 
-3. **Ejecutar la aplicación**:
-   ```bash
-   python main.py
-   ```
+   > **Nota**: `main_simple.py` instala automáticamente todas las dependencias y ejecuta la aplicación.
+
+### 🔧 Instalación Manual (opcional)
+
+```bash
+# Instalar dependencias
+pip install -r requirements_minimal.txt
+
+# Ejecutar aplicación
+python main_simple.py
+```
+
+## 📊 Funcionalidades Detalladas
+
+### ✨ **Newton-Cotes Avanzado**
+- **8 Métodos Completos**:
+  - 📐 Rectángulo Simple y Compuesto
+  - 📏 Trapecio Simple y Compuesto
+  - 🎯 Simpson 1/3 Simple y Compuesto
+  - 🎯 Simpson 3/8 Simple y Compuesto
+
+- **Características Especiales**:
+  - 📋 **Tabla de Iteraciones**: Muestra i, xi, f(xi) para cada paso
+  - 🔢 **Coeficientes**: Visualización de coeficientes en Simpson
+  - 📊 **Información Detallada**: Fórmulas, órdenes de error, estadísticas
+  - 🎯 **Ejemplos Interactivos**: Biblioteca completa de casos de prueba
+  - ✅ **Validaciones**: Verificación de restricciones (n par para Simpson 1/3, etc.)
+
+### 🎯 **Búsqueda de Raíces**
+- Algoritmos: Bisección, Newton-Raphson, Punto Fijo
+- Validaciones automáticas de intervalos
+- Cálculo de convergencia y errores
+
+### ∫ **Integración Numérica**
+- Métodos: Trapecio, Simpson 1/3, Simpson 3/8
+- Integración simple y compuesta
+- Comparación de precisión entre métodos
+
+### 📈 **Resolución de EDOs**
+- Métodos: Euler, Runge-Kutta 2º y 4º orden, Heun
+- RK45 adaptativo para máxima precisión
+- Visualización gráfica de soluciones
+
+### 🔢 **Diferencias Finitas**
+- Tipos: Adelante, atrás, central, 5 puntos
+- Extrapolación de Richardson
+- Análisis de precisión y convergencia
 
 ## 🧪 Testing
 
-### Ejecutar todos los tests:
+### Ejecutar Todos los Tests
 ```bash
 python tests/run_tests.py
 ```
 
-### Ejecutar tests de un módulo específico:
+### Tests Específicos
 ```bash
-python tests/run_tests.py root_finding
-python tests/run_tests.py integration
-python tests/run_tests.py ode_solver
-python tests/run_tests.py finite_differences
-```
+# Tests de Newton-Cotes
+python -m unittest tests.test_newton_cotes -v
 
-### Ejecutar tests individuales:
-```bash
+# Tests de raíces
 python -m unittest tests.test_root_finding -v
-python -m unittest tests.test_integration -v
+
+# Tests de EDOs
 python -m unittest tests.test_ode_solver -v
+
+# Tests de diferencias finitas
 python -m unittest tests.test_finite_differences -v
 ```
 
-## 📊 Uso de la Aplicación
+## 🎯 Uso de la Aplicación
 
-### Búsqueda de Raíces
-1. Selecciona el método (Bisección, Newton-Raphson, Punto Fijo)
-2. Ingresa la función como string (ej: `x**2 - 4`)
-3. Define el intervalo o valor inicial
-4. Ajusta tolerancia e iteraciones máximas
-5. Ejecuta y visualiza los resultados
+### ✨ **Newton-Cotes (Recomendado)**
+1. Seleccionar la pestaña **"📊 Newton-Cotes"**
+2. Elegir uno de los 8 métodos disponibles
+3. Ingresar función: `x**2`, `sin(x)`, `exp(-x**2)`, etc.
+4. Definir intervalo: `[a, b]` y subdivisiones `n`
+5. **¡Ver tabla de iteraciones completa!**
+6. Comparar resultados con diferentes métodos
 
-### Integración Numérica
-1. Elige el método de integración
-2. Ingresa la función a integrar
-3. Define los límites de integración
-4. Especifica el número de subdivisiones
-5. Compara resultados con diferentes métodos
+### 🎯 **Búsqueda de Raíces**
+1. Seleccionar método (Bisección, Newton-Raphson, Punto Fijo)
+2. Ingresar función como string: `x**2 - 4`
+3. Definir intervalo o valor inicial
+4. Ajustar tolerancia e iteraciones máximas
+5. Visualizar convergencia y resultados
 
-### Resolución de ODEs
-1. Selecciona el método de integración
-2. Define la ecuación diferencial
-3. Establece condiciones iniciales
-4. Configura el paso y rango de solución
-5. Visualiza la solución gráficamente
+### 📈 **EDOs**
+1. Seleccionar método de integración
+2. Definir EDO: `dy/dx = -2*x*y`
+3. Establecer condición inicial: `y(0) = 1`
+4. Configurar paso y rango de solución
+5. Visualizar solución gráfica
 
-### Diferencias Finitas
-1. Elige el tipo de diferencia finita
-2. Ingresa la función a derivar
-3. Especifica el punto y tamaño de paso
-4. Compara precisión entre métodos
-5. Analiza convergencia
+## 🔧 Tecnologías Utilizadas
 
-## 🎯 Principios de Diseño Implementados
+- **� Python 3.8+**: Lenguaje principal
+- **🎨 CustomTkinter**: Interfaz gráfica moderna
+- **🔢 NumPy**: Cálculos numéricos eficientes
+- **📊 Matplotlib**: Visualización de gráficos
+- **🔬 SciPy**: Funciones científicas avanzadas
+- **🖼️ Pillow**: Manejo de imágenes
 
-### SOLID
-- **S**ingle Responsibility: Cada clase tiene una responsabilidad específica
+## 🎯 Principios de Diseño
+
+### SOLID Principles
+- **S**ingle Responsibility: Cada módulo tiene una responsabilidad clara
 - **O**pen/Closed: Extensible sin modificar código existente
-- **L**iskov Substitution: Las subclases son intercambiables
+- **L**iskov Substitution: Subclases intercambiables
 - **I**nterface Segregation: Interfaces específicas y cohesivas
 - **D**ependency Inversion: Dependencias hacia abstracciones
 
 ### Otros Principios
-- **DRY** (Don't Repeat Yourself): Código reutilizable y modular
-- **KISS** (Keep It Simple, Stupid): Soluciones simples y claras
+- **DRY** (Don't Repeat Yourself): Código reutilizable
+- **KISS** (Keep It Simple): Soluciones simples y claras
 - **Separation of Concerns**: UI, lógica y datos separados
-
-## 🔧 Configuración
-
-Modifica `config/settings.py` para personalizar:
-
-```python
-# Configuración de UI
-UI_SETTINGS = {
-    'theme': 'dark',
-    'color_theme': 'blue',
-    'window_size': (1200, 800)
-}
-
-# Configuración de gráficos
-PLOT_SETTINGS = {
-    'figure_size': (8, 6),
-    'dpi': 100,
-    'style': 'default'
-}
-
-# Configuración numérica
-NUMERICAL_SETTINGS = {
-    'default_tolerance': 1e-10,
-    'max_iterations': 1000,
-    'default_step_size': 0.01
-}
-```
+- **Fail-Fast**: Detección temprana de errores
 
 ## 🤝 Contribución
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. **Fork** el proyecto
+2. Crear rama: `git checkout -b feature/AmazingFeature`
+3. **Commit** cambios: `git commit -m 'Add AmazingFeature'`
+4. **Push** rama: `git push origin feature/AmazingFeature`
+5. Abrir **Pull Request**
 
-## 📝 Notas de Desarrollo
-
-### Agregar Nuevos Métodos
-1. Implementa la lógica en el módulo correspondiente en `src/core/`
-2. Actualiza la interfaz en `src/ui/tabs/`
-3. Agrega tests en `tests/`
-4. Actualiza la configuración si es necesario
-
-### Estructura de Tests
-- Tests básicos: Funcionalidad core
-- Tests avanzados: Casos complejos
-- Tests de casos límite: Manejo de errores
+### 📝 Agregar Nuevos Métodos
+1. Implementar lógica en `src/core/`
+2. Crear interfaz en `src/ui/tabs/`
+3. Agregar tests en `tests/`
+4. Actualizar documentación
 
 ## 📄 Licencia
+**🚀 Ejecuta `python main_simple.py` y comienza a explorar los métodos numéricos de manera interactiva.**
 
-Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para detalles.
+⭐ **Si te gusta el proyecto, ¡dale una estrella en GitHub!**
+   ```
