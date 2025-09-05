@@ -12,7 +12,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from numerics.advanced import InterpolationMethods, AdvancedNumericalMethods, ErrorAnalysis
+from numerics.interpolation_methods import InterpolationMethods
+from numerics.advanced_numerical_methods import AdvancedNumericalMethods
+from numerics.error_analysis import ErrorAnalysis
 from numerics.methods import MathParser
 
 from .finite_differences_derivatives import DerivativesTab

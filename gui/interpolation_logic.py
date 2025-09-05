@@ -5,7 +5,7 @@ Módulo para la lógica de interpolación y diferencias finitas
 import numpy as np
 from PyQt6.QtWidgets import QMessageBox
 
-from numerics.advanced import InterpolationMethods
+from numerics.interpolation_methods import InterpolationMethods
 
 
 class InterpolationLogic:
