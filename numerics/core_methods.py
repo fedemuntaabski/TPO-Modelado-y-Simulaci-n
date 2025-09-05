@@ -124,6 +124,53 @@ class NumericalMethods:
         return integral
 
     @staticmethod
+    def newton_cotes_integration(f: Callable, a: float, b: float, n: int = 100,
+                                method: str = "simpson_13") -> float:
+        """
+        Método general de Newton-Cotes que incluye varios métodos de integración
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones
+            method: Método a usar ('rectangle', 'midpoint', 'trapezoid', 'simpson_13', 'simpson_38',
+                                  'rectangle_simple', 'midpoint_simple', 'trapezoid_simple', 
+                                  'simpson_13_simple', 'simpson_38_simple')
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        from core.numerical_integration import NumericalIntegration
+        
+        # Manejar versiones simples
+        if method.endswith("_simple"):
+            base_method = method.replace("_simple", "")
+            if base_method == "rectangle":
+                # Para rectángulo simple, usar punto medio
+                midpoint = (a + b) / 2
+                return (b - a) * f(midpoint)
+            elif base_method == "midpoint":
+                return NumericalIntegration.midpoint_rule(f, a, b, 1)
+            elif base_method == "trapezoid":
+                return NumericalIntegration.trapezoid(f, a, b, 1)
+            elif base_method == "simpson_13":
+                return NumericalIntegration.simpson_13(f, a, b, 2)
+            elif base_method == "simpson_38":
+                return NumericalIntegration.simpson_38(f, a, b, 3)
+        
+        # Manejar versiones compuestas
+        if method == "rectangle":
+            return NumericalIntegration.rectangle_rule(f, a, b, n)
+        elif method == "midpoint":
+            return NumericalIntegration.midpoint_rule(f, a, b, n)
+        elif method == "trapezoid":
+            return NumericalIntegration.trapezoid(f, a, b, n)
+        elif method == "simpson_13":
+            return NumericalIntegration.simpson_13(f, a, b, n)
+        elif method == "simpson_38":
+            return NumericalIntegration.simpson_38(f, a, b, n)
+        else:
+            raise ValueError(f"Método '{method}' no reconocido. Use: 'rectangle', 'midpoint', 'trapezoid', 'simpson_13', 'simpson_38' o sus versiones '_simple'")    @staticmethod
     def central_difference(f: Callable, x: float, h: float = 1e-5) -> float:
         """
         Derivada numérica usando diferencias centrales

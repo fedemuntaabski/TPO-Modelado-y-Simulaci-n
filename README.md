@@ -1,14 +1,15 @@
 # 🧮 Simulador Matemático Avanzado v3.0
 
-Un simulador interactivo para métodos numéricos con interfaz gráfica moderna, desarrollado en Python con PyQt6.
+Un simulador interactivo para métodos numéricos con interfaz gráfica moderna, desarrollado en Python con PyQt6. Incluye métodos especializados de Newton-Cotes para integración numérica.
 
 ## ✨ Características Principales
 
 ### 📊 Métodos Numéricos Implementados
 - **Ecuaciones Diferenciales**: Runge-Kutta (2do y 4to orden), Euler, integración con SciPy
 - **Búsqueda de Raíces**: Bisección, Newton-Raphson, Punto Fijo
-- **Integración Numérica**: Regla del Trapecio, Simpson 1/3
-- **Interpolación**: Método de Lagrange, diferencias finitas
+- **Integración Numérica**: Newton-Cotes (Rectángulo, Trapecio, Simpson 1/3, Simpson 3/8)
+- **Diferencias Finitas**: Derivadas e interpolación numérica
+- **Interpolación**: Método de Lagrange
 - **Derivadas Numéricas**: Diferencias finitas centrales, extrapolación de Richardson
 
 ### 🎨 Interfaz Gráfica
@@ -61,8 +62,10 @@ python test_runner.py
 
 ### Cobertura de Tests
 - Tests unitarios para métodos numéricos
-- Tests de integración para componentes GUI
-- Tests de validación y utilidades
+- Tests de ecuaciones diferenciales
+- Tests de diferencias finitas
+- Tests de integración numérica
+- Tests de validadores
 - Reporte JSON generado automáticamente
 
 ## 📖 Guía de Uso
@@ -85,12 +88,24 @@ python test_runner.py
 3. Definir límites de integración
 4. Configurar número de subdivisiones
 
-### 4. Interpolación
+### 4. Newton-Cotes
+1. Ir a la pestaña "📊 Newton-Cotes"
+2. Ingresar la función `f(x)`
+3. Definir límites de integración `a` y `b`
+4. Configurar número de subdivisiones `n`
+5. Seleccionar método: Rectángulo, Trapecio, Simpson 1/3, Simpson 3/8 (simple o compuesto)
+
+### 5. Diferencias Finitas
+1. Ir a la pestaña "� Diferencias Finitas"
+2. Ingresar la función `f(x)`
+3. Configurar parámetros según el análisis requerido
+
+### 6. Interpolación
 1. Ir a la pestaña "📊 Interpolación"
 2. Ingresar puntos (x, y) en la tabla
 3. Especificar punto de evaluación
 
-### 5. Derivadas Numéricas
+### 7. Derivadas Numéricas
 1. Ir a la pestaña "🔢 Derivadas"
 2. Ingresar la función `f(x)`
 3. Configurar punto y paso `h`
@@ -115,7 +130,8 @@ TPO-Modelado-y-Simulaci-n/
 ├── test_report.json       # Reporte de tests
 ├── test_runner.py         # Ejecutor de tests
 ├── config/
-│   └── settings.json      # Configuración
+│   ├── settings.json      # Configuración
+│   └── settings.py        # Configuración adicional
 ├── core/
 │   ├── __init__.py
 │   ├── differential_equations.py
@@ -129,27 +145,48 @@ TPO-Modelado-y-Simulaci-n/
 │   ├── app_launcher.py
 │   ├── components.py
 │   ├── credits.py
+│   ├── credits_dialog.py
+│   ├── credits_tabs.py
+│   ├── derivatives_tab.py
+│   ├── finite_differences_analysis.py
+│   ├── finite_differences_derivatives.py
+│   ├── finite_differences_interpolation.py
+│   ├── finite_differences_tab.py
 │   ├── initializer.py
 │   ├── integration_tab.py
+│   ├── interpolation_logic.py
+│   ├── interpolation_tab.py
+│   ├── interpolation_ui.py
+│   ├── main_window.py
+│   ├── newton_cotes_tab.py
 │   ├── ode_tab.py
 │   ├── roots_tab.py
+│   ├── roots_tab_methods.py
+│   ├── roots_tab_plotting.py
+│   ├── roots_tab_plotting_bisection.py
+│   ├── roots_tab_plotting_helpers.py
+│   ├── roots_tab_plotting_iterative.py
+│   ├── roots_tab_ui.py
 │   ├── tabs.py
+│   ├── team_info.py
 │   └── themes.py
 ├── numerics/
 │   ├── __init__.py
-│   ├── advanced.py
+│   ├── advanced_numerical_methods.py
 │   ├── core_methods.py
+│   ├── error_analysis.py
+│   ├── interpolation_methods.py
 │   ├── methods.py
 │   ├── parser_utils.py
+│   ├── root_acceleration_methods.py
+│   ├── root_basic_methods.py
+│   ├── root_interpolation_methods.py
 │   └── root_methods.py
 ├── tests/
-│   ├── test_advanced_methods.py
-│   ├── test_config.py
+│   ├── test_differential_equations.py
 │   ├── test_finite_differences.py
-│   ├── test_gui.py
-│   ├── test_main.py
-│   ├── test_numerical_methods.py
-│   └── test_utils.py
+│   ├── test_numerical_integration.py
+│   └── test_validators.py
 └── utils/
     ├── __init__.py
     ├── function_parser.py

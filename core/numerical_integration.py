@@ -1,12 +1,13 @@
 """
-Integración Numérica
-Implementa métodos de integración numérica (reglas de Newton-Cotes)
+Integración Numérica - Métodos de Newton-Cotes
+Implementa métodos de integración numérica basados en reglas de Newton-Cotes
 
 Métodos incluidos:
+- Regla del Rectángulo
+- Regla del Rectángulo Medio  
 - Regla del Trapecio
 - Regla de Simpson 1/3
 - Regla de Simpson 3/8
-- Cuadratura de Gauss (opcional avanzado)
 """
 
 import numpy as np
@@ -19,7 +20,67 @@ class NumericalIntegration:
     """
     
     @staticmethod
+    def rectangle_rule(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Regla del Rectángulo para integración numérica
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        h = (b - a) / n
+        x = np.linspace(a, b, n + 1)
+        y = np.array([f(xi) for xi in x])
+        
+        # Regla del rectángulo: h * sum(y_i) para i=0 to n-1
+        integral = h * np.sum(y[:-1])
+        return integral
+    
+    @staticmethod
+    def midpoint_rule(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Regla del Rectángulo Medio para integración numérica
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        h = (b - a) / n
+        x = np.linspace(a + h/2, b - h/2, n)  # Puntos medios
+        y = np.array([f(xi) for xi in x])
+        
+        # Regla del rectángulo medio: h * sum(f((x_i + x_{i+1})/2))
+        integral = h * np.sum(y)
+        return integral
+    
+    @staticmethod
     def trapezoid(f: Callable, a: float, b: float, n: int = 100) -> float:
+        """
+        Regla del Trapecio para integración numérica
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        h = (b - a) / n
+        x = np.linspace(a, b, n + 1)
+        y = np.array([f(xi) for xi in x])
+        
+        # Regla del trapecio: h/2 * (y0 + 2*(y1 + y2 + ... + yn-1) + yn)
+        integral = h/2 * (y[0] + 2*np.sum(y[1:-1]) + y[-1])
+        return integral
         """
         Regla del Trapecio para integración numérica
         
@@ -88,7 +149,35 @@ class NumericalIntegration:
         return integral
     
     @staticmethod
-    def gauss_quadrature(f: Callable, a: float, b: float, n: int = 5) -> float:
+    def newton_cotes_integration(f: Callable, a: float, b: float, n: int = 100, 
+                                method: str = "simpson_13") -> float:
+        """
+        Método general de Newton-Cotes que incluye varios métodos de integración
+        
+        Args:
+            f: Función a integrar
+            a, b: Límites de integración
+            n: Número de subdivisiones
+            method: Método a usar ('rectangle', 'midpoint', 'trapezoid', 'simpson_13', 'simpson_38')
+            
+        Returns:
+            Valor de la integral aproximada
+        """
+        if method == "rectangle":
+            return NumericalIntegration.rectangle_rule(f, a, b, n)
+        elif method == "midpoint":
+            return NumericalIntegration.midpoint_rule(f, a, b, n)
+        elif method == "trapezoid":
+            return NumericalIntegration.trapezoid(f, a, b, n)
+        elif method == "simpson_13":
+            return NumericalIntegration.simpson_13(f, a, b, n)
+        elif method == "simpson_38":
+            return NumericalIntegration.simpson_38(f, a, b, n)
+        else:
+            raise ValueError(f"Método '{method}' no reconocido. Use: 'rectangle', 'midpoint', 'trapezoid', 'simpson_13', 'simpson_38'")
+    
+    # Los siguientes métodos están disponibles pero no son parte de Newton-Cotes
+    # Se mantienen por compatibilidad pero no se usan en el método newton_cotes_integration
         """
         Cuadratura de Gauss para integración numérica (usando scipy)
         

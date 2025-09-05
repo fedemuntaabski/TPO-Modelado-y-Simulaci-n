@@ -175,10 +175,11 @@ class MathSimulatorApp(QMainWindow):
         self.tab_widget = QTabWidget()
 
         # Crear pestañas
-        from gui.tabs import ODETab, RootsTab, IntegrationTab
+        from gui.tabs import ODETab, RootsTab, IntegrationTab, NewtonCotesTab
         self.ode_tab = ODETab(self.keyboard, self.plot_widget)
         self.roots_tab = RootsTab(self.keyboard, self.plot_widget)
         self.integration_tab = IntegrationTab(self.keyboard, self.plot_widget)
+        self.newton_cotes_tab = NewtonCotesTab(self.keyboard, self.plot_widget)
 
         # Importar pestañas avanzadas
         try:
@@ -190,12 +191,14 @@ class MathSimulatorApp(QMainWindow):
             self.tab_widget.addTab(self.finite_differences_tab, "� Diferencias Finitas")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
+            self.tab_widget.addTab(self.newton_cotes_tab, "📊 Newton-Cotes")
         except ImportError as e:
             # Si no se pueden importar las pestañas avanzadas, usar solo las básicas
             print(f"Warning: No se pudieron cargar pestañas avanzadas: {e}")
             self.tab_widget.addTab(self.roots_tab, "🎯 Búsqueda de Raíces")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
+            self.tab_widget.addTab(self.newton_cotes_tab, "📊 Newton-Cotes")
 
         right_layout.addWidget(self.tab_widget)
         right_panel.setLayout(right_layout)

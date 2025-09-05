@@ -10,6 +10,30 @@ from core.numerical_integration import NumericalIntegration
 class TestNumericalIntegration:
     """Test cases for NumericalIntegration class"""
 
+    def test_rectangle_rule_simple_function(self):
+        """Test rectangle rule with f(x) = x^2 from 0 to 1"""
+        def f(x):
+            return x**2
+
+        a, b = 0, 1
+        result = NumericalIntegration.rectangle_rule(f, a, b, n=100)
+
+        # Analytical result: ∫x^2 dx from 0 to 1 = 1/3 ≈ 0.3333
+        expected = 1/3
+        assert abs(result - expected) < 0.1  # Rectangle rule is less accurate
+
+    def test_midpoint_rule_simple_function(self):
+        """Test midpoint rule with f(x) = x^2 from 0 to 1"""
+        def f(x):
+            return x**2
+
+        a, b = 0, 1
+        result = NumericalIntegration.midpoint_rule(f, a, b, n=100)
+
+        # Analytical result: ∫x^2 dx from 0 to 1 = 1/3 ≈ 0.3333
+        expected = 1/3
+        assert abs(result - expected) < 0.01  # Midpoint rule should be more accurate
+
     def test_trapezoid_simple_function(self):
         """Test trapezoid rule with f(x) = x^2 from 0 to 1"""
         def f(x):
@@ -46,18 +70,6 @@ class TestNumericalIntegration:
         expected = 1/3
         assert abs(result - expected) < 0.01
 
-    def test_gauss_quadrature_simple_function(self):
-        """Test Gauss quadrature with f(x) = x^2 from 0 to 1"""
-        def f(x):
-            return x**2
-
-        a, b = 0, 1
-        result = NumericalIntegration.gauss_quadrature(f, a, b, n=5)
-
-        # Analytical result: ∫x^2 dx from 0 to 1 = 1/3 ≈ 0.3333
-        expected = 1/3
-        assert abs(result - expected) < 1e-10  # Gauss quadrature should be very accurate
-
     def test_adaptive_simpson_simple_function(self):
         """Test adaptive Simpson with f(x) = x^2 from 0 to 1"""
         def f(x):
@@ -69,3 +81,34 @@ class TestNumericalIntegration:
         # Analytical result: ∫x^2 dx from 0 to 1 = 1/3 ≈ 0.3333
         expected = 1/3
         assert abs(result - expected) < 1e-6  # Adaptive should be very accurate
+
+    def test_newton_cotes_integration_rectangle(self):
+        """Test newton_cotes_integration with rectangle method"""
+        def f(x):
+            return x**2
+
+        a, b = 0, 1
+        result = NumericalIntegration.newton_cotes_integration(f, a, b, n=100, method="rectangle")
+
+        expected = 1/3
+        assert abs(result - expected) < 0.1
+
+    def test_newton_cotes_integration_simpson_13(self):
+        """Test newton_cotes_integration with Simpson 1/3 method"""
+        def f(x):
+            return x**2
+
+        a, b = 0, 1
+        result = NumericalIntegration.newton_cotes_integration(f, a, b, n=100, method="simpson_13")
+
+        expected = 1/3
+        assert abs(result - expected) < 0.001
+
+    def test_newton_cotes_integration_invalid_method(self):
+        """Test newton_cotes_integration with invalid method"""
+        def f(x):
+            return x**2
+
+        a, b = 0, 1
+        with pytest.raises(ValueError):
+            NumericalIntegration.newton_cotes_integration(f, a, b, n=100, method="invalid")

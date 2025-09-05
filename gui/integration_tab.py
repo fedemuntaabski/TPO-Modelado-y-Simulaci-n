@@ -61,6 +61,20 @@ class IntegrationTab(QWidget):
         input_layout.addWidget(QLabel("Subdivisiones (n):"))
         input_layout.addWidget(self.n_input)
 
+        # Método de integración
+        from PyQt6.QtWidgets import QComboBox
+        self.method_combo = QComboBox()
+        self.method_combo.addItems([
+            "Regla del Rectángulo",
+            "Rectángulo Medio", 
+            "Regla del Trapecio",
+            "Simpson 1/3",
+            "Simpson 3/8"
+        ])
+        self.method_combo.setCurrentText("Simpson 1/3")
+        input_layout.addWidget(QLabel("Método:"))
+        input_layout.addWidget(self.method_combo)
+
         # Botón calcular
         calc_button = QPushButton("Calcular Integral")
         from gui.themes import DarkTheme
@@ -95,12 +109,23 @@ class IntegrationTab(QWidget):
             b = self.b_input.value()
             n = self.n_input.value()
 
+            # Mapear selección del combo a método
+            method_map = {
+                "Regla del Rectángulo": "rectangle",
+                "Rectángulo Medio": "midpoint",
+                "Regla del Trapecio": "trapezoid", 
+                "Simpson 1/3": "simpson_13",
+                "Simpson 3/8": "simpson_38"
+            }
+            selected_method = self.method_combo.currentText()
+            method = method_map[selected_method]
+
             if a >= b:
                 QMessageBox.warning(self, "Error", "a debe ser menor que b")
                 return
 
             # Calcular integral
-            integral_value = NumericalMethods.newton_cotes_integration(f, a, b, n)
+            integral_value = NumericalMethods.newton_cotes_integration(f, a, b, n, method)
 
             # Graficar la función y el área bajo la curva
             x = np.linspace(a, b, 200)
@@ -119,7 +144,7 @@ class IntegrationTab(QWidget):
 
             # Mostrar resultados
             results = f"""
-Método: Newton-Cotes (Simpson 1/3)
+Método: {selected_method}
 Función: f(x) = {function_str}
 Límites: [{a}, {b}]
 Subdivisiones: {n}
