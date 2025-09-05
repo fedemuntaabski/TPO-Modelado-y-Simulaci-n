@@ -9,7 +9,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from numerics.advanced import InterpolationMethods, AdvancedNumericalMethods, ErrorAnalysis
+from numerics.interpolation_methods import InterpolationMethods
+from numerics.advanced_numerical_methods import AdvancedNumericalMethods
+from numerics.error_analysis import ErrorAnalysis
 from numerics.methods import MathParser
 
 class DerivativesTab(QWidget):
@@ -78,11 +80,6 @@ class DerivativesTab(QWidget):
         convergence_btn.clicked.connect(self.convergence_analysis)
         input_layout.addWidget(convergence_btn)
 
-        richardson_btn = QPushButton("Extrapolación de Richardson")
-        richardson_btn.setStyleSheet("background-color: #fdcb6e; color: black; font-weight: bold; padding: 10px;")
-        richardson_btn.clicked.connect(self.richardson_extrapolation)
-        input_layout.addWidget(richardson_btn)
-
         # Resultados
         self.results_text = QTextEdit()
         self.results_text.setMaximumHeight(250)
@@ -111,7 +108,7 @@ class DerivativesTab(QWidget):
             order = self.derivative_order.value()
 
             # Calcular derivada usando diferencias finitas centrales
-            from numerics.advanced import InterpolationMethods
+            from numerics.interpolation_methods import InterpolationMethods
             derivatives = InterpolationMethods.central_finite_differences_derivative_table(
                 f, x, [order], h
             )
@@ -195,7 +192,7 @@ f^({order})(x) ≈ {result:.10f}
 
             # Calcular derivadas para diferentes h
             for h in h_values:
-                from numerics.advanced import InterpolationMethods
+                from numerics.interpolation_methods import InterpolationMethods
                 deriv_dict = InterpolationMethods.central_finite_differences_derivative_table(
                     f, x, [order], h
                 )
@@ -276,58 +273,4 @@ Orden de derivada: {order}
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error en análisis de convergencia: {str(e)}")
 
-    def richardson_extrapolation(self):
-        """Aplica extrapolación de Richardson"""
-        try:
-            function_str = self.function_input.text().strip()
-            if not function_str:
-                QMessageBox.warning(self, "Error", "Ingrese una función")
-                return
 
-            f = MathParser.parse_function(function_str)
-            x = self.x_point.value()
-            h_initial = self.h_initial.value()
-
-            # Generar pasos h para Richardson
-            h_values = [h_initial / (2**i) for i in range(5)]
-
-            # Aplicar extrapolación de Richardson
-            from numerics.advanced import AdvancedNumericalMethods
-            best_approx, R_table = AdvancedNumericalMethods.richardson_extrapolation(
-                f, x, h_values
-            )
-
-            # Mostrar tabla de Richardson
-            results = f"""
-Extrapolación de Richardson
-===========================
-Función: f(x) = {function_str}
-Punto: x = {x}
-
-Mejor aproximación: {best_approx:.12f}
-
-Tabla de Richardson:
-"""
-            for i, row in enumerate(R_table):
-                results += f"h={h_values[i]:8.2e}: "
-                for j, val in enumerate(row):
-                    if val != 0:
-                        results += f"{val:12.8f} "
-                results += "\n"
-
-            # Comparar con exacta si disponible
-            exact_str = self.exact_derivative.text().strip()
-            if exact_str:
-                try:
-                    exact_f = MathParser.parse_function(exact_str)
-                    exact_value = exact_f(x)
-                    error = abs(exact_value - best_approx)
-                    results += f"\nValor exacto: {exact_value:.12f}"
-                    results += f"\nError: {error:.2e}"
-                except:
-                    pass
-
-            self.results_text.setText(results)
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error en extrapolación de Richardson: {str(e)}")

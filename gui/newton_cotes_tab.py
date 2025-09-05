@@ -52,7 +52,7 @@ class NewtonCotesTab(QWidget):
         self.function_input.setPlaceholderText("Ej: x**2, sin(x), exp(-x**2)")
         self.function_input.focusInEvent = lambda e: self.keyboard.set_target(self.function_input)
         function_label = QLabel("f(x):")
-        function_label.setStyleSheet("font-size: 10px;")
+        function_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
         input_layout.addWidget(function_label)
         input_layout.addWidget(self.function_input)
 
@@ -64,7 +64,7 @@ class NewtonCotesTab(QWidget):
         self.a_input.setPlaceholderText("Ej: 0, pi/2, sqrt(2)")
         self.a_input.setMaximumWidth(80)
         a_label = QLabel("a:")
-        a_label.setStyleSheet("font-size: 10px;")
+        a_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
         limits_layout.addWidget(a_label)
         limits_layout.addWidget(self.a_input)
 
@@ -73,7 +73,7 @@ class NewtonCotesTab(QWidget):
         self.b_input.setPlaceholderText("Ej: 1, pi, 2*pi")
         self.b_input.setMaximumWidth(80)
         b_label = QLabel("b:")
-        b_label.setStyleSheet("font-size: 10px;")
+        b_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
         limits_layout.addWidget(b_label)
         limits_layout.addWidget(self.b_input)
 
@@ -84,7 +84,7 @@ class NewtonCotesTab(QWidget):
         self.n_input.setRange(2, 1000)
         self.n_input.setValue(100)
         n_label = QLabel("n:")
-        n_label.setStyleSheet("font-size: 10px;")
+        n_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
         input_layout.addWidget(n_label)
         input_layout.addWidget(self.n_input)
 
@@ -108,7 +108,7 @@ class NewtonCotesTab(QWidget):
         ])
         self.method_combo.setCurrentText("Simpson 1/3 Compuesto")
         method_label = QLabel("Método:")
-        method_label.setStyleSheet("font-size: 10px;")
+        method_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
         method_layout.addWidget(method_label)
         method_layout.addWidget(self.method_combo)
         input_layout.addLayout(method_layout)
@@ -119,6 +119,10 @@ class NewtonCotesTab(QWidget):
         calc_button = QPushButton("Calcular")
         calc_button.clicked.connect(self.calculate_integral)
         buttons_layout.addWidget(calc_button)
+
+        plot_button = QPushButton("Graficar")
+        plot_button.clicked.connect(self.plot_function)
+        buttons_layout.addWidget(plot_button)
 
         clear_button = QPushButton("Limpiar")
         clear_button.clicked.connect(self.clear_results)
@@ -309,3 +313,54 @@ class NewtonCotesTab(QWidget):
         self.results_table.setRowCount(0)
         self.plot_widget.figure.clear()
         self.plot_widget.canvas.draw()
+
+    def plot_function(self):
+        """Grafica la función en el rango de integración"""
+        try:
+            # Obtener la función
+            function_str = self.function_input.text().strip()
+            if not function_str:
+                QMessageBox.warning(self, "Error", "Por favor ingrese una función.")
+                return
+
+            # Obtener límites
+            a_str = self.a_input.text().strip()
+            b_str = self.b_input.text().strip()
+
+            if not a_str or not b_str:
+                QMessageBox.warning(self, "Error", "Por favor ingrese los límites de integración.")
+                return
+
+            a = self.evaluate_expression(a_str)
+            b = self.evaluate_expression(b_str)
+
+            if a >= b:
+                QMessageBox.warning(self, "Error", "El límite inferior debe ser menor que el superior.")
+                return
+
+            # Crear puntos para graficar
+            x_points = np.linspace(a - 0.5, b + 0.5, 1000)
+            y_points = []
+
+            for x in x_points:
+                try:
+                    y = self.evaluate_function(function_str, x)
+                    y_points.append(y)
+                except:
+                    y_points.append(0)
+
+            # Graficar
+            self.plot_widget.clear_plot()
+            self.plot_widget.plot_function(x_points, y_points,
+                                         f"Función: {function_str}",
+                                         "x", "f(x)")
+
+            # Agregar líneas verticales para los límites de integración
+            ax = self.plot_widget.figure.gca()
+            ax.axvline(x=a, color='red', linestyle='--', alpha=0.7, label=f'Límite inferior: {a}')
+            ax.axvline(x=b, color='red', linestyle='--', alpha=0.7, label=f'Límite superior: {b}')
+            ax.legend()
+            self.plot_widget.canvas.draw()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al graficar la función:\n{str(e)}")

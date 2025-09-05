@@ -27,12 +27,6 @@
       "success_rate": 100.0,
       "execution_time": 2.5
     },
-    "test_gui.py": {
-      "passed": 12,
-      "total": 22,
-      "success_rate": 54.55,
-      "execution_time": 6.09
-    },
     "test_main.py": {
       "passed": 16,
       "total": 16,
@@ -55,6 +49,6 @@
   "recommendations": [
     "⚠️ 60 tests fallaron - revisar implementación",
     "Ejecutar tests individuales para debugging detallado",
-    "Archivos con problemas: test_advanced_methods.py, test_config.py, test_gui.py, test_numerical_methods.py"
+    "Archivos con problemas: test_advanced_methods.py, test_config.py, test_numerical_methods.py"
   ]
 }

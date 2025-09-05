@@ -3,7 +3,7 @@ Componentes GUI principales del Simulador Matemático
 Implementa los widgets básicos: teclado virtual, widget de gráficos y aplicación principal
 
 Características:
-- Teclado virtual para funciones matemáticas
+- Teclado virtual para f            self.tab_widget.addTab(self.credits_tab, "👨‍🎓 Créditos")           self.tab_widget.addTab(self.credits_tab, "👨‍🎓 Créditos")           self.tab_widget.addTab(self.credits_tab, "👥 Créditos")           self.tab_widget.addTab(self.credits_tab, "👥 Créditos")nciones matemáticas
 - Widget para mostrar gráficos con matplotlib
 - Ventana principal de la aplicación
 """
@@ -50,8 +50,6 @@ class MathKeyboard(QWidget):
         from gui.themes import DarkTheme
 
         self.function_buttons = []
-        self.operator_buttons = []
-        self.number_buttons = []
 
         # Botones de funciones matemáticas
         functions = ['sin', 'cos', 'tan', 'log', 'exp', 'sqrt', 'pi', 'e']
@@ -181,6 +179,9 @@ class MathSimulatorApp(QMainWindow):
         self.integration_tab = IntegrationTab(self.keyboard, self.plot_widget)
         self.newton_cotes_tab = NewtonCotesTab(self.keyboard, self.plot_widget)
 
+        # Crear pestaña de créditos simplificada
+        self.credits_tab = self.create_credits_tab()
+
         # Importar pestañas avanzadas
         try:
             from gui.advanced_tabs import FiniteDifferencesTab
@@ -188,17 +189,19 @@ class MathSimulatorApp(QMainWindow):
             self.finite_differences_tab = FiniteDifferencesTab(self.keyboard, self.plot_widget)
 
             self.tab_widget.addTab(self.roots_tab, "🎯 Búsqueda de Raíces")
+            self.tab_widget.addTab(self.newton_cotes_tab, "📊 Newton-Cotes")
             self.tab_widget.addTab(self.finite_differences_tab, "� Diferencias Finitas")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
-            self.tab_widget.addTab(self.newton_cotes_tab, "📊 Newton-Cotes")
+            self.tab_widget.addTab(self.credits_tab, "� Créditos")
         except ImportError as e:
             # Si no se pueden importar las pestañas avanzadas, usar solo las básicas
             print(f"Warning: No se pudieron cargar pestañas avanzadas: {e}")
             self.tab_widget.addTab(self.roots_tab, "🎯 Búsqueda de Raíces")
+            self.tab_widget.addTab(self.newton_cotes_tab, "📊 Newton-Cotes")
             self.tab_widget.addTab(self.ode_tab, "📈 Ecuaciones Diferenciales")
             self.tab_widget.addTab(self.integration_tab, "∫ Integración")
-            self.tab_widget.addTab(self.newton_cotes_tab, "📊 Newton-Cotes")
+            self.tab_widget.addTab(self.credits_tab, "� Créditos")
 
         right_layout.addWidget(self.tab_widget)
         right_panel.setLayout(right_layout)
@@ -298,3 +301,58 @@ class MathSimulatorApp(QMainWindow):
         palette.setColor(QPalette.ColorRole.HighlightedText, QColor(DarkTheme.TEXT_PRIMARY))
 
         self.setPalette(palette)
+
+    def create_credits_tab(self):
+        """Crea una pestaña de créditos simplificada"""
+        from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtGui import QFont
+
+        credits_widget = QWidget()
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Título
+        title = QLabel("📚 CRÉDITOS")
+        title_font = QFont("Arial", 30, QFont.Weight.Bold)
+        title.setFont(title_font)
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("color: #3498db; margin: 36px;")
+        layout.addWidget(title)
+
+        # Materia
+        subject = QLabel("Materia: Modelado y Simulación")
+        subject_font = QFont("Arial", 22, QFont.Weight.Bold)
+        subject.setFont(subject_font)
+        subject.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subject.setStyleSheet("margin: 26px;")
+        layout.addWidget(subject)
+
+        # Estudiantes
+        students_title = QLabel("Estudiantes:")
+        students_title_font = QFont("Arial", 22)
+        students_title.setFont(students_title_font)
+        students_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        students_title.setStyleSheet("margin: 31px 0 21px 0;")
+        layout.addWidget(students_title)
+
+        students = [
+            "Federico Muntaabski",
+            "Nicolas Llousas",
+            "Santiago Oteiza"
+        ]
+
+        for student in students:
+            student_label = QLabel(f"• {student}")
+            student_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            student_label.setStyleSheet("margin: 14px; font-size: 21px; font-weight: bold;")
+            layout.addWidget(student_label)
+
+        # Año
+        year = QLabel("2025")
+        year.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        year.setStyleSheet("margin: 36px; color: #7f8c8d; font-size: 20px; font-weight: bold;")
+        layout.addWidget(year)
+
+        credits_widget.setLayout(layout)
+        return credits_widget

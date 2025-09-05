@@ -31,7 +31,9 @@ class DerivativesTab(QWidget):
         self.fd_function_input = QLineEdit()
         self.fd_function_input.setPlaceholderText("Ej: x**3 + 2*x**2 - x + 1")
         self.fd_function_input.focusInEvent = lambda e: self.keyboard.set_target(self.fd_function_input)
-        left_layout.addWidget(QLabel("Función f(x):"))
+        func_label = QLabel("Función f(x):")
+        func_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        left_layout.addWidget(func_label)
         left_layout.addWidget(self.fd_function_input)
 
         # Punto de evaluación
@@ -39,7 +41,9 @@ class DerivativesTab(QWidget):
         self.fd_x_point.setRange(-100, 100)
         self.fd_x_point.setValue(1)
         self.fd_x_point.setDecimals(4)
-        left_layout.addWidget(QLabel("Punto x:"))
+        x_label = QLabel("Punto x:")
+        x_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        left_layout.addWidget(x_label)
         left_layout.addWidget(self.fd_x_point)
 
         # Paso h
@@ -47,20 +51,27 @@ class DerivativesTab(QWidget):
         self.fd_h_value.setRange(1e-10, 1)
         self.fd_h_value.setValue(1e-5)
         self.fd_h_value.setDecimals(10)
-        left_layout.addWidget(QLabel("Paso h:"))
+        h_label = QLabel("Paso h:")
+        h_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        left_layout.addWidget(h_label)
         left_layout.addWidget(self.fd_h_value)
 
         # Orden de derivada
         self.fd_order = QSpinBox()
         self.fd_order.setRange(1, 4)
         self.fd_order.setValue(1)
-        left_layout.addWidget(QLabel("Orden:"))
+        self.fd_order.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)  # Quitar botones
+        order_label = QLabel("Orden:")
+        order_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        left_layout.addWidget(order_label)
         left_layout.addWidget(self.fd_order)
 
         # Método
         self.fd_method = QComboBox()
         self.fd_method.addItems(["Central", "Hacia adelante", "Hacia atrás", "Adaptativo"])
-        left_layout.addWidget(QLabel("Método:"))
+        method_label = QLabel("Método:")
+        method_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        left_layout.addWidget(method_label)
         left_layout.addWidget(self.fd_method)
 
         # Botones
@@ -68,11 +79,6 @@ class DerivativesTab(QWidget):
         calc_btn.setStyleSheet("background-color: #00cec9; color: white; font-weight: bold; padding: 8px;")
         calc_btn.clicked.connect(self.calculate_fd_derivative)
         left_layout.addWidget(calc_btn)
-
-        richardson_btn = QPushButton("Richardson")
-        richardson_btn.setStyleSheet("background-color: #fdcb6e; color: black; font-weight: bold; padding: 8px;")
-        richardson_btn.clicked.connect(self.fd_richardson)
-        left_layout.addWidget(richardson_btn)
 
         left_panel.setLayout(left_layout)
         left_panel.setMaximumWidth(300)
@@ -138,34 +144,6 @@ Resultado: f{order}(x) ≈ {result:.8f}
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error calculando derivada: {str(e)}")
-
-    def fd_richardson(self):
-        """Aplica extrapolación de Richardson"""
-        try:
-            function_str = self.fd_function_input.text().strip()
-            if not function_str:
-                QMessageBox.warning(self, "Error", "Ingrese una función")
-                return
-
-            f = MathParser.parse_function(function_str)
-            x = self.fd_x_point.value()
-
-            result, info = FiniteDifferences.richardson_extrapolation(f, x)
-
-            self.fd_results_text.setText(f"""
-EXTRAPOLACIÓN DE RICHARDSON
-Función: f(x) = {function_str}
-Punto: x = {x}
-
-Derivada mejorada: f'(x) ≈ {result:.10f}
-Error estimado: {info['estimated_error']:.2e}
-
-Valores de h utilizados:
-{', '.join([f'{h:.2e}' for h in info['h_values']])}
-            """.strip())
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error en Richardson: {str(e)}")
 
     def plot_fd_function(self, f, function_str, x):
         """Grafica función y punto de evaluación"""
