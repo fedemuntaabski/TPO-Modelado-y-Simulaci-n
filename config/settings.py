@@ -1,101 +1,46 @@
 """
-Configuración del sistema
-Manejo de configuraciones de la aplicación
+Configuración del Simulador Matemático
 """
 
-import json
-import os
-from typing import Dict, Any
+import matplotlib.pyplot as plt
+import customtkinter as ctk
 
+# Configuración de la interfaz
+UI_CONFIG = {
+    "appearance_mode": "dark",
+    "color_theme": "blue",
+    "default_font_size": 12,
+    "title_font_size": 24,
+    "window_geometry": "1400x800",
+    "window_title": "🧮 Simulador Matemático Avanzado v4.0"
+}
 
-class Settings:
-    """
-    Clase para manejar configuraciones del sistema
-    """
+# Configuración de matplotlib
+PLOT_CONFIG = {
+    "style": "dark_background",
+    "figure_size": (10, 6),
+    "dpi": 100,
+    "grid": True,
+    "legend": True
+}
 
-    def __init__(self):
-        self.config_file = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            'config', 'settings.json'
-        )
+# Configuración numérica
+NUMERICAL_CONFIG = {
+    "default_tolerance": 1e-6,
+    "max_iterations": 1000,
+    "default_step_size": 0.1,
+    "precision_digits": 8
+}
 
-    def load_settings(self) -> Dict[str, Any]:
-        """
-        Carga configuraciones desde archivo JSON
+def configure_ui():
+    """Configura la interfaz de usuario"""
+    ctk.set_appearance_mode(UI_CONFIG["appearance_mode"])
+    ctk.set_default_color_theme(UI_CONFIG["color_theme"])
 
-        Returns:
-            Diccionario con configuraciones
-        """
-        try:
-            if os.path.exists(self.config_file):
-                with open(self.config_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            else:
-                return self.get_default_settings()
-        except Exception:
-            return self.get_default_settings()
+def configure_matplotlib():
+    """Configura matplotlib para el tema oscuro"""
+    plt.style.use(PLOT_CONFIG["style"])
 
-    def save_settings(self, settings: Dict[str, Any]) -> bool:
-        """
-        Guarda configuraciones en archivo JSON
-
-        Args:
-            settings: Configuraciones a guardar
-
-        Returns:
-            True si se guardó correctamente, False en caso contrario
-        """
-        try:
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, indent=4, ensure_ascii=False)
-            return True
-        except Exception:
-            return False
-
-    def get_default_settings(self) -> Dict[str, Any]:
-        """
-        Retorna configuraciones por defecto
-
-        Returns:
-            Diccionario con configuraciones por defecto
-        """
-        return {
-            "theme": "dark",
-            "language": "es",
-            "precision": 6,
-            "max_iterations": 1000,
-            "plot_resolution": 100
-        }
-
-    def validate_config(self, config: Dict[str, Any]) -> bool:
-        """
-        Valida una configuración
-
-        Args:
-            config: Configuración a validar
-
-        Returns:
-            True si es válida, False en caso contrario
-        """
-        required_fields = ['theme', 'language', 'precision', 'max_iterations']
-
-        # Verificar campos requeridos
-        for field in required_fields:
-            if field not in config:
-                return False
-
-        # Verificar tipos y rangos
-        if not isinstance(config.get('precision', 0), int) or config['precision'] < 1:
-            return False
-
-        if not isinstance(config.get('max_iterations', 0), int) or config['max_iterations'] < 1:
-            return False
-
-        if config.get('theme', '') not in ['dark', 'light']:
-            return False
-
-        if config.get('language', '') not in ['es', 'en']:
-            return False
-
-        return True
+# Alias para compatibilidad
+UI_SETTINGS = UI_CONFIG
+NUMERICAL_SETTINGS = NUMERICAL_CONFIG

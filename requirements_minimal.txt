@@ -1,0 +1,15 @@
+# Requirements para main_simple.py - Simulador Matemático v4.0
+# Dependencias mínimas para funcionamiento completo
+
+# UI Framework
+customtkinter>=5.2.0
+
+# Cálculo científico
+numpy>=1.21.0
+matplotlib>=3.5.0
+
+# Opcional para mayor precisión (recomendado)
+scipy>=1.7.0
+
+# Manejo de imágenes para CustomTkinter
+Pillow>=8.3.0
