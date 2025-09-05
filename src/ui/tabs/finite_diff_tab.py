@@ -11,7 +11,8 @@ import numpy as np
 from typing import Optional
 
 from src.ui.components.base_tab import BaseTab
-from src.core.finite_differences import FiniteDifferenceCalculator, create_function_from_string
+from src.core.finite_differences import FiniteDifferenceCalculator
+from src.core.root_finding import create_function_from_string
 from config.settings import NUMERICAL_CONFIG
 
 

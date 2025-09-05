@@ -11,7 +11,8 @@ import numpy as np
 from typing import Optional
 
 from src.ui.components.base_tab import BaseTab
-from src.core.integration import NumericalIntegrator, create_function_from_string
+from src.core.integration import NumericalIntegrator
+from src.core.root_finding import create_function_from_string
 from config.settings import NUMERICAL_CONFIG
 
 
