@@ -212,15 +212,18 @@ class NewtonCotesTab(BaseTab):
         # Área de texto para resultados
         self.results_text = ctk.CTkTextbox(
             results_frame,
-            height=400,
+            height=250,
             width=500,
             font=ctk.CTkFont(family="Consolas", size=12)
         )
         self.results_text.grid(row=1, column=0, pady=10, padx=20, sticky="nsew")
         
+        # Tabla de iteraciones
+        self.create_iterations_table(results_frame)
+        
         # Frame para información rápida
         info_frame = ctk.CTkFrame(results_frame)
-        info_frame.grid(row=2, column=0, pady=15, padx=20, sticky="ew")
+        info_frame.grid(row=3, column=0, pady=15, padx=20, sticky="ew")
         
         # Labels de información
         info_items = ["Resultado", "Tiempo", "Evaluaciones", "Error"]
@@ -240,6 +243,47 @@ class NewtonCotesTab(BaseTab):
         
         # Mensaje inicial
         self.clear_results()
+        
+    def create_iterations_table(self, parent_frame):
+        """Crear tabla para mostrar iteraciones"""
+        # Frame para la tabla
+        table_frame = ctk.CTkFrame(parent_frame)
+        table_frame.grid(row=2, column=0, pady=10, padx=20, sticky="ew")
+        
+        # Título de la tabla
+        table_title = ctk.CTkLabel(
+            table_frame,
+            text="📋 Tabla de Iteraciones",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        table_title.grid(row=0, column=0, pady=10, padx=20, sticky="w")
+        
+        # Scrollable frame para la tabla
+        self.table_scrollable = ctk.CTkScrollableFrame(
+            table_frame,
+            height=150,
+            width=460
+        )
+        self.table_scrollable.grid(row=1, column=0, pady=5, padx=20, sticky="ew")
+        
+        # Headers de la tabla
+        headers = ["i", "xi", "f(xi)"]
+        for i, header in enumerate(headers):
+            header_label = ctk.CTkLabel(
+                self.table_scrollable,
+                text=header,
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color=["#1f538d", "#3d8bff"]
+            )
+            header_label.grid(row=0, column=i, pady=5, padx=10, sticky="w")
+        
+        # Configurar columnas
+        for i in range(len(headers)):
+            self.table_scrollable.grid_columnconfigure(i, weight=1)
+        
+        # Inicialmente ocultar la tabla
+        table_frame.grid_remove()
+        self.table_frame = table_frame
         
     def on_method_change(self):
         """Manejar cambio de método seleccionado"""
@@ -361,6 +405,72 @@ class NewtonCotesTab(BaseTab):
         # Mostrar en el textbox
         self.results_text.insert("1.0", output)
         
+        # Mostrar tabla de iteraciones si hay datos
+        if hasattr(result, 'iteration_details') and result.iteration_details:
+            self.display_iterations_table(result.iteration_details)
+        
+    def display_iterations_table(self, iteration_details):
+        """Mostrar tabla con detalles de iteraciones"""
+        if not hasattr(self, 'table_scrollable'):
+            return
+            
+        # Limpiar tabla anterior
+        for widget in self.table_scrollable.winfo_children():
+            if widget.grid_info()['row'] > 0:  # No eliminar headers
+                widget.destroy()
+        
+        # Mostrar tabla
+        if hasattr(self, 'table_frame'):
+            self.table_frame.grid()
+        
+        # Agregar filas de datos
+        for i, detail in enumerate(iteration_details):
+            row = i + 1
+            
+            # Columna i
+            i_label = ctk.CTkLabel(
+                self.table_scrollable,
+                text=str(detail['i']),
+                font=ctk.CTkFont(size=11)
+            )
+            i_label.grid(row=row, column=0, pady=2, padx=10, sticky="w")
+            
+            # Columna xi
+            xi_label = ctk.CTkLabel(
+                self.table_scrollable,
+                text=f"{detail['xi']:.6f}",
+                font=ctk.CTkFont(size=11)
+            )
+            xi_label.grid(row=row, column=1, pady=2, padx=10, sticky="w")
+            
+            # Columna f(xi)
+            fxi_label = ctk.CTkLabel(
+                self.table_scrollable,
+                text=f"{detail['f(xi)']:.6f}",
+                font=ctk.CTkFont(size=11)
+            )
+            fxi_label.grid(row=row, column=2, pady=2, padx=10, sticky="w")
+            
+            # Columna coeficiente (si existe)
+            if 'coeficiente' in detail:
+                coeff_label = ctk.CTkLabel(
+                    self.table_scrollable,
+                    text=str(detail['coeficiente']),
+                    font=ctk.CTkFont(size=11)
+                )
+                coeff_label.grid(row=row, column=3, pady=2, padx=10, sticky="w")
+                
+                # Actualizar headers si es necesario
+                if row == 1:  # Solo en la primera fila
+                    coeff_header = ctk.CTkLabel(
+                        self.table_scrollable,
+                        text="Coef",
+                        font=ctk.CTkFont(size=12, weight="bold"),
+                        text_color=["#1f538d", "#3d8bff"]
+                    )
+                    coeff_header.grid(row=0, column=3, pady=5, padx=10, sticky="w")
+                    self.table_scrollable.grid_columnconfigure(3, weight=1)
+        
     def update_info_labels(self, result):
         """Actualizar labels de información rápida"""
         if not self.info_labels:
@@ -417,6 +527,10 @@ class NewtonCotesTab(BaseTab):
             for label in self.info_labels.values():
                 text = label.cget("text").split(":")[0] + ": --"
                 label.configure(text=text)
+        
+        # Ocultar tabla de iteraciones
+        if hasattr(self, 'table_frame'):
+            self.table_frame.grid_remove()
                 
     def show_examples_menu(self):
         """Mostrar menú de ejemplos específicos por método"""

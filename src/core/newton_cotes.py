@@ -46,6 +46,7 @@ class NewtonCotesResult:
         self.error_order = kwargs.get('error_order', '')
         self.accuracy_estimate = kwargs.get('accuracy_estimate', '')
         self.sample_points = kwargs.get('sample_points', [])
+        self.iteration_details = kwargs.get('iteration_details', [])
         
     def to_dict(self) -> Dict[str, Any]:
         """Convertir resultado a diccionario"""
@@ -148,7 +149,7 @@ class NewtonCotes:
         try:
             h = (b - a) / n
             total_sum = 0.0
-            sample_points = []
+            iteration_details = []
             
             # Sumar evaluaciones en puntos medios
             for i in range(n):
@@ -156,9 +157,12 @@ class NewtonCotes:
                 fi = self.parser.parse_and_evaluate(func_str, xi)
                 total_sum += fi
                 
-                # Guardar algunos puntos para mostrar
-                if len(sample_points) < 5:
-                    sample_points.append({'x': xi, 'f(x)': fi})
+                # Guardar TODOS los puntos con índice de iteración
+                iteration_details.append({
+                    'i': i + 1,
+                    'xi': xi,
+                    'f(xi)': fi
+                })
             
             result = h * total_sum
             computation_time = time.time() - start_time
@@ -175,7 +179,8 @@ class NewtonCotes:
                 computation_time=computation_time,
                 error_order='O(h²)',
                 accuracy_estimate='Moderada (método de orden 2)',
-                sample_points=sample_points
+                sample_points=iteration_details,
+                iteration_details=iteration_details
             )
             
         except Exception as e:
@@ -240,18 +245,28 @@ class NewtonCotes:
             
             # Sumar evaluaciones intermedias
             sum_intermediate = 0.0
-            sample_points = [{'x': a, 'f(x)': fa}]
+            iteration_details = [
+                {'i': 0, 'xi': a, 'f(xi)': fa}
+            ]
             
             for i in range(1, n):
                 xi = a + i * h
                 fi = self.parser.parse_and_evaluate(func_str, xi)
                 sum_intermediate += fi
                 
-                # Guardar algunos puntos para mostrar
-                if len(sample_points) < 4:
-                    sample_points.append({'x': xi, 'f(x)': fi})
+                # Guardar TODOS los puntos con índice de iteración
+                iteration_details.append({
+                    'i': i,
+                    'xi': xi,
+                    'f(xi)': fi
+                })
             
-            sample_points.append({'x': b, 'f(x)': fb})
+            # Agregar punto final
+            iteration_details.append({
+                'i': n,
+                'xi': b,
+                'f(xi)': fb
+            })
             
             # Aplicar fórmula del trapecio
             result = (h / 2) * (fa + 2 * sum_intermediate + fb)
@@ -270,7 +285,8 @@ class NewtonCotes:
                 computation_time=computation_time,
                 error_order='O(h²)',
                 accuracy_estimate='Buena (método de orden 2)',
-                sample_points=sample_points
+                sample_points=iteration_details,
+                iteration_details=iteration_details
             )
             
         except Exception as e:
@@ -344,22 +360,35 @@ class NewtonCotes:
             # Sumar puntos pares (coeficiente 2)
             sum_even = 0.0
             
-            sample_points = [{'x': a, 'f(x)': fa}]
+            iteration_details = [
+                {'i': 0, 'xi': a, 'f(xi)': fa, 'coeficiente': 1}
+            ]
             
             for i in range(1, n):
                 xi = a + i * h
                 fi = self.parser.parse_and_evaluate(func_str, xi)
                 
+                coef = 4 if i % 2 == 1 else 2
                 if i % 2 == 1:  # Índice impar
                     sum_odd += fi
                 else:  # Índice par
                     sum_even += fi
                 
-                # Guardar algunos puntos para mostrar
-                if len(sample_points) < 4:
-                    sample_points.append({'x': xi, 'f(x)': fi})
+                # Guardar TODOS los puntos con índice de iteración y coeficiente
+                iteration_details.append({
+                    'i': i,
+                    'xi': xi,
+                    'f(xi)': fi,
+                    'coeficiente': coef
+                })
             
-            sample_points.append({'x': b, 'f(x)': fb})
+            # Agregar punto final
+            iteration_details.append({
+                'i': n,
+                'xi': b,
+                'f(xi)': fb,
+                'coeficiente': 1
+            })
             
             # Aplicar fórmula de Simpson 1/3 compuesta
             result = (h / 3) * (fa + 4 * sum_odd + 2 * sum_even + fb)
@@ -378,7 +407,8 @@ class NewtonCotes:
                 computation_time=computation_time,
                 error_order='O(h⁴)',
                 accuracy_estimate='Excelente (método de orden 4)',
-                sample_points=sample_points
+                sample_points=iteration_details,
+                iteration_details=iteration_details
             )
             
         except Exception as e:
@@ -454,7 +484,9 @@ class NewtonCotes:
             
             # Para Simpson 3/8, los coeficientes son: 1, 3, 3, 2, 3, 3, 2, ..., 3, 3, 1
             total_sum = fa + fb
-            sample_points = [{'x': a, 'f(x)': fa}]
+            iteration_details = [
+                {'i': 0, 'xi': a, 'f(xi)': fa, 'coeficiente': 1}
+            ]
             
             for i in range(1, n):
                 xi = a + i * h
@@ -468,11 +500,21 @@ class NewtonCotes:
                 
                 total_sum += coeff * fi
                 
-                # Guardar algunos puntos para mostrar
-                if len(sample_points) < 4:
-                    sample_points.append({'x': xi, 'f(x)': fi, 'coeff': coeff})
+                # Guardar TODOS los puntos con índice de iteración y coeficiente
+                iteration_details.append({
+                    'i': i,
+                    'xi': xi,
+                    'f(xi)': fi,
+                    'coeficiente': coeff
+                })
             
-            sample_points.append({'x': b, 'f(x)': fb})
+            # Agregar punto final
+            iteration_details.append({
+                'i': n,
+                'xi': b,
+                'f(xi)': fb,
+                'coeficiente': 1
+            })
             
             # Aplicar fórmula de Simpson 3/8 compuesta
             result = 3 * h / 8 * total_sum
@@ -491,7 +533,8 @@ class NewtonCotes:
                 computation_time=computation_time,
                 error_order='O(h⁴)',
                 accuracy_estimate='Excelente (método de orden 4)',
-                sample_points=sample_points
+                sample_points=iteration_details,
+                iteration_details=iteration_details
             )
             
         except Exception as e:
