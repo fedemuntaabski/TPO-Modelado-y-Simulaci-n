@@ -488,3 +488,362 @@ def adaptive_step_size(calc: FiniteDifferenceCalculator,
         'final_error': error,
         'results': results
     }
+
+
+class FiniteDifferences:
+    """
+    Clase para diferencias finitas según especificaciones del prompt.
+    Implementa métodos progresivo, regresivo y central con modo automático por listas.
+    """
+    
+    def __init__(self):
+        """Inicialización del calculador de diferencias finitas"""
+        self.logger = logging.getLogger(__name__)
+    
+    def progressive_method(self, x: float, h: float, f_func: callable) -> dict:
+        """
+        Método progresivo: f'(x) ≈ [f(x+h) - f(x)] / h
+        Error de truncamiento: O(h)
+        
+        Args:
+            x: Punto de evaluación
+            h: Tamaño de paso
+            f_func: Función a derivar
+            
+        Returns:
+            Diccionario con información completa del cálculo
+        """
+        try:
+            # Validar inputs
+            if h <= 0:
+                raise ValueError("h debe ser positivo")
+            if h >= 1:
+                self.logger.warning(f"h={h} es muy grande, puede afectar precisión")
+            
+            # Calcular valores de función
+            fx = f_func(x)
+            fx_plus_h = f_func(x + h)
+            
+            # Calcular derivada
+            derivative = (fx_plus_h - fx) / h
+            
+            return {
+                'method': 'progressive',
+                'x': x,
+                'h': h,
+                'fx': fx,
+                'fx_plus_h': fx_plus_h,
+                'derivative': derivative,
+                'error_order': 'O(h)',
+                'formula': "f'(x) ≈ [f(x+h) - f(x)] / h",
+                'points_used': [x, x + h],
+                'function_values': [fx, fx_plus_h]
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error en método progresivo: {e}")
+            raise ValueError(f"Error calculando derivada progresiva: {e}")
+    
+    def regressive_method(self, x: float, h: float, f_func: callable) -> dict:
+        """
+        Método regresivo: f'(x) ≈ [f(x) - f(x-h)] / h
+        Error de truncamiento: O(h)
+        
+        Args:
+            x: Punto de evaluación
+            h: Tamaño de paso
+            f_func: Función a derivar
+            
+        Returns:
+            Diccionario con información completa del cálculo
+        """
+        try:
+            # Validar inputs
+            if h <= 0:
+                raise ValueError("h debe ser positivo")
+            if h >= 1:
+                self.logger.warning(f"h={h} es muy grande, puede afectar precisión")
+            
+            # Calcular valores de función
+            fx = f_func(x)
+            fx_minus_h = f_func(x - h)
+            
+            # Calcular derivada
+            derivative = (fx - fx_minus_h) / h
+            
+            return {
+                'method': 'regressive',
+                'x': x,
+                'h': h,
+                'fx': fx,
+                'fx_minus_h': fx_minus_h,
+                'derivative': derivative,
+                'error_order': 'O(h)',
+                'formula': "f'(x) ≈ [f(x) - f(x-h)] / h",
+                'points_used': [x - h, x],
+                'function_values': [fx_minus_h, fx]
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error en método regresivo: {e}")
+            raise ValueError(f"Error calculando derivada regresiva: {e}")
+    
+    def central_method(self, x: float, h: float, f_func: callable) -> dict:
+        """
+        Método central: f'(x) ≈ [f(x+h) - f(x-h)] / (2h)
+        Error de truncamiento: O(h²) - Mayor precisión
+        
+        Args:
+            x: Punto de evaluación
+            h: Tamaño de paso
+            f_func: Función a derivar
+            
+        Returns:
+            Diccionario con información completa del cálculo
+        """
+        try:
+            # Validar inputs
+            if h <= 0:
+                raise ValueError("h debe ser positivo")
+            if h >= 1:
+                self.logger.warning(f"h={h} es muy grande, puede afectar precisión")
+            
+            # Calcular valores de función
+            fx_plus_h = f_func(x + h)
+            fx_minus_h = f_func(x - h)
+            fx = f_func(x)  # Para información completa
+            
+            # Calcular derivada
+            derivative = (fx_plus_h - fx_minus_h) / (2 * h)
+            
+            return {
+                'method': 'central',
+                'x': x,
+                'h': h,
+                'fx': fx,
+                'fx_plus_h': fx_plus_h,
+                'fx_minus_h': fx_minus_h,
+                'derivative': derivative,
+                'error_order': 'O(h²)',
+                'formula': "f'(x) ≈ [f(x+h) - f(x-h)] / (2h)",
+                'points_used': [x - h, x, x + h],
+                'function_values': [fx_minus_h, fx, fx_plus_h]
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error en método central: {e}")
+            raise ValueError(f"Error calculando derivada central: {e}")
+    
+    def auto_calculate_list(self, data_points: List[Dict]) -> List[Dict]:
+        """
+        Cálculo automático por lista con método óptimo según posición.
+        
+        - Primer punto: método progresivo
+        - Puntos intermedios: método central (mayor precisión)
+        - Último punto: método regresivo
+        
+        Args:
+            data_points: Lista de diccionarios con keys: 'x', 'h', 'fx'
+                        O con 'x', 'h' y función será evaluada
+                        
+        Returns:
+            Lista de diccionarios con resultados de derivadas
+        """
+        try:
+            if not data_points:
+                raise ValueError("La lista de puntos no puede estar vacía")
+            
+            if len(data_points) < 1:
+                raise ValueError("Se requiere al menos un punto de datos")
+            
+            results = []
+            n_points = len(data_points)
+            
+            for i, point in enumerate(data_points):
+                # Validar estructura del punto
+                if 'x' not in point or 'h' not in point:
+                    raise ValueError(f"Punto {i}: debe contener 'x' y 'h'")
+                
+                x = point['x']
+                h = point['h']
+                
+                # Si tenemos fx, crear función constante, sino evaluar función dada
+                if 'fx' in point:
+                    # Crear función que interpolará entre puntos conocidos
+                    fx_value = point['fx']
+                    
+                    # Para modo lista con valores fx, creamos función usando interpolación
+                    # o diferencias finitas entre puntos adyacentes
+                    if i == 0 and n_points > 1:
+                        # Primer punto: usar siguiente punto para estimación
+                        next_point = data_points[i + 1]
+                        slope = (next_point.get('fx', fx_value) - fx_value) / (next_point['x'] - x)
+                        f_func = lambda t, fx=fx_value, x0=x, m=slope: fx + m * (t - x0)
+                    elif i == n_points - 1 and n_points > 1:
+                        # Último punto: usar punto anterior
+                        prev_point = data_points[i - 1]
+                        slope = (fx_value - prev_point.get('fx', fx_value)) / (x - prev_point['x'])
+                        f_func = lambda t, fx=fx_value, x0=x, m=slope: fx + m * (t - x0)
+                    else:
+                        # Punto intermedio: interpolación con puntos adyacentes
+                        if n_points > 2:
+                            prev_point = data_points[i - 1]
+                            next_point = data_points[i + 1]
+                            # Interpolación cuadrática simple
+                            def quadratic_interp(t):
+                                x0, x1, x2 = prev_point['x'], x, next_point['x']
+                                y0, y1, y2 = prev_point.get('fx', fx_value), fx_value, next_point.get('fx', fx_value)
+                                
+                                # Interpolación de Lagrange
+                                L0 = ((t - x1) * (t - x2)) / ((x0 - x1) * (x0 - x2))
+                                L1 = ((t - x0) * (t - x2)) / ((x1 - x0) * (x1 - x2))
+                                L2 = ((t - x0) * (t - x1)) / ((x2 - x0) * (x2 - x1))
+                                
+                                return y0 * L0 + y1 * L1 + y2 * L2
+                            
+                            f_func = quadratic_interp
+                        else:
+                            # Función constante si solo hay 2 puntos
+                            f_func = lambda t, fx=fx_value: fx_value
+                else:
+                    # Usar función proporcionada
+                    if 'function' not in point:
+                        raise ValueError(f"Punto {i}: debe contener 'fx' o 'function'")
+                    f_func = point['function']
+                
+                # Seleccionar método según posición
+                if n_points == 1:
+                    # Solo un punto: usar central por defecto
+                    method = 'central'
+                elif i == 0:
+                    # Primer punto: progresivo
+                    method = 'progressive'
+                elif i == n_points - 1:
+                    # Último punto: regresivo
+                    method = 'regressive'
+                else:
+                    # Puntos intermedios: central (mayor precisión)
+                    method = 'central'
+                
+                # Calcular derivada con método seleccionado
+                result = self.calculate_single_point(x, h, f_func, method)
+                result['position_in_list'] = i
+                result['total_points'] = n_points
+                result['auto_selected_method'] = method
+                
+                results.append(result)
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Error en cálculo automático por lista: {e}")
+            raise ValueError(f"Error en auto_calculate_list: {e}")
+    
+    def calculate_single_point(self, x: float, h: float, f_func: callable, method: str) -> dict:
+        """
+        Cálculo para un punto específico con método seleccionado.
+        
+        Args:
+            x: Punto de evaluación
+            h: Tamaño de paso
+            f_func: Función a derivar
+            method: 'progressive', 'regressive', o 'central'
+            
+        Returns:
+            Diccionario con resultado del cálculo
+        """
+        try:
+            method = method.lower()
+            
+            if method == 'progressive':
+                return self.progressive_method(x, h, f_func)
+            elif method == 'regressive':
+                return self.regressive_method(x, h, f_func)
+            elif method == 'central':
+                return self.central_method(x, h, f_func)
+            else:
+                raise ValueError(f"Método '{method}' no válido. Use: 'progressive', 'regressive', o 'central'")
+                
+        except Exception as e:
+            self.logger.error(f"Error en cálculo de punto único: {e}")
+            raise ValueError(f"Error en calculate_single_point: {e}")
+    
+    def validate_input_data(self, data_points: List[Dict]) -> bool:
+        """
+        Valida la estructura de los datos de entrada.
+        
+        Args:
+            data_points: Lista de puntos a validar
+            
+        Returns:
+            True si los datos son válidos
+            
+        Raises:
+            ValueError: Si los datos no son válidos
+        """
+        if not isinstance(data_points, list):
+            raise ValueError("data_points debe ser una lista")
+        
+        if len(data_points) == 0:
+            raise ValueError("La lista no puede estar vacía")
+        
+        for i, point in enumerate(data_points):
+            if not isinstance(point, dict):
+                raise ValueError(f"Punto {i}: debe ser un diccionario")
+            
+            # Validar keys requeridos
+            required_keys = ['x', 'h']
+            for key in required_keys:
+                if key not in point:
+                    raise ValueError(f"Punto {i}: falta key requerido '{key}'")
+            
+            # Validar tipos
+            try:
+                float(point['x'])
+                float(point['h'])
+            except (ValueError, TypeError):
+                raise ValueError(f"Punto {i}: 'x' y 'h' deben ser numéricos")
+            
+            # Validar h positivo
+            if float(point['h']) <= 0:
+                raise ValueError(f"Punto {i}: 'h' debe ser positivo")
+            
+            # Validar que tenga fx o function
+            if 'fx' not in point and 'function' not in point:
+                raise ValueError(f"Punto {i}: debe contener 'fx' o 'function'")
+        
+        return True
+    
+    def get_method_info(self) -> Dict[str, Dict]:
+        """
+        Retorna información sobre los métodos disponibles.
+        
+        Returns:
+            Diccionario con información de cada método
+        """
+        return {
+            'progressive': {
+                'name': 'Método Progresivo',
+                'formula': "f'(x) ≈ [f(x+h) - f(x)] / h",
+                'error_order': 'O(h)',
+                'best_for': 'Primer punto de una lista o cuando solo se conoce f(x) y f(x+h)',
+                'points_needed': 2,
+                'points_pattern': '[x, x+h]'
+            },
+            'regressive': {
+                'name': 'Método Regresivo', 
+                'formula': "f'(x) ≈ [f(x) - f(x-h)] / h",
+                'error_order': 'O(h)',
+                'best_for': 'Último punto de una lista o cuando solo se conoce f(x-h) y f(x)',
+                'points_needed': 2,
+                'points_pattern': '[x-h, x]'
+            },
+            'central': {
+                'name': 'Método Central',
+                'formula': "f'(x) ≈ [f(x+h) - f(x-h)] / (2h)",
+                'error_order': 'O(h²)',
+                'best_for': 'Puntos intermedios, mayor precisión',
+                'points_needed': 3,
+                'points_pattern': '[x-h, x, x+h]'
+            }
+        }

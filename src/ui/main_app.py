@@ -14,6 +14,7 @@ from src.ui.tabs.integration_tab import IntegrationTab
 from src.ui.tabs.ode_tab import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -99,10 +100,9 @@ class MathSimulatorApp(ctk.CTk):
         self.tabs["integration"] = IntegrationTab(self.main_frame)
         self.tabs["ode"] = ODETab(self.main_frame)
         self.tabs["finite_diff"] = FiniteDiffTab(self.main_frame)
+        # self.tabs["newton_cotes"] = NewtonCotesTab(self.main_frame)  # TODO: Create NewtonCotesTab
 
         # Pestañas placeholder para las demás
-        self.tabs["newton_cotes"] = self.create_placeholder_tab("📊 Newton-Cotes",
-                                                               "Métodos avanzados de Newton-Cotes para integración numérica")
         self.tabs["interpolation"] = self.create_placeholder_tab("🔗 Interpolación",
                                                                 "Métodos de interpolación polinomial y splines")
         self.tabs["derivatives"] = self.create_placeholder_tab("∂ Derivadas Numéricas",

@@ -1,535 +1,350 @@
 """
-Pestaña de diferencias finitas.
+Pestaña de diferencias finitas - Versión simplificada.
 
-Implementa la interfaz gráfica para los métodos de diferencias finitas
-siguiendo principios SOLID y DRY.
+Solo entrada por lista de puntos con área de resultados expandible.
 """
 
 import customtkinter as ctk
-import matplotlib.pyplot as plt
 import numpy as np
-from typing import Optional
+from typing import Optional, List, Dict
 
 from src.ui.components.base_tab import BaseTab
-from src.core.finite_differences import FiniteDifferenceCalculator
-from src.core.root_finding import create_function_from_string
+from src.core.finite_differences import FiniteDifferences
 from config.settings import NUMERICAL_CONFIG
 
 
 class FiniteDiffTab(BaseTab):
     """
-    Pestaña para diferencias finitas.
-    Hereda funcionalidad común de BaseTab (principio DRY).
+    Pestaña para diferencias finitas simplificada.
+    Solo entrada por lista con área de resultados grande.
     """
     
     def __init__(self, parent):
         super().__init__(parent, "🔢 Diferencias Finitas")
-        self.calculator = FiniteDifferenceCalculator()
+        self.calculator = FiniteDifferences()
+        self.data_points = []
     
     def create_content(self):
-        """Crear contenido específico para diferencias finitas (Template Method)"""
+        """Crear contenido específico para diferencias finitas"""
+        # Configurar el grid principal para que se expanda
+        self.content_frame.grid_columnconfigure(0, weight=1)
+        self.content_frame.grid_rowconfigure(1, weight=0)  # Input section
+        self.content_frame.grid_rowconfigure(2, weight=1)  # Results section (expandible)
+        
         # Descripción
         desc_label = ctk.CTkLabel(
             self.content_frame,
-            text="Métodos de diferencias finitas para calcular derivadas numéricas",
-            font=ctk.CTkFont(size=14)
+            text="Diferencias Finitas - Entrada directa de puntos (x, f(x))",
+            font=ctk.CTkFont(size=14, weight="bold")
         )
         desc_label.grid(row=0, column=0, pady=10, padx=20, sticky="ew")
         
-        # Crear sección de entrada
-        input_data = {
-            "Función f(x):": "x**3 + 2*x**2 - x + 1",
-            "Punto x₀:": "1",
-            "Paso h:": "0.1"
-        }
-        self.entries = self.create_input_section(input_data)
+        # Sección de entrada (más compacta)
+        self.create_input_section()
         
-        # Agregar selector de orden de derivada
-        input_frame = self.content_frame.winfo_children()[1]  # Frame de entrada
+        # Sección de resultados (expandible)
+        self.create_large_results_section()
+
+    def create_input_section(self):
+        """Crear sección de entrada compacta solo para lista de puntos"""
+        # Frame para la entrada
+        input_frame = ctk.CTkFrame(self.content_frame)
+        input_frame.grid(row=1, column=0, pady=10, padx=20, sticky="ew")
+        input_frame.grid_columnconfigure(1, weight=1)
         
-        ctk.CTkLabel(input_frame, text="Orden de derivada:").grid(
-            row=len(input_data), column=0, padx=10, pady=5, sticky="w"
+        # Paso h común para todos los puntos
+        ctk.CTkLabel(input_frame, text="Paso h (común):").grid(
+            row=0, column=0, padx=10, pady=5, sticky="w"
         )
-        self.order_combobox = ctk.CTkComboBox(
-            input_frame, 
-            values=["1", "2", "3"], 
-            state="readonly"
-        )
-        self.order_combobox.grid(row=len(input_data), column=1, padx=10, pady=5, sticky="w")
-        self.order_combobox.set("1")
+        self.h_entry = ctk.CTkEntry(input_frame, width=100)
+        self.h_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+        self.h_entry.insert(0, "0.1")
         
-        # Crear sección de métodos
-        methods = [
-            ("Hacia Adelante", self.forward_difference),
-            ("Hacia Atrás", self.backward_difference),
-            ("Central", self.central_difference),
-            ("Análisis Completo", self.complete_analysis)
+        # Tabla para entrada de puntos
+        table_label = ctk.CTkLabel(
+            input_frame,
+            text="Puntos (x, f(x)):",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        table_label.grid(row=1, column=0, columnspan=3, pady=(10,5), padx=10, sticky="w")
+        
+        # Frame para la tabla
+        self.table_frame = ctk.CTkFrame(input_frame)
+        self.table_frame.grid(row=2, column=0, columnspan=3, pady=5, padx=10, sticky="ew")
+        
+        # Headers
+        ctk.CTkLabel(self.table_frame, text="x", font=ctk.CTkFont(weight="bold")).grid(
+            row=0, column=0, padx=5, pady=2
+        )
+        ctk.CTkLabel(self.table_frame, text="f(x)", font=ctk.CTkFont(weight="bold")).grid(
+            row=0, column=1, padx=5, pady=2
+        )
+        
+        # Crear entradas para puntos
+        self.point_entries = []
+        for i in range(6):  # 6 filas por defecto
+            x_entry = ctk.CTkEntry(self.table_frame, width=80)
+            fx_entry = ctk.CTkEntry(self.table_frame, width=80)
+            
+            x_entry.grid(row=i+1, column=0, padx=5, pady=2)
+            fx_entry.grid(row=i+1, column=1, padx=5, pady=2)
+            
+            self.point_entries.append((x_entry, fx_entry))
+        
+        # Valores por defecto
+        default_points = [
+            ("1.0", "3.0"),
+            ("1.1", "3.651"),
+            ("1.2", "4.448"),
+            ("1.3", "5.403")
         ]
-        self.create_methods_section(methods)
         
-        # Crear sección de resultados
-        self.results_frame, self.results_text, self.plot_frame = self.create_results_section()
-    
-    def forward_difference(self):
-        """Ejecutar diferencias hacia adelante"""
+        for i, (x_val, fx_val) in enumerate(default_points):
+            if i < len(self.point_entries):
+                self.point_entries[i][0].insert(0, x_val)
+                self.point_entries[i][1].insert(0, fx_val)
+        
+        # Botón de cálculo
+        calculate_btn = ctk.CTkButton(
+            input_frame,
+            text="🧮 Calcular Diferencias Finitas",
+            command=self.calculate_list_mode,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            width=250
+        )
+        calculate_btn.grid(row=3, column=0, columnspan=3, pady=15, padx=10)
+
+    def create_large_results_section(self):
+        """Crear sección de resultados expandible y grande"""
+        # Frame principal para resultados que se expande
+        self.results_frame = ctk.CTkFrame(self.content_frame)
+        self.results_frame.grid(row=2, column=0, pady=10, padx=20, sticky="nsew")
+        self.results_frame.grid_columnconfigure(0, weight=1)
+        self.results_frame.grid_rowconfigure(1, weight=1)
+        
+        # Título de resultados
+        results_title = ctk.CTkLabel(
+            self.results_frame,
+            text="📊 Resultados",
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        results_title.grid(row=0, column=0, pady=10, padx=20, sticky="w")
+        
+        # Área de texto expandible para resultados
+        self.results_text = ctk.CTkTextbox(
+            self.results_frame,
+            height=400,  # Altura inicial grande
+            font=ctk.CTkFont(family="Consolas", size=12),
+            wrap="word"
+        )
+        self.results_text.grid(row=1, column=0, pady=10, padx=20, sticky="nsew")
+        
+        # Mensaje inicial
+        initial_message = """🔢 Diferencias Finitas - Listo para calcular
+
+📝 Instrucciones:
+1. Ingrese el paso h común para todos los puntos
+2. Complete la tabla con los puntos (x, f(x))
+3. Haga clic en "Calcular Diferencias Finitas"
+
+ℹ️ El sistema seleccionará automáticamente:
+• Método Progresivo: para el primer punto
+• Método Central: para puntos intermedios (mayor precisión)
+• Método Regresivo: para el último punto
+
+Los resultados mostrarán explicaciones paso a paso del proceso de cálculo."""
+        
+        self.results_text.insert("0.0", initial_message)
+
+    def calculate_list_mode(self):
+        """Ejecutar cálculo en modo lista"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "punto_x₀", "paso_h"]
-            )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            # Validar paso h
+            try:
+                h = float(self.h_entry.get())
+                if h <= 0:
+                    raise ValueError("El paso h debe ser positivo")
+            except ValueError:
+                self.show_error("Paso h inválido. Ingrese un número positivo.")
                 return
             
-            # Crear función
-            f = create_function_from_string(values["función_fx"])
-            order = int(self.order_combobox.get())
+            # Recopilar puntos válidos
+            data_points = []
+            for i, (x_entry, fx_entry) in enumerate(self.point_entries):
+                x_text = x_entry.get().strip()
+                fx_text = fx_entry.get().strip()
+                
+                if x_text and fx_text:  # Solo procesar si ambos campos tienen datos
+                    try:
+                        x = float(x_text)
+                        fx = float(fx_text)
+                        data_points.append({
+                            "x": x,
+                            "h": h,
+                            "fx": fx
+                        })
+                    except ValueError:
+                        self.show_error(f"Error en fila {i+1}: valores numéricos inválidos")
+                        return
             
-            # Ejecutar método
-            result = self.calculator.forward_difference(
-                f, values["punto_x₀"], values["paso_h"], order
-            )
-            
-            # Mostrar resultados
-            self._display_results(result)
-            
-            # Crear gráfico
-            self._plot_derivative_analysis(f, result, "Hacia Adelante")
-            
-        except Exception as e:
-            self.show_error(f"Error en diferencias hacia adelante: {e}")
-    
-    def backward_difference(self):
-        """Ejecutar diferencias hacia atrás"""
-        try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "punto_x₀", "paso_h"]
-            )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if len(data_points) < 2:
+                self.show_error("Se necesitan al menos 2 puntos para calcular diferencias finitas")
                 return
             
-            # Crear función
-            f = create_function_from_string(values["función_fx"])
-            order = int(self.order_combobox.get())
+            # Calcular usando auto_calculate_list
+            results = self.calculator.auto_calculate_list(data_points)
             
-            # Ejecutar método
-            result = self.calculator.backward_difference(
-                f, values["punto_x₀"], values["paso_h"], order
-            )
-            
-            # Mostrar resultados
-            self._display_results(result)
-            
-            # Crear gráfico
-            self._plot_derivative_analysis(f, result, "Hacia Atrás")
+            # Mostrar resultados mejorados
+            self._display_improved_results(results, h, manual_mode=False)
             
         except Exception as e:
-            self.show_error(f"Error en diferencias hacia atrás: {e}")
+            self.show_error(f"Error en cálculo: {e}")
+
+    # Métodos heredados de BaseTab - mantener para compatibilidad
+    def progressive_method(self):
+        """Método progresivo - ahora redirige al cálculo principal"""
+        self.calculate_list_mode()
     
-    def central_difference(self):
-        """Ejecutar diferencias centrales"""
-        try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "punto_x₀", "paso_h"]
-            )
-            
-            if not is_valid:
-                self.show_error(error_msg)
-                return
-            
-            # Crear función
-            f = create_function_from_string(values["función_fx"])
-            order = int(self.order_combobox.get())
-            
-            # Ejecutar método
-            result = self.calculator.central_difference(
-                f, values["punto_x₀"], values["paso_h"], order
-            )
-            
-            # Mostrar resultados
-            self._display_results(result)
-            
-            # Crear gráfico
-            self._plot_derivative_analysis(f, result, "Central")
-            
-        except Exception as e:
-            self.show_error(f"Error en diferencias centrales: {e}")
+    def regressive_method(self):
+        """Método regresivo - ahora redirige al cálculo principal"""
+        self.calculate_list_mode()
+    
+    def central_method(self):
+        """Método central - ahora redirige al cálculo principal"""
+        self.calculate_list_mode()
+    
+    def auto_calculate(self):
+        """Cálculo automático - ahora redirige al cálculo principal"""
+        self.calculate_list_mode()
     
     def complete_analysis(self):
-        """Análisis completo comparando todos los métodos"""
-        try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "punto_x₀", "paso_h"]
-            )
-            
-            if not is_valid:
-                self.show_error(error_msg)
-                return
-            
-            # Crear función
-            f = create_function_from_string(values["función_fx"])
-            order = int(self.order_combobox.get())
-            
-            # Ejecutar todos los métodos
-            results = self.calculator.compare_all_methods(
-                f, values["punto_x₀"], values["paso_h"], order
-            )
-            
-            # Mostrar comparación
-            self._display_comparison(results, order)
-            
-            # Crear gráfico comparativo
-            self._plot_comparison(f, results, values["punto_x₀"], values["paso_h"])
-            
-        except Exception as e:
-            self.show_error(f"Error en análisis completo: {e}")
-    
-    def _display_results(self, result):
-        """Mostrar resultados de un método específico"""
-        # Datos principales
-        main_data = {
-            "Función": self.entries["función_fx"].get(),
-            "Punto": f"x₀ = {result.point}",
-            "Método": result.method,
-            "Orden de derivada": result.order,
-            "Paso (h)": f"{result.step_size:.6f}",
-            "Derivada aproximada": f"{result.value:.10f}"
-        }
+        """Análisis completo - ahora redirige al cálculo principal"""
+        self.calculate_list_mode()
+
+    def _display_improved_results(self, results, h, manual_mode=False, function_str=None):
+        """Mostrar resultados mejorados con explicaciones paso a paso"""
+        self.results_text.delete("1.0", "end")
         
-        # Agregar información exacta si está disponible
-        if result.exact_value is not None:
-            main_data["Valor exacto"] = f"{result.exact_value:.10f}"
-            main_data["Error absoluto"] = f"{result.absolute_error:.2e}"
-            main_data["Error relativo"] = f"{result.relative_error:.6f}%"
+        output = []
+        output.append("🎯 RESULTADOS DIFERENCIAS FINITAS")
+        output.append("=" * 60)
+        output.append("")
         
-        # Secciones adicionales
-        sections = {}
+        if manual_mode and function_str:
+            output.append(f"📝 Función: f(x) = {function_str}")
         
-        # Fórmula utilizada
-        if result.formula:
-            sections["FÓRMULA UTILIZADA"] = [
-                result.formula,
-                f"Orden de error: {result.error_order}"
-            ]
+        output.append(f"📐 Paso común: h = {h}")
+        output.append(f"📊 Total de puntos procesados: {len(results)}")
+        output.append("")
         
-        # Información del método
-        method_info = []
-        if "adelante" in result.method.lower():
-            method_info = [
-                "Usa puntos hacia adelante desde x₀",
-                "Error: O(h) - convergencia lineal",
-                "Útil en bordes izquierdos del dominio",
-                "Requiere menos puntos hacia atrás"
-            ]
-        elif "atrás" in result.method.lower():
-            method_info = [
-                "Usa puntos hacia atrás desde x₀",
-                "Error: O(h) - convergencia lineal", 
-                "Útil en bordes derechos del dominio",
-                "Requiere menos puntos hacia adelante"
-            ]
-        elif "central" in result.method.lower():
-            method_info = [
-                "Usa puntos en ambas direcciones desde x₀",
-                "Error: O(h²) - convergencia cuadrática (orden 1)",
-                "Generalmente más preciso que forward/backward",
-                "Requiere puntos en ambas direcciones"
-            ]
+        # Estadísticas de métodos
+        methods_count = {}
+        for result in results:
+            method = result.get('auto_selected_method', result.get('method', 'unknown'))
+            methods_count[method] = methods_count.get(method, 0) + 1
         
-        if method_info:
-            sections["CARACTERÍSTICAS DEL MÉTODO"] = method_info
+        output.append("🔧 MÉTODOS UTILIZADOS:")
+        for method, count in methods_count.items():
+            output.append(f"   • {method.title()}: {count} vez(es)")
+        output.append("")
         
-        # Datos de computación
-        if result.computation_data:
-            comp_data = result.computation_data
-            if 'points_used' in comp_data and 'function_evaluations' in comp_data:
-                points = comp_data['points_used']
-                values = comp_data['function_evaluations']
-                
-                computation_lines = []
-                computation_lines.append("Puntos utilizados en el cálculo:")
-                computation_lines.append(f"{'Punto':<12} {'f(x)':<15}")
-                computation_lines.append("-" * 30)
-                
-                for point, value in zip(points, values):
-                    computation_lines.append(f"{point:<12.6f} {value:<15.8f}")
-                
-                sections["DATOS DE COMPUTACIÓN"] = computation_lines
+        # Resultados detallados para cada punto
+        for i, result in enumerate(results, 1):
+            output.append(f"{'='*50}")
+            output.append(f"📍 PUNTO {i}: x = {result['x']}")
+            output.append(f"{'='*50}")
+            
+            # Información del método
+            method = result.get('auto_selected_method', result.get('method', 'unknown'))
+            output.append(f"🔸 Método seleccionado: {method.title()}")
+            output.append(f"   Fórmula: {result.get('formula', 'N/A')}")
+            output.append(f"   Error de truncamiento: {result.get('error_order', 'N/A')}")
+            
+            # Justificación de selección automática
+            if 'position_in_list' in result:
+                pos = result['position_in_list'] + 1
+                total = result['total_points']
+                if pos == 1:
+                    justification = "Primer punto → Método progresivo"
+                elif pos == total:
+                    justification = "Último punto → Método regresivo"
+                else:
+                    justification = "Punto intermedio → Método central (mayor precisión)"
+                output.append(f"   Justificación: {justification}")
+            
+            output.append("")
+            
+            # Proceso de cálculo
+            output.append("📝 PROCESO DE CÁLCULO:")
+            output.append("-" * 30)
+            
+            # Evaluaciones de función
+            if 'fx_minus_h' in result:
+                output.append(f"   f({result['x'] - h:.3f}) = {result['fx_minus_h']:.6f}")
+            if 'fx' in result:
+                output.append(f"   f({result['x']:.3f}) = {result['fx']:.6f}")
+            if 'fx_plus_h' in result:
+                output.append(f"   f({result['x'] + h:.3f}) = {result['fx_plus_h']:.6f}")
+            
+            output.append("")
+            
+            # Sustitución en fórmula
+            output.append("🧮 SUSTITUCIÓN EN FÓRMULA:")
+            if method == 'progressive':
+                output.append(f"   f'({result['x']}) ≈ [{result['fx_plus_h']:.6f} - {result['fx']:.6f}] / {h}")
+                output.append(f"   f'({result['x']}) ≈ {result['fx_plus_h'] - result['fx']:.6f} / {h}")
+            elif method == 'regressive':
+                output.append(f"   f'({result['x']}) ≈ [{result['fx']:.6f} - {result['fx_minus_h']:.6f}] / {h}")
+                output.append(f"   f'({result['x']}) ≈ {result['fx'] - result['fx_minus_h']:.6f} / {h}")
+            elif method == 'central':
+                output.append(f"   f'({result['x']}) ≈ [{result['fx_plus_h']:.6f} - {result['fx_minus_h']:.6f}] / (2 × {h})")
+                output.append(f"   f'({result['x']}) ≈ {result['fx_plus_h'] - result['fx_minus_h']:.6f} / {2 * h}")
+            
+            output.append("")
+            
+            # Resultado final
+            output.append("🎯 RESULTADO FINAL:")
+            output.append(f"   f'({result['x']}) ≈ {result['derivative']:.8f}")
+            
+            # Análisis de error
+            output.append("")
+            output.append("📊 ANÁLISIS DE ERROR:")
+            error_order = result.get('error_order', 'N/A')
+            if error_order == 'O(h²)':
+                precision = "ALTA (error cuadrático)"
+                estimated_error = h**2
+            else:
+                precision = "MEDIA (error lineal)"
+                estimated_error = h
+            
+            output.append(f"   Error de truncamiento: {error_order}")
+            output.append(f"   Precisión: {precision}")
+            output.append(f"   Error local estimado: ≈ {estimated_error:.6f}")
+            output.append("")
+        
+        # Resumen final
+        output.append("="*60)
+        output.append("📈 RESUMEN GENERAL")
+        output.append("="*60)
+        output.append(f"✅ Procesamiento completado exitosamente")
+        output.append(f"📊 {len(results)} derivadas calculadas")
+        output.append(f"🎯 Paso común utilizado: h = {h}")
         
         # Recomendaciones
-        recommendations = []
-        if result.absolute_error is not None:
-            if result.absolute_error < 1e-8:
-                recommendations.append("✅ Excelente precisión obtenida")
-            elif result.absolute_error < 1e-6:
-                recommendations.append("✅ Buena precisión")
-            elif result.absolute_error < 1e-4:
-                recommendations.append("⚠️ Precisión moderada - considere reducir h")
-            else:
-                recommendations.append("❌ Baja precisión - reduzca h significativamente")
+        output.append("")
+        output.append("💡 RECOMENDACIONES:")
+        if any(result.get('error_order') == 'O(h²)' for result in results):
+            output.append("   • Excelente: Se utilizó método central para máxima precisión")
+        output.append("   • Para mayor precisión, reduzca el valor de h")
+        output.append("   • Para puntos extremos, considere agregar más datos")
         
-        recommendations.extend([
-            "• Para mayor precisión, use diferencias centrales",
-            "• Reduzca h para mejorar la precisión",
-            "• Para funciones suaves, central es generalmente mejor",
-            "• Considere métodos de alta precisión (5-puntos) para mayor exactitud"
-        ])
-        
-        sections["RECOMENDACIONES"] = recommendations
-        
-        # Formatear y mostrar
-        formatted_text = self.format_result_text(
-            f"{result.method} - DERIVADA DE ORDEN {result.order}", 
-            main_data, sections
-        )
+        # Mostrar en el widget de texto
+        result_text = "\n".join(output)
+        self.results_text.insert("1.0", result_text)
+
+    def show_error(self, message):
+        """Mostrar mensaje de error en el área de resultados"""
         self.results_text.delete("1.0", "end")
-        self.results_text.insert("1.0", formatted_text)
-    
-    def _display_comparison(self, results, order):
-        """Mostrar comparación de todos los métodos"""
-        main_data = {
-            "Función": self.entries["función_fx"].get(),
-            "Punto": f"x₀ = {self.entries['punto_x₀'].get()}",
-            "Paso": f"h = {self.entries['paso_h'].get()}",
-            "Orden de derivada": order
-        }
-        
-        # Obtener valor exacto de referencia
-        exact_value = None
-        for result in results.values():
-            if result.exact_value is not None:
-                exact_value = result.exact_value
-                break
-        
-        if exact_value is not None:
-            main_data["Valor exacto"] = f"{exact_value:.10f}"
-        
-        # Tabla comparativa
-        comparison_lines = []
-        comparison_lines.append(f"{'Método':<20} {'Aproximación':<15} {'Error':<15} {'Error Rel.':<12} {'Orden':<8}")
-        comparison_lines.append("-" * 80)
-        
-        # Encontrar el mejor método
-        best_method = None
-        best_error = float('inf')
-        
-        for name, result in results.items():
-            error_str = f"{result.absolute_error:.2e}" if result.absolute_error is not None else "N/A"
-            rel_error_str = f"{result.relative_error:.4f}%" if result.relative_error is not None else "N/A"
-            
-            comparison_lines.append(
-                f"{result.method:<20} {result.value:<15.8f} {error_str:<15} {rel_error_str:<12} {result.error_order:<8}"
-            )
-            
-            # Actualizar mejor método
-            if result.absolute_error is not None and result.absolute_error < best_error:
-                best_error = result.absolute_error
-                best_method = result.method
-        
-        sections = {
-            "COMPARACIÓN DE MÉTODOS": comparison_lines
-        }
-        
-        # Análisis de los resultados
-        if best_method:
-            analysis = []
-            analysis.append(f"✅ Mejor método: {best_method}")
-            analysis.append(f"   Error mínimo: {best_error:.2e}")
-            analysis.append("")
-            analysis.extend([
-                "📊 Características teóricas:",
-                "   • Hacia Adelante: Error O(h), 1 dirección",
-                "   • Hacia Atrás: Error O(h), 1 dirección",
-                "   • Central: Error O(h²), 2 direcciones",
-                "",
-                "🎯 Cuándo usar cada método:",
-                "   • Adelante: borde izquierdo, datos limitados hacia atrás",
-                "   • Atrás: borde derecho, datos limitados hacia adelante",
-                "   • Central: interior del dominio, mejor precisión general",
-                "",
-                "💡 Para mejorar precisión:",
-                "   • Reducir h (pero cuidado con errores de redondeo)",
-                "   • Usar métodos de mayor orden (5-puntos)",
-                "   • Aplicar extrapolación de Richardson"
-            ])
-            
-            sections["ANÁLISIS"] = analysis
-        
-        # Formatear y mostrar
-        formatted_text = self.format_result_text(
-            f"ANÁLISIS COMPLETO - DERIVADA DE ORDEN {order}", 
-            main_data, sections
-        )
-        self.results_text.delete("1.0", "end")
-        self.results_text.insert("1.0", formatted_text)
-    
-    def _plot_derivative_analysis(self, f, result, method_name):
-        """Crear gráfico para análisis de derivadas"""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6), facecolor='#2b2b2b')
-        
-        for ax in [ax1, ax2]:
-            ax.set_facecolor('#2b2b2b')
-        
-        x0 = result.point
-        h = result.step_size
-        
-        # Gráfico 1: Función original y puntos usados
-        x_range = np.linspace(x0 - 3*h, x0 + 3*h, 1000)
-        y_values = [f(x) for x in x_range]
-        
-        ax1.plot(x_range, y_values, 'cyan', linewidth=2, label='f(x)')
-        
-        # Marcar punto de evaluación
-        ax1.plot(x0, f(x0), 'ro', markersize=10, label=f'x₀ = {x0}')
-        
-        # Marcar puntos usados en el cálculo
-        if result.computation_data and 'points_used' in result.computation_data:
-            points = result.computation_data['points_used']
-            values = result.computation_data['function_evaluations']
-            
-            for point, value in zip(points, values):
-                if point != x0:  # No remarcar el punto central
-                    ax1.plot(point, value, 'go', markersize=6, alpha=0.7)
-        
-        self.apply_plot_styling(
-            ax1,
-            title="Función y Puntos de Evaluación",
-            xlabel="x",
-            ylabel="f(x)"
-        )
-        
-        # Gráfico 2: Análisis de convergencia con h
-        h_values = [h * (2**i) for i in range(-3, 4)]  # h/8 a 8h
-        errors = []
-        derivatives = []
-        
-        for h_test in h_values:
-            try:
-                if "adelante" in method_name.lower():
-                    test_result = self.calculator.forward_difference(f, x0, h_test, result.order)
-                elif "atrás" in method_name.lower():
-                    test_result = self.calculator.backward_difference(f, x0, h_test, result.order)
-                else:  # central
-                    test_result = self.calculator.central_difference(f, x0, h_test, result.order)
-                
-                derivatives.append(test_result.value)
-                if test_result.absolute_error is not None:
-                    errors.append(test_result.absolute_error)
-                else:
-                    errors.append(np.nan)
-            except:
-                derivatives.append(np.nan)
-                errors.append(np.nan)
-        
-        # Graficar convergencia
-        valid_indices = [i for i, e in enumerate(errors) if not np.isnan(e) and e > 0]
-        if valid_indices:
-            valid_h = [h_values[i] for i in valid_indices]
-            valid_errors = [errors[i] for i in valid_indices]
-            
-            ax2.loglog(valid_h, valid_errors, 'o-', color='orange', linewidth=2, 
-                      markersize=6, label='Error vs h')
-            
-            # Marcar h actual
-            current_error = result.absolute_error
-            if current_error is not None and current_error > 0:
-                ax2.loglog(h, current_error, 'ro', markersize=10, 
-                          label=f'h actual = {h:.3f}')
-        
-        self.apply_plot_styling(
-            ax2,
-            title="Convergencia del Error",
-            xlabel="Paso h",
-            ylabel="Error absoluto"
-        )
-        
-        plt.tight_layout()
-        canvas = fig.canvas
-        canvas.draw()
-    
-    def _plot_comparison(self, f, results, x0, h):
-        """Crear gráfico comparativo de los métodos"""
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), facecolor='#2b2b2b')
-        
-        for ax in [ax1, ax2]:
-            ax.set_facecolor('#2b2b2b')
-        
-        # Gráfico 1: Función y esquemas de diferencias
-        x_range = np.linspace(x0 - 3*h, x0 + 3*h, 1000)
-        y_values = [f(x) for x in x_range]
-        
-        ax1.plot(x_range, y_values, 'cyan', linewidth=2, label='f(x)')
-        ax1.plot(x0, f(x0), 'ro', markersize=10, label=f'x₀ = {x0}')
-        
-        # Mostrar puntos de cada método
-        colors = {'forward': 'orange', 'backward': 'green', 'central': 'yellow'}
-        for name, result in results.items():
-            if result.computation_data and 'points_used' in result.computation_data:
-                points = result.computation_data['points_used']
-                values = result.computation_data['function_evaluations']
-                
-                color = colors.get(name, 'white')
-                for point, value in zip(points, values):
-                    if abs(point - x0) > 1e-10:  # No remarcar el punto central
-                        ax1.plot(point, value, 'o', color=color, 
-                                markersize=6, alpha=0.7)
-        
-        self.apply_plot_styling(
-            ax1,
-            title="Función y Puntos de Evaluación",
-            xlabel="x",
-            ylabel="f(x)"
-        )
-        
-        # Gráfico 2: Comparación de precisión
-        methods = [result.method for result in results.values()]
-        values_computed = [result.value for result in results.values()]
-        errors = [result.absolute_error if result.absolute_error is not None else 0 
-                 for result in results.values()]
-        
-        # Gráfico de barras para los valores
-        x_pos = np.arange(len(methods))
-        bars1 = ax2.bar(x_pos - 0.2, values_computed, 0.4, 
-                       color=['orange', 'green', 'yellow'], alpha=0.7, 
-                       label='Aproximaciones')
-        
-        # Línea del valor exacto si está disponible
-        exact_value = None
-        for result in results.values():
-            if result.exact_value is not None:
-                exact_value = result.exact_value
-                break
-        
-        if exact_value is not None:
-            ax2.axhline(y=exact_value, color='white', linestyle='--', 
-                       linewidth=2, label=f'Exacto: {exact_value:.8f}')
-        
-        # Añadir valores en las barras
-        for bar, value in zip(bars1, values_computed):
-            height = bar.get_height()
-            ax2.text(bar.get_x() + bar.get_width()/2., height + 0.001*abs(height),
-                    f'{value:.6f}', ha='center', va='bottom', color='white', fontsize=9)
-        
-        ax2.set_xticks(x_pos)
-        ax2.set_xticklabels([m.replace('Diferencias ', '') for m in methods], rotation=45)
-        
-        self.apply_plot_styling(
-            ax2,
-            title="Comparación de Aproximaciones",
-            xlabel="Método",
-            ylabel="Valor de la Derivada"
-        )
-        
-        plt.tight_layout()
-        canvas = fig.canvas
-        canvas.draw()
+        error_msg = f"❌ ERROR\n\n{message}\n\nPor favor, corrija los datos e intente nuevamente."
+        self.results_text.insert("1.0", error_msg)
