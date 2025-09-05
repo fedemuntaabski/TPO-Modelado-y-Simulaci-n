@@ -13,6 +13,7 @@ from src.ui.tabs.roots_tab import RootsTab
 from src.ui.tabs.integration_tab import IntegrationTab
 from src.ui.tabs.ode_tab import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
+from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
 
 
 logger = logging.getLogger(__name__)
@@ -24,9 +25,10 @@ class MathSimulatorApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        # Configuración de la ventana
+        # Configuración de la ventana - más grande para Newton-Cotes
         self.title("🧮 Simulador Matemático v4.0 - Modular")
-        self.geometry("1200x800")
+        self.geometry("1500x900")  # Aumentado de 1200x800 a 1500x900
+        self.minsize(1400, 850)   # Tamaño mínimo para que todo se vea bien
 
         # Configurar grid
         self.grid_rowconfigure(0, weight=1)
@@ -100,7 +102,7 @@ class MathSimulatorApp(ctk.CTk):
         self.tabs["integration"] = IntegrationTab(self.main_frame)
         self.tabs["ode"] = ODETab(self.main_frame)
         self.tabs["finite_diff"] = FiniteDiffTab(self.main_frame)
-        # self.tabs["newton_cotes"] = NewtonCotesTab(self.main_frame)  # TODO: Create NewtonCotesTab
+        self.tabs["newton_cotes"] = NewtonCotesTab(self.main_frame)
 
         # Pestañas placeholder para las demás
         self.tabs["interpolation"] = self.create_placeholder_tab("🔗 Interpolación",

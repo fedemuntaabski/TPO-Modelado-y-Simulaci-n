@@ -33,14 +33,22 @@ def run_simple_app():
     try:
         print("🚀 Iniciando Simulador Matemático")
         app = MathSimulatorApp()
+        print("✅ Aplicación inicializada correctamente")
         app.mainloop()
         return 0
     except Exception as e:
-        logger.error(f"Error en aplicación simplificada: {e}")
         print(f"❌ Error en interfaz simplificada: {e}")
         return 1
 
 
+
+
 if __name__ == "__main__":
-    exit_code = run_simple_app()
-    sys.exit(exit_code)
+    logging.basicConfig(level=logging.INFO)
+    
+    if MODULES_AVAILABLE:
+        exit_code = run_simple_app()
+        sys.exit(exit_code)
+    else:
+        print("No se puede ejecutar la aplicación sin los módulos necesarios.")
+        sys.exit(1)
