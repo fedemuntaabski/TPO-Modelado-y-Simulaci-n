@@ -52,7 +52,7 @@ class NewtonCotesTab(QWidget):
         self.function_input.setPlaceholderText("Ej: x**2, sin(x), exp(-x**2)")
         self.function_input.focusInEvent = lambda e: self.keyboard.set_target(self.function_input)
         function_label = QLabel("f(x):")
-        function_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
+        function_label.setStyleSheet("font-size: 16px; margin: 1px; padding: 1px;")
         input_layout.addWidget(function_label)
         input_layout.addWidget(self.function_input)
 
@@ -64,7 +64,7 @@ class NewtonCotesTab(QWidget):
         self.a_input.setPlaceholderText("Ej: 0, pi/2, sqrt(2)")
         self.a_input.setMaximumWidth(80)
         a_label = QLabel("a:")
-        a_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
+        a_label.setStyleSheet("font-size: 16px; margin: 1px; padding: 1px;")
         limits_layout.addWidget(a_label)
         limits_layout.addWidget(self.a_input)
 
@@ -73,7 +73,7 @@ class NewtonCotesTab(QWidget):
         self.b_input.setPlaceholderText("Ej: 1, pi, 2*pi")
         self.b_input.setMaximumWidth(80)
         b_label = QLabel("b:")
-        b_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
+        b_label.setStyleSheet("font-size: 16px; margin: 1px; padding: 1px;")
         limits_layout.addWidget(b_label)
         limits_layout.addWidget(self.b_input)
 
@@ -84,7 +84,7 @@ class NewtonCotesTab(QWidget):
         self.n_input.setRange(2, 1000)
         self.n_input.setValue(100)
         n_label = QLabel("n:")
-        n_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
+        n_label.setStyleSheet("font-size: 16px; margin: 1px; padding: 1px;")
         input_layout.addWidget(n_label)
         input_layout.addWidget(self.n_input)
 
@@ -108,7 +108,7 @@ class NewtonCotesTab(QWidget):
         ])
         self.method_combo.setCurrentText("Simpson 1/3 Compuesto")
         method_label = QLabel("Método:")
-        method_label.setStyleSheet("font-size: 8px; margin: 0px; padding: 0px;")
+        method_label.setStyleSheet("font-size: 16px; margin: 1px; padding: 1px;")
         method_layout.addWidget(method_label)
         method_layout.addWidget(self.method_combo)
         input_layout.addLayout(method_layout)
