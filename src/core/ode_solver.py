@@ -44,7 +44,7 @@ class ODESolver:
     Sigue el principio de responsabilidad única (SRP) del SOLID.
     """
     
-    def __init__(self, use_scipy: bool = True):
+    def __init__(self, use_scipy: bool = True) -> None:
         self.use_scipy = use_scipy
         
         # Intentar importar scipy para soluciones exactas

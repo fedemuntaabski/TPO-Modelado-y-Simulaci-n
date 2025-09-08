@@ -2,10 +2,6 @@
 
 Un simulador interactivo completo para métodos numéricos con interfaz gráfica moderna, completamente modularizado siguiendo principios SOLID y DRY.
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CustomTkinter](https://img.shields.io/badge/UI-CustomTkinter-orange.svg)](https://github.com/TomSchimansky/CustomTkinter)
-
 ## 🚀 Características Principales
 
 ### ✅ **Funcionalidades Completas**
@@ -18,14 +14,6 @@ Un simulador interactivo completo para métodos numéricos con interfaz gráfica
 - 🎨 **Interfaz Moderna**: CustomTkinter con diseño responsivo y oscuro
 - 📊 **Visualización**: Gráficos interactivos con Matplotlib
 - ✅ **Tests Completos**: Suite de pruebas unitarias para validación
-
-### 🆕 **Novedades v4.0**
-- ✨ **Newton-Cotes Completo**: Interfaz dedicada con 8 métodos
-- 📋 **Tabla de Iteraciones**: Visualización detallada de cada paso
-- 🔧 **Parser Seguro**: Evaluación segura de funciones con AST
-- ✅ **Validaciones Avanzadas**: Manejo robusto de errores
-- 🎯 **Ejemplos Interactivos**: Biblioteca de casos de prueba
-- 📊 **Información Detallada**: Coeficientes, fórmulas y estadísticas
 
 ## 📁 Estructura del Proyecto
 
@@ -133,51 +121,6 @@ python main_simple.py
 - Extrapolación de Richardson
 - Análisis de precisión y convergencia
 
-## 🧪 Testing
-
-### Ejecutar Todos los Tests
-```bash
-python tests/run_tests.py
-```
-
-### Tests Específicos
-```bash
-# Tests de Newton-Cotes
-python -m unittest tests.test_newton_cotes -v
-
-# Tests de raíces
-python -m unittest tests.test_root_finding -v
-
-# Tests de EDOs
-python -m unittest tests.test_ode_solver -v
-
-# Tests de diferencias finitas
-python -m unittest tests.test_finite_differences -v
-```
-
-## 🎯 Uso de la Aplicación
-
-### ✨ **Newton-Cotes (Recomendado)**
-1. Seleccionar la pestaña **"📊 Newton-Cotes"**
-2. Elegir uno de los 8 métodos disponibles
-3. Ingresar función: `x**2`, `sin(x)`, `exp(-x**2)`, etc.
-4. Definir intervalo: `[a, b]` y subdivisiones `n`
-5. **¡Ver tabla de iteraciones completa!**
-6. Comparar resultados con diferentes métodos
-
-### 🎯 **Búsqueda de Raíces**
-1. Seleccionar método (Bisección, Newton-Raphson, Punto Fijo)
-2. Ingresar función como string: `x**2 - 4`
-3. Definir intervalo o valor inicial
-4. Ajustar tolerancia e iteraciones máximas
-5. Visualizar convergencia y resultados
-
-### 📈 **EDOs**
-1. Seleccionar método de integración
-2. Definir EDO: `dy/dx = -2*x*y`
-3. Establecer condición inicial: `y(0) = 1`
-4. Configurar paso y rango de solución
-5. Visualizar solución gráfica
 
 ## 🔧 Tecnologías Utilizadas
 
@@ -202,23 +145,9 @@ python -m unittest tests.test_finite_differences -v
 - **KISS** (Keep It Simple): Soluciones simples y claras
 - **Separation of Concerns**: UI, lógica y datos separados
 - **Fail-Fast**: Detección temprana de errores
-
-## 🤝 Contribución
-
-1. **Fork** el proyecto
-2. Crear rama: `git checkout -b feature/AmazingFeature`
-3. **Commit** cambios: `git commit -m 'Add AmazingFeature'`
-4. **Push** rama: `git push origin feature/AmazingFeature`
-5. Abrir **Pull Request**
-
 ### 📝 Agregar Nuevos Métodos
 1. Implementar lógica en `src/core/`
 2. Crear interfaz en `src/ui/tabs/`
 3. Agregar tests en `tests/`
 4. Actualizar documentación
 
-## 📄 Licencia
-**🚀 Ejecuta `python main_simple.py` y comienza a explorar los métodos numéricos de manera interactiva.**
-
-⭐ **Si te gusta el proyecto, ¡dale una estrella en GitHub!**
-   ```

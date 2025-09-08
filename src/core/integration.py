@@ -40,7 +40,7 @@ class NumericalIntegrator:
     Sigue el principio de responsabilidad única (SRP) del SOLID.
     """
     
-    def __init__(self, use_scipy: bool = True):
+    def __init__(self, use_scipy: bool = True) -> None:
         self.use_scipy = use_scipy
         
         # Intentar importar scipy para valores exactos
@@ -207,7 +207,7 @@ class NumericalIntegrator:
         Simpson adaptativo con refinamiento automático.
         Principio KISS: mantiene la lógica simple pero efectiva.
         """
-        def simpson_single(fa, fb, fc, h):
+        def simpson_single(fa: float, fb: float, fc: float, h: float) -> float:
             """Simpson simple en un intervalo"""
             return h/6 * (fa + 4*fc + fb)
         
@@ -219,7 +219,7 @@ class NumericalIntegrator:
         s1 = simpson_single(fa, fb, fc, h)
         
         # Refinar recursivamente
-        def recursive_simpson(xa, xb, fa, fb, s_total, tolerance, depth=0):
+        def recursive_simpson(xa: float, xb: float, fa: float, fb: float, s_total: float, tolerance: float, depth: int = 0) -> float:
             if depth > 20:  # Evitar recursión infinita
                 return s_total
             

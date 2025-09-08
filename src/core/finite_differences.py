@@ -47,7 +47,7 @@ class FiniteDifferenceCalculator:
     Sigue el principio de responsabilidad única (SRP) del SOLID.
     """
     
-    def __init__(self, high_precision_h: float = 1e-8):
+    def __init__(self, high_precision_h: float = 1e-8) -> None:
         self.high_precision_h = high_precision_h
     
     def forward_difference(self, f: Callable[[float], float], 
@@ -496,7 +496,7 @@ class FiniteDifferences:
     Implementa métodos progresivo, regresivo y central con modo automático por listas.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Inicialización del calculador de diferencias finitas"""
         self.logger = logging.getLogger(__name__)
     
@@ -690,7 +690,7 @@ class FiniteDifferences:
                             prev_point = data_points[i - 1]
                             next_point = data_points[i + 1]
                             # Interpolación cuadrática simple
-                            def quadratic_interp(t):
+                            def quadratic_interp(t: float) -> float:
                                 x0, x1, x2 = prev_point['x'], x, next_point['x']
                                 y0, y1, y2 = prev_point.get('fx', fx_value), fx_value, next_point.get('fx', fx_value)
                                 

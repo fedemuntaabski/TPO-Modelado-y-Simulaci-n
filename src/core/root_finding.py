@@ -31,7 +31,7 @@ class RootFinder:
     Sigue el principio de responsabilidad única (SRP) del SOLID.
     """
     
-    def __init__(self, tolerance: float = 1e-6, max_iterations: int = 100):
+    def __init__(self, tolerance: float = 1e-6, max_iterations: int = 100) -> None:
         self.tolerance = tolerance
         self.max_iterations = max_iterations
     
@@ -208,7 +208,7 @@ class RootFinder:
         Calcula la derivada numérica usando diferencias centrales.
         Principio DRY: reutilizable para cualquier función.
         """
-        def df(x):
+        def df(x: float) -> float:
             return (f(x + h) - f(x - h)) / (2 * h)
         return df
 
@@ -228,7 +228,7 @@ def create_function_from_string(expr: str) -> Callable[[float], float]:
         "pi": np.pi, "e": np.e
     }
     
-    def safe_eval(x_val):
+    def safe_eval(x_val: float) -> float:
         # Preparar el namespace seguro
         namespace = allowed_names.copy()
         namespace["x"] = x_val

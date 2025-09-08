@@ -294,7 +294,7 @@ class IntegrationValidator:
         return requirements
 
 
-def test_integration_validator():
+def test_integration_validator() -> None:
     """Función de prueba para el validador"""
     validator = IntegrationValidator()
     

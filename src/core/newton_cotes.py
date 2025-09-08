@@ -83,7 +83,7 @@ class NewtonCotes:
     y optimizaciones de rendimiento.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.parser = FunctionParser()
         self.validator = IntegrationValidator()
         
@@ -630,7 +630,7 @@ class NewtonCotes:
 
 
 # Funciones de utilidad y prueba
-def demo_newton_cotes():
+def demo_newton_cotes() -> None:
     """Demostración completa de Newton-Cotes"""
     nc = NewtonCotes()
     

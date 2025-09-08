@@ -11,14 +11,15 @@ import numpy as np
 from typing import Optional
 
 from src.ui.components.base_tab import BaseTab
+from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.core.ode_solver import ODESolver
 from config.settings import NUMERICAL_CONFIG
 
 
-class ODETab(BaseTab):
+class ODETab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
     """
     Pestaña para ecuaciones diferenciales ordinarias.
-    Hereda funcionalidad común de BaseTab (principio DRY).
+    Hereda funcionalidad común de BaseTab y usa mixins para reducir duplicación.
     """
     
     def __init__(self, parent):

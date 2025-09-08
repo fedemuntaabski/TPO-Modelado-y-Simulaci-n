@@ -9,14 +9,15 @@ import numpy as np
 from typing import Optional, List, Dict
 
 from src.ui.components.base_tab import BaseTab
+from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.core.finite_differences import FiniteDifferences
 from config.settings import NUMERICAL_CONFIG
 
 
-class FiniteDiffTab(BaseTab):
+class FiniteDiffTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
     """
     Pestaña para diferencias finitas simplificada.
-    Solo entrada por lista con área de resultados grande.
+    Hereda funcionalidad común de BaseTab y usa mixins para reducir duplicación.
     """
     
     def __init__(self, parent):

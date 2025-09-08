@@ -11,14 +11,15 @@ import numpy as np
 from typing import Optional
 
 from src.ui.components.base_tab import BaseTab
+from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.core.root_finding import RootFinder, create_function_from_string
 from config.settings import NUMERICAL_CONFIG
 
 
-class RootsTab(BaseTab):
+class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
     """
     Pestaña para búsqueda de raíces.
-    Hereda funcionalidad común de BaseTab (principio DRY).
+    Hereda funcionalidad común de BaseTab y usa mixins para reducir duplicación.
     """
     
     def __init__(self, parent):
@@ -59,98 +60,119 @@ class RootsTab(BaseTab):
         self.results_frame, self.results_text, self.plot_frame = self.create_results_section()
     
     def bisection_method(self):
-        """Ejecutar método de bisección"""
+        """Ejecutar método de bisección usando mixins"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries, 
-                ["función_fx", "intervalo_a", "intervalo_b", "tolerancia"]
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
             )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if not is_valid_func:
+                self.show_error(func_error)
                 return
-            
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["intervalo_a", "intervalo_b", "tolerancia"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
+                return
+
             # Crear función
-            f = create_function_from_string(values["función_fx"])
-            
+            f = create_function_from_string(function_str)
+
             # Ejecutar método
             result = self.root_finder.bisection_method(
                 f, values["intervalo_a"], values["intervalo_b"]
             )
-            
-            # Mostrar resultados
+
+            # Mostrar resultados usando mixin
             self._display_results(result, "MÉTODO DE BISECCIÓN")
-            
-            # Crear gráfico
+
+            # Crear gráfico usando mixin
             self._plot_function_and_root(f, values["intervalo_a"], values["intervalo_b"], result.root)
-            
+
         except Exception as e:
             self.show_error(f"Error en bisección: {e}")
     
     def newton_raphson_method(self):
-        """Ejecutar método de Newton-Raphson"""
+        """Ejecutar método de Newton-Raphson usando mixins"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "intervalo_a", "tolerancia"]  # Usar 'a' como punto inicial
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
             )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if not is_valid_func:
+                self.show_error(func_error)
                 return
-            
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["intervalo_a", "tolerancia"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
+                return
+
             # Crear función
-            f = create_function_from_string(values["función_fx"])
-            
+            f = create_function_from_string(function_str)
+
             # Ejecutar método (derivada se calcula numéricamente)
             result = self.root_finder.newton_raphson_method(
                 f, None, values["intervalo_a"]  # None = derivada numérica
             )
-            
-            # Mostrar resultados
+
+            # Mostrar resultados usando mixin
             self._display_results(result, "MÉTODO DE NEWTON-RAPHSON")
-            
-            # Crear gráfico con tangentes
+
+            # Crear gráfico usando mixin
             self._plot_newton_raphson(f, values["intervalo_a"], result.root)
-            
+
         except Exception as e:
             self.show_error(f"Error en Newton-Raphson: {e}")
     
     def fixed_point_method(self):
-        """Ejecutar método de punto fijo"""
+        """Ejecutar método de punto fijo usando mixins"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "intervalo_a", "tolerancia"]
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
             )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if not is_valid_func:
+                self.show_error(func_error)
                 return
-            
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["intervalo_a", "tolerancia"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
+                return
+
             # Crear función original
-            f = create_function_from_string(values["función_fx"])
-            
+            f = create_function_from_string(function_str)
+
             # Convertir a función de punto fijo: g(x) = x + f(x)
             g = lambda x: x + f(x)
-            
+
             # Ejecutar método
             result = self.root_finder.fixed_point_method(g, values["intervalo_a"])
-            
-            # Mostrar resultados
+
+            # Mostrar resultados usando mixin
             self._display_results(result, "MÉTODO DE PUNTO FIJO")
-            
-            # Crear gráfico
+
+            # Crear gráfico usando mixin
             self._plot_fixed_point(f, g, values["intervalo_a"], result.root)
-            
+
         except Exception as e:
             self.show_error(f"Error en punto fijo: {e}")
     
     def _display_results(self, result, method_name: str):
-        """Mostrar resultados en el área de texto"""
+        """Mostrar resultados usando mixin ResultDisplayMixin"""
         # Datos principales
         main_data = {
             "Función": self.entries["función_fx"].get(),
@@ -161,38 +183,14 @@ class RootsTab(BaseTab):
             "Convergió": "Sí" if result.converged else "No",
             "Error final": f"{result.error:.2e}"
         }
-        
+
         # Secciones adicionales
         sections = {}
-        
-        # Tabla de iteraciones (primeras 10)
+
+        # Tabla de iteraciones usando mixin
         if result.iteration_data:
-            iterations_text = []
-            iterations_text.append("Iter | Datos de la iteración")
-            iterations_text.append("-" * 40)
-            
-            for i, data in enumerate(result.iteration_data[:10]):
-                if 'c' in data:  # Bisección
-                    iterations_text.append(
-                        f"{data['iteration']:4d} | a={data['a']:.6f}, b={data['b']:.6f}, "
-                        f"c={data['c']:.6f}, error={data['error']:.2e}"
-                    )
-                elif 'x_n' in data:  # Newton-Raphson
-                    iterations_text.append(
-                        f"{data['iteration']:4d} | x_n={data['x_n']:.6f}, "
-                        f"x_n+1={data['x_n_plus_1']:.6f}, error={data['error']:.2e}"
-                    )
-                elif 'g_x_n' in data:  # Punto fijo
-                    iterations_text.append(
-                        f"{data['iteration']:4d} | x_n={data['x_n']:.6f}, "
-                        f"g(x_n)={data['g_x_n']:.6f}, error={data['error']:.2e}"
-                    )
-            
-            if len(result.iteration_data) > 10:
-                iterations_text.append("... (mostrando solo las primeras 10 iteraciones)")
-            
-            sections["TABLA DE ITERACIONES"] = iterations_text
-        
+            self.display_iteration_table(self.results_text, result.iteration_data, method_name)
+
         # Información del método
         method_info = []
         if "bisección" in method_name.lower():
@@ -216,112 +214,103 @@ class RootsTab(BaseTab):
                 "Transformación: g(x) = x + f(x)",
                 "Puede requerir diferentes transformaciones"
             ]
-        
+
         if method_info:
             sections["CARACTERÍSTICAS DEL MÉTODO"] = method_info
-        
-        # Formatear y mostrar
-        formatted_text = self.format_result_text(method_name, main_data, sections)
-        self.results_text.delete("1.0", "end")
-        self.results_text.insert("1.0", formatted_text)
+
+        # Usar mixin para mostrar resultados
+        self.display_calculation_results(self.results_text, method_name, main_data, sections)
     
     def _plot_function_and_root(self, f, a: float, b: float, root: float):
-        """Crear gráfico de la función y la raíz encontrada"""
-        fig, canvas = self.create_matplotlib_plot(self.plot_frame)
+        """Crear gráfico de la función y la raíz encontrada usando mixin"""
+        fig, canvas = self.setup_plot_area(self.plot_frame)
         ax = fig.add_subplot(111)
-        
-        # Rango de x expandido
-        x_range = np.linspace(a - 0.5*(b-a), b + 0.5*(b-a), 1000)
-        y_values = [f(x) for x in x_range]
-        
-        # Graficar función
-        ax.plot(x_range, y_values, 'cyan', linewidth=2, label='f(x)')
-        
+
+        # Usar mixin para graficar función
+        x_range = (a - 0.5*(b-a), b + 0.5*(b-a))
+        points = [(root, f(root))]
+        point_labels = [f'Raíz: x = {root:.6f}']
+
+        self.plot_function_with_points(fig, ax, f, x_range, points, point_labels)
+
         # Línea de y=0
         ax.axhline(y=0, color='white', linestyle='--', alpha=0.7, label='y = 0')
-        
-        # Marcar la raíz
-        ax.plot(root, f(root), 'ro', markersize=10, label=f'Raíz: x = {root:.6f}')
-        
+
         # Marcar intervalo inicial (para bisección)
         if abs(b - a) > 1e-10:
             ax.axvline(x=a, color='yellow', linestyle=':', alpha=0.7, label=f'a = {a}')
             ax.axvline(x=b, color='yellow', linestyle=':', alpha=0.7, label=f'b = {b}')
-        
-        self.apply_plot_styling(
-            ax, 
+
+        self.apply_standard_plot_styling(
+            ax,
             title="Función y Raíz Encontrada",
             xlabel="x",
             ylabel="f(x)"
         )
-        
+
+        # Actualizar canvas
         canvas.draw()
-    
+
     def _plot_newton_raphson(self, f, x0: float, root: float):
-        """Crear gráfico mostrando el proceso de Newton-Raphson"""
-        fig, canvas = self.create_matplotlib_plot(self.plot_frame)
+        """Crear gráfico mostrando el proceso de Newton-Raphson usando mixin"""
+        fig, canvas = self.setup_plot_area(self.plot_frame)
         ax = fig.add_subplot(111)
         
-        # Rango de x
+        # Usar mixin para graficar función con puntos
         range_size = max(abs(root - x0), 1)
-        x_range = np.linspace(x0 - range_size, root + range_size, 1000)
-        y_values = [f(x) for x in x_range]
+        x_range = (x0 - range_size, root + range_size)
+        points = [(x0, f(x0)), (root, f(root))]
+        point_labels = [f'Inicio: x₀ = {x0:.6f}', f'Raíz: x = {root:.6f}']
         
-        # Graficar función
-        ax.plot(x_range, y_values, 'cyan', linewidth=2, label='f(x)')
+        self.plot_function_with_points(fig, ax, f, x_range, points, point_labels)
         
         # Línea de y=0
         ax.axhline(y=0, color='white', linestyle='--', alpha=0.7, label='y = 0')
         
-        # Punto inicial
-        ax.plot(x0, f(x0), 'go', markersize=8, label=f'Inicio: x₀ = {x0:.6f}')
-        
-        # Raíz encontrada
-        ax.plot(root, f(root), 'ro', markersize=10, label=f'Raíz: x = {root:.6f}')
-        
-        # Mostrar algunas tangentes del proceso (si tenemos datos)
-        # Esto requeriría almacenar los datos de iteración
-        
-        self.apply_plot_styling(
+        self.apply_standard_plot_styling(
             ax,
             title="Método de Newton-Raphson",
-            xlabel="x", 
+            xlabel="x",
             ylabel="f(x)"
         )
         
+        # Actualizar canvas
         canvas.draw()
     
     def _plot_fixed_point(self, f, g, x0: float, root: float):
-        """Crear gráfico para punto fijo mostrando f(x), g(x) y y=x"""
-        fig, canvas = self.create_matplotlib_plot(self.plot_frame)
+        """Crear gráfico para punto fijo mostrando f(x), g(x) y y=x usando mixin"""
+        fig, canvas = self.setup_plot_area(self.plot_frame)
         ax = fig.add_subplot(111)
         
-        # Rango de x
+        # Usar mixin para graficar múltiples funciones
         range_size = max(abs(root - x0), 1)
-        x_range = np.linspace(x0 - range_size, root + range_size, 1000)
+        x_range = (x0 - range_size, root + range_size)
         
-        # Graficar funciones
-        f_values = [f(x) for x in x_range]
-        g_values = [g(x) for x in x_range]
+        functions = [
+            (f, 'cyan', 'f(x)'),
+            (g, 'orange', 'g(x) = x + f(x)'),
+            (lambda x: x, 'white', 'y = x')  # línea y=x
+        ]
         
-        ax.plot(x_range, f_values, 'cyan', linewidth=2, label='f(x)')
-        ax.plot(x_range, g_values, 'orange', linewidth=2, label='g(x) = x + f(x)')
-        ax.plot(x_range, x_range, 'white', linestyle='--', alpha=0.7, label='y = x')
+        self.plot_multiple_functions(fig, ax, functions, x_range)
         
         # Línea de y=0
         ax.axhline(y=0, color='gray', linestyle=':', alpha=0.5)
         
-        # Punto inicial
-        ax.plot(x0, g(x0), 'go', markersize=8, label=f'Inicio: x₀ = {x0:.6f}')
+        # Puntos importantes
+        points = [(x0, g(x0)), (root, root)]
+        point_labels = [f'Inicio: x₀ = {x0:.6f}', f'Punto fijo: x = {root:.6f}']
         
-        # Punto fijo encontrado
-        ax.plot(root, root, 'ro', markersize=10, label=f'Punto fijo: x = {root:.6f}')
+        for point, label in zip(points, point_labels):
+            ax.plot(point[0], point[1], 'o', markersize=8 if 'Inicio' in label else 10,
+                   color='green' if 'Inicio' in label else 'red', label=label)
         
-        self.apply_plot_styling(
+        self.apply_standard_plot_styling(
             ax,
             title="Método de Punto Fijo",
             xlabel="x",
             ylabel="y"
         )
         
+        # Actualizar canvas
         canvas.draw()

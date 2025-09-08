@@ -10,16 +10,17 @@ import logging
 from typing import Optional, Dict, Any
 
 from src.ui.components.base_tab import BaseTab
+from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.core.newton_cotes import NewtonCotes, NewtonCotesError
 from src.core.integration_validators import IntegrationValidationError
 
 logger = logging.getLogger(__name__)
 
 
-class NewtonCotesTab(BaseTab):
+class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
     """
     Pestaña para integración Newton-Cotes.
-    Hereda funcionalidad común de BaseTab siguiendo principio DRY.
+    Hereda funcionalidad común de BaseTab y usa mixins para reducir duplicación.
     """
     
     def __init__(self, parent):

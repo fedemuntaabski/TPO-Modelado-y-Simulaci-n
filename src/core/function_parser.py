@@ -24,7 +24,7 @@ class FunctionParserError(Exception):
 class SafeFunctionEvaluator:
     """Evaluador seguro de funciones matemáticas usando AST"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         # Operadores permitidos
         self.allowed_operators = {
             ast.Add: operator.add,
@@ -211,7 +211,7 @@ class SafeFunctionEvaluator:
 class FunctionParser:
     """Parser principal para funciones matemáticas"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.evaluator = SafeFunctionEvaluator()
     
     def parse_and_evaluate(self, func_str: str, x: float) -> float:
@@ -302,7 +302,7 @@ def create_function_evaluator(func_str: str) -> Callable[[float], float]:
     return evaluator
 
 
-def test_function_parser():
+def test_function_parser() -> None:
     """Función de prueba para el parser"""
     parser = FunctionParser()
     

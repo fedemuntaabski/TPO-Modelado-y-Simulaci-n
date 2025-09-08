@@ -11,15 +11,16 @@ import numpy as np
 from typing import Optional
 
 from src.ui.components.base_tab import BaseTab
+from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.core.integration import NumericalIntegrator
 from src.core.root_finding import create_function_from_string
 from config.settings import NUMERICAL_CONFIG
 
 
-class IntegrationTab(BaseTab):
+class IntegrationTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
     """
     Pestaña para integración numérica.
-    Hereda funcionalidad común de BaseTab (principio DRY).
+    Hereda funcionalidad común de BaseTab y usa mixins para reducir duplicación.
     """
     
     def __init__(self, parent):
@@ -58,28 +59,35 @@ class IntegrationTab(BaseTab):
         self.results_frame, self.results_text, self.plot_frame = self.create_results_section()
     
     def trapezoid_method(self):
-        """Ejecutar regla del trapecio"""
+        """Ejecutar regla del trapecio usando mixins"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
             )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if not is_valid_func:
+                self.show_error(func_error)
                 return
-            
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
+                return
+
             # Crear función
-            f = create_function_from_string(values["función_fx"])
+            f = create_function_from_string(function_str)
             
             # Ejecutar método
             result = self.integrator.trapezoid_rule(
                 f, values["límite_inferior_a"], values["límite_superior_b"], values["subdivisiones_n"]
             )
             
-            # Mostrar resultados
-            self._display_results(result)
+            # Mostrar resultados usando mixin
+            self._display_integration_results(result)
             
             # Crear gráfico
             self._plot_integration(f, result)
@@ -88,28 +96,35 @@ class IntegrationTab(BaseTab):
             self.show_error(f"Error en trapecio: {e}")
     
     def simpson_13_method(self):
-        """Ejecutar regla de Simpson 1/3"""
+        """Ejecutar regla de Simpson 1/3 usando mixins"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
             )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if not is_valid_func:
+                self.show_error(func_error)
+                return
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
                 return
             
             # Crear función
-            f = create_function_from_string(values["función_fx"])
+            f = create_function_from_string(function_str)
             
             # Ejecutar método
             result = self.integrator.simpson_13_rule(
                 f, values["límite_inferior_a"], values["límite_superior_b"], values["subdivisiones_n"]
             )
             
-            # Mostrar resultados
-            self._display_results(result)
+            # Mostrar resultados usando mixin
+            self._display_integration_results(result)
             
             # Crear gráfico
             self._plot_integration(f, result)
@@ -118,28 +133,35 @@ class IntegrationTab(BaseTab):
             self.show_error(f"Error en Simpson 1/3: {e}")
     
     def simpson_38_method(self):
-        """Ejecutar regla de Simpson 3/8"""
+        """Ejecutar regla de Simpson 3/8 usando mixins"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
             )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if not is_valid_func:
+                self.show_error(func_error)
+                return
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
                 return
             
             # Crear función
-            f = create_function_from_string(values["función_fx"])
+            f = create_function_from_string(function_str)
             
             # Ejecutar método
             result = self.integrator.simpson_38_rule(
                 f, values["límite_inferior_a"], values["límite_superior_b"], values["subdivisiones_n"]
             )
             
-            # Mostrar resultados
-            self._display_results(result)
+            # Mostrar resultados usando mixin
+            self._display_integration_results(result)
             
             # Crear gráfico
             self._plot_integration(f, result)
@@ -148,20 +170,27 @@ class IntegrationTab(BaseTab):
             self.show_error(f"Error en Simpson 3/8: {e}")
     
     def compare_all_methods(self):
-        """Comparar todos los métodos de integración"""
+        """Comparar todos los métodos de integración usando mixins"""
         try:
-            # Validar entradas
-            is_valid, values, error_msg = self.validate_inputs(
-                self.entries,
-                ["función_fx", "límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
             )
-            
-            if not is_valid:
-                self.show_error(error_msg)
+            if not is_valid_func:
+                self.show_error(func_error)
+                return
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["límite_inferior_a", "límite_superior_b", "subdivisiones_n"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
                 return
             
             # Crear función
-            f = create_function_from_string(values["función_fx"])
+            f = create_function_from_string(function_str)
             
             # Ejecutar todos los métodos
             results = {}
@@ -184,7 +213,7 @@ class IntegrationTab(BaseTab):
         except Exception as e:
             self.show_error(f"Error en comparación: {e}")
     
-    def _display_results(self, result):
+    def _display_integration_results(self, result):
         """Mostrar resultados de un método específico"""
         # Datos principales
         main_data = {
@@ -258,10 +287,8 @@ class IntegrationTab(BaseTab):
         
         sections["RECOMENDACIONES"] = recommendations
         
-        # Formatear y mostrar
-        formatted_text = self.format_result_text(result.method, main_data, sections)
-        self.results_text.delete("1.0", "end")
-        self.results_text.insert("1.0", formatted_text)
+        # Usar mixin para mostrar resultados
+        self.display_calculation_results(self.results_text, result.method, main_data, sections)
     
     def _display_comparison(self, results):
         """Mostrar comparación de todos los métodos"""
@@ -327,8 +354,8 @@ class IntegrationTab(BaseTab):
         self.results_text.insert("1.0", formatted_text)
     
     def _plot_integration(self, f, result):
-        """Crear gráfico de la integración"""
-        fig, canvas = self.create_matplotlib_plot(self.plot_frame)
+        """Crear gráfico de la integración usando mixin"""
+        fig, canvas = self.setup_plot_area(self.plot_frame)
         ax = fig.add_subplot(111)
         
         # Obtener límites
@@ -368,7 +395,7 @@ class IntegrationTab(BaseTab):
         ax.axvline(x=a, color='white', linestyle='--', alpha=0.7, label=f'a = {a}')
         ax.axvline(x=b, color='white', linestyle='--', alpha=0.7, label=f'b = {b}')
         
-        self.apply_plot_styling(
+        self.apply_standard_plot_styling(
             ax,
             title=f"{result.method} (n={n})",
             xlabel="x",
@@ -383,8 +410,12 @@ class IntegrationTab(BaseTab):
         canvas.draw()
     
     def _plot_comparison(self, f, results):
-        """Crear gráfico comparativo de los métodos"""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6), facecolor='#2b2b2b')
+        """Crear gráfico comparativo de los métodos usando mixin"""
+        fig, canvas = self.setup_plot_area(self.plot_frame)
+        
+        # Crear dos subplots
+        ax1 = fig.add_subplot(121)  # 1 fila, 2 columnas, posición 1
+        ax2 = fig.add_subplot(122)  # 1 fila, 2 columnas, posición 2
         
         for ax in [ax1, ax2]:
             ax.set_facecolor('#2b2b2b')
@@ -402,7 +433,7 @@ class IntegrationTab(BaseTab):
                         [f(x) for x in x_smooth[(x_smooth >= a) & (x_smooth <= b)]], 
                         alpha=0.3, color='cyan')
         
-        self.apply_plot_styling(ax1, title="Función a Integrar", xlabel="x", ylabel="f(x)")
+        self.apply_standard_plot_styling(ax1, title="Función a Integrar", xlabel="x", ylabel="f(x)")
         
         # Gráfico 2: Comparación de resultados
         methods = list(results.keys())
@@ -430,8 +461,8 @@ class IntegrationTab(BaseTab):
             ax2.text(bar.get_x() + bar.get_width()/2., height + 0.01*abs(height),
                     f'{value:.6f}', ha='center', va='bottom', color='white', fontsize=10)
         
-        self.apply_plot_styling(ax2, title="Comparación de Resultados", 
-                               xlabel="Método", ylabel="Valor de la Integral")
+        self.apply_standard_plot_styling(ax2, title="Comparación de Resultados", 
+                                       xlabel="Método", ylabel="Valor de la Integral")
         
         plt.tight_layout()
         canvas.draw()
