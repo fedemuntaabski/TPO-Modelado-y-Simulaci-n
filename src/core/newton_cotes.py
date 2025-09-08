@@ -130,7 +130,10 @@ class NewtonCotes:
                 computation_time=computation_time,
                 error_order='O(h³)',
                 accuracy_estimate='Moderada (método de orden 2)',
-                sample_points=[{'x': midpoint, 'f(x)': f_mid}]
+                sample_points=[{'x': midpoint, 'f(x)': f_mid}],
+                iteration_details=[
+                    {'i': 1, 'xi': midpoint, 'f(xi)': f_mid}
+                ]
             )
             
         except Exception as e:
@@ -220,6 +223,10 @@ class NewtonCotes:
                 sample_points=[
                     {'x': a, 'f(x)': fa},
                     {'x': b, 'f(x)': fb}
+                ],
+                iteration_details=[
+                    {'i': 0, 'xi': a, 'f(xi)': fa},
+                    {'i': 1, 'xi': b, 'f(xi)': fb}
                 ]
             )
             
@@ -330,6 +337,11 @@ class NewtonCotes:
                     {'x': a, 'f(x)': fa},
                     {'x': midpoint, 'f(x)': fm},
                     {'x': b, 'f(x)': fb}
+                ],
+                iteration_details=[
+                    {'i': 0, 'xi': a, 'f(xi)': fa, 'coeficiente': 1},
+                    {'i': 1, 'xi': midpoint, 'f(xi)': fm, 'coeficiente': 4},
+                    {'i': 2, 'xi': b, 'f(xi)': fb, 'coeficiente': 1}
                 ]
             )
             
@@ -458,6 +470,12 @@ class NewtonCotes:
                     {'x': x1, 'f(x)': f1},
                     {'x': x2, 'f(x)': f2},
                     {'x': b, 'f(x)': fb}
+                ],
+                iteration_details=[
+                    {'i': 0, 'xi': a, 'f(xi)': fa, 'coeficiente': 1},
+                    {'i': 1, 'xi': x1, 'f(xi)': f1, 'coeficiente': 3},
+                    {'i': 2, 'xi': x2, 'f(xi)': f2, 'coeficiente': 3},
+                    {'i': 3, 'xi': b, 'f(xi)': fb, 'coeficiente': 1}
                 ]
             )
             

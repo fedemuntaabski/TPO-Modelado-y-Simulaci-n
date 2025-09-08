@@ -178,6 +178,38 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         # Actualizar info inicial
         self.on_method_change()
         
+    def on_method_change(self):
+        """Manejar cambio de método seleccionado"""
+        if not hasattr(self, 'newton_cotes') or not self.method_var:
+            return
+            
+        method = self.method_var.get()
+        try:
+            method_info = self.newton_cotes.get_method_info(method)
+            
+            info_text = f"📋 {method_info['description']}"
+            if method_info['formula']:
+                info_text += f"\n📐 {method_info['formula']}"
+            info_text += f"\n⚡ {method_info['error_order']}"
+            
+            if method_info['n_constraint']:
+                info_text += f"\n⚠️ n debe ser {method_info['n_constraint']}"
+            
+            self.method_info_label.configure(text=info_text)
+            
+            # Habilitar/deshabilitar campo n
+            n_entry = self.entries.get("Subdivisiones (n)")
+            if n_entry:
+                if method_info['requires_n']:
+                    n_entry.configure(state="normal")
+                else:
+                    n_entry.configure(state="disabled")
+                    
+        except Exception as e:
+            logger.error(f"Error actualizando info del método: {e}")
+            if self.method_info_label:
+                self.method_info_label.configure(text=f"Error: {e}")
+                
     def create_control_buttons(self, parent_frame):
         """Crear botones de control"""
         button_frame = ctk.CTkFrame(parent_frame)
@@ -287,8 +319,9 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         )
         self.table_scrollable.grid(row=1, column=0, pady=5, padx=20, sticky="ew")
         
-        # Headers de la tabla
+        # Headers de la tabla (iniciales)
         headers = ["i", "xi", "f(xi)"]
+        self.table_headers = []
         for i, header in enumerate(headers):
             header_label = ctk.CTkLabel(
                 self.table_scrollable,
@@ -297,8 +330,9 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
                 text_color=["#1f538d", "#3d8bff"]
             )
             header_label.grid(row=0, column=i, pady=5, padx=10, sticky="w")
+            self.table_headers.append(header_label)
         
-        # Configurar columnas
+        # Configurar columnas iniciales
         for i in range(len(headers)):
             self.table_scrollable.grid_columnconfigure(i, weight=1)
         
@@ -306,37 +340,95 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         table_frame.grid_remove()
         self.table_frame = table_frame
         
-    def on_method_change(self):
-        """Manejar cambio de método seleccionado"""
-        if not hasattr(self, 'newton_cotes') or not self.method_var:
-            return
-            
-        method = self.method_var.get()
+    def is_form_valid(self) -> bool:
+        """Valida que todos los campos del formulario sean válidos"""
         try:
+            # Validar función
+            func_entry = self.entries.get("Función f(x)")
+            if not func_entry or not func_entry.get().strip():
+                self.show_error("La función f(x) no puede estar vacía")
+                return False
+            
+            # Validar límites
+            a_entry = self.entries.get("Límite inferior (a)")
+            b_entry = self.entries.get("Límite superior (b)")
+            
+            if not a_entry or not b_entry:
+                self.show_error("Los límites a y b son requeridos")
+                return False
+            
+            try:
+                a_val = float(a_entry.get().strip())
+                b_val = float(b_entry.get().strip())
+            except ValueError:
+                self.show_error("Los límites deben ser números válidos")
+                return False
+            
+            if a_val >= b_val:
+                self.show_error("El límite inferior (a) debe ser menor que el límite superior (b)")
+                return False
+            
+            # Validar n si es requerido
+            method = self.method_var.get()
             method_info = self.newton_cotes.get_method_info(method)
             
-            info_text = f"📋 {method_info['description']}"
-            if method_info['formula']:
-                info_text += f"\n📐 {method_info['formula']}"
-            info_text += f"\n⚡ {method_info['error_order']}"
+            if method_info['requires_n']:
+                n_entry = self.entries.get("Subdivisiones (n)")
+                if not n_entry or not n_entry.get().strip():
+                    self.show_error("El número de subdivisiones (n) es requerido para este método")
+                    return False
+                
+                try:
+                    n_val = int(n_entry.get().strip())
+                    if n_val < VALIDATION.MIN_SUBDIVISIONS or n_val > VALIDATION.MAX_SUBDIVISIONS:
+                        self.show_error(f"El número de subdivisiones debe estar entre {VALIDATION.MIN_SUBDIVISIONS} y {VALIDATION.MAX_SUBDIVISIONS}")
+                        return False
+                except ValueError:
+                    self.show_error("El número de subdivisiones debe ser un entero válido")
+                    return False
             
-            if method_info['n_constraint']:
-                info_text += f"\n⚠️ n debe ser {method_info['n_constraint']}"
+            return True
             
-            self.method_info_label.configure(text=info_text)
-            
-            # Habilitar/deshabilitar campo n
-            n_entry = self.entries.get("Subdivisiones (n)")
-            if n_entry:
-                if method_info['requires_n']:
-                    n_entry.configure(state="normal")
-                else:
-                    n_entry.configure(state="disabled")
-                    
         except Exception as e:
-            logger.error(f"Error actualizando info del método: {e}")
-            if self.method_info_label:
-                self.method_info_label.configure(text=f"Error: {e}")
+            self.show_error(f"Error en validación: {e}")
+            return False
+    
+    def get_validated_values(self) -> Dict[str, Any]:
+        """Obtiene los valores validados del formulario"""
+        values = {}
+        
+        # Función
+        values["función_fx"] = self.entries["Función f(x)"].get().strip()
+        
+        # Límites
+        values["límite_inferior_a"] = float(self.entries["Límite inferior (a)"].get().strip())
+        values["límite_superior_b"] = float(self.entries["Límite superior (b)"].get().strip())
+        
+        # Subdivisiones (si existe)
+        n_entry = self.entries.get("Subdivisiones (n)")
+        if n_entry and n_entry.get().strip():
+            values["subdivisiones_n"] = int(n_entry.get().strip())
+        
+        return values
+    
+    def validate_range(self, a: float, b: float, a_name: str = "a", b_name: str = "b") -> bool:
+        """Valida que los límites estén en un rango razonable"""
+        # Validar que no sean demasiado grandes/pequeños
+        if abs(a) > VALIDATION.MAX_VALUE or abs(b) > VALIDATION.MAX_VALUE:
+            self.show_error(f"Los valores de {a_name} y {b_name} no pueden ser mayores a {VALIDATION.MAX_VALUE} en valor absoluto")
+            return False
+        
+        # Validar que el intervalo no sea demasiado grande
+        if abs(b - a) > VALIDATION.MAX_INTERVAL:
+            self.show_error(f"El intervalo entre {a_name} y {b_name} no puede ser mayor a {VALIDATION.MAX_INTERVAL}")
+            return False
+        
+        # Validar que el intervalo no sea demasiado pequeño
+        if abs(b - a) < VALIDATION.MIN_INTERVAL:
+            self.show_error(f"El intervalo entre {a_name} y {b_name} debe ser al menos {VALIDATION.MIN_INTERVAL}")
+            return False
+        
+        return True
                 
     def calculate_integration(self):
         """Calcular integración usando Newton-Cotes"""
@@ -450,10 +542,32 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         if not hasattr(self, 'table_scrollable'):
             return
             
-        # Limpiar tabla anterior
+        # Limpiar tabla anterior (mantener headers)
         for widget in self.table_scrollable.winfo_children():
             if widget.grid_info()['row'] > 0:  # No eliminar headers
                 widget.destroy()
+        
+        # Verificar si hay coeficientes en los datos
+        has_coefficients = any('coeficiente' in detail for detail in iteration_details)
+        
+        # Gestionar header de coeficiente
+        if has_coefficients:
+            # Agregar header de coeficiente si no existe
+            if len(self.table_headers) < 4:
+                coeff_header = ctk.CTkLabel(
+                    self.table_scrollable,
+                    text="Coef",
+                    font=ctk.CTkFont(size=12, weight="bold"),
+                    text_color=["#1f538d", "#3d8bff"]
+                )
+                coeff_header.grid(row=0, column=3, pady=5, padx=10, sticky="w")
+                self.table_headers.append(coeff_header)
+                self.table_scrollable.grid_columnconfigure(3, weight=1)
+        else:
+            # Remover header de coeficiente si existe
+            if len(self.table_headers) > 3:
+                self.table_headers[3].destroy()
+                self.table_headers.pop()
         
         # Mostrar tabla
         if hasattr(self, 'table_frame'):
@@ -487,25 +601,14 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
             )
             fxi_label.grid(row=row, column=2, pady=2, padx=10, sticky="w")
             
-            # Columna coeficiente (si existe)
-            if 'coeficiente' in detail:
+            # Columna coeficiente (si existe y hay header)
+            if has_coefficients and 'coeficiente' in detail and len(self.table_headers) > 3:
                 coeff_label = ctk.CTkLabel(
                     self.table_scrollable,
                     text=str(detail['coeficiente']),
                     font=ctk.CTkFont(size=11)
                 )
                 coeff_label.grid(row=row, column=3, pady=2, padx=10, sticky="w")
-                
-                # Actualizar headers si es necesario
-                if row == 1:  # Solo en la primera fila
-                    coeff_header = ctk.CTkLabel(
-                        self.table_scrollable,
-                        text="Coef",
-                        font=ctk.CTkFont(size=12, weight="bold"),
-                        text_color=["#1f538d", "#3d8bff"]
-                    )
-                    coeff_header.grid(row=0, column=3, pady=5, padx=10, sticky="w")
-                    self.table_scrollable.grid_columnconfigure(3, weight=1)
         
     def update_info_labels(self, result):
         """Actualizar labels de información rápida"""
@@ -570,16 +673,33 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
                 
     def show_examples_menu(self):
         """Mostrar menú de ejemplos específicos por método"""
+        # Obtener método actualmente seleccionado
+        current_method = self.method_var.get()
+        
+        # Mapear clave del método a nombre display
+        method_names = {
+            "rectangle_simple": "Rectángulo Simple",
+            "rectangle_composite": "Rectángulo Compuesto",
+            "trapezoid_simple": "Trapecio Simple",
+            "trapezoid_composite": "Trapecio Compuesto",
+            "simpson_13_simple": "Simpson 1/3 Simple",
+            "simpson_13_composite": "Simpson 1/3 Compuesto",
+            "simpson_38_simple": "Simpson 3/8 Simple",
+            "simpson_38_composite": "Simpson 3/8 Compuesto"
+        }
+        
+        current_method_name = method_names.get(current_method, current_method)
+        
         # Crear ventana de ejemplos
         examples_window = ctk.CTkToplevel(self.content_frame)
-        examples_window.title("📝 Ejemplos Newton-Cotes")
+        examples_window.title(f"📝 Ejemplos - {current_method_name}")
         examples_window.geometry("600x500")
         examples_window.grab_set()
         
         # Título
         title_label = ctk.CTkLabel(
             examples_window,
-            text="📚 Ejemplos por Método",
+            text=f"📚 Ejemplos para {current_method_name}",
             font=ctk.CTkFont(size=20, weight="bold")
         )
         title_label.pack(pady=20)
@@ -626,20 +746,22 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
             ]
         }
         
-        row = 0
-        for method_name, examples in examples_by_method.items():
+        # Mostrar solo ejemplos del método actual
+        if current_method_name in examples_by_method:
+            examples = examples_by_method[current_method_name]
+            
             # Título del método
             method_title = ctk.CTkLabel(
                 scroll_frame,
-                text=f"🔧 {method_name}",
+                text=f"🔧 {current_method_name}",
                 font=ctk.CTkFont(size=16, weight="bold"),
                 text_color=["#1f538d", "#3d8bff"]
             )
-            method_title.grid(row=row, column=0, columnspan=3, pady=(15, 5), padx=10, sticky="w")
-            row += 1
+            method_title.grid(row=0, column=0, columnspan=3, pady=(15, 5), padx=10, sticky="w")
             
             # Ejemplos del método
-            for func, a, b, method_key, n, description in examples:
+            for i, (func, a, b, method_key, n, description) in enumerate(examples):
+                row = i + 1
                 # Botón para cargar ejemplo
                 example_btn = ctk.CTkButton(
                     scroll_frame,
@@ -660,8 +782,15 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
                     text_color=["gray60", "gray40"]
                 )
                 info_label.grid(row=row, column=1, pady=2, padx=5, sticky="w")
-                
-                row += 1
+        else:
+            # Si no hay ejemplos para el método (caso improbable)
+            no_examples_label = ctk.CTkLabel(
+                scroll_frame,
+                text="No hay ejemplos disponibles para este método.",
+                font=ctk.CTkFont(size=14),
+                text_color=["gray60", "gray40"]
+            )
+            no_examples_label.pack(pady=50)
         
         # Botón cerrar
         close_btn = ctk.CTkButton(

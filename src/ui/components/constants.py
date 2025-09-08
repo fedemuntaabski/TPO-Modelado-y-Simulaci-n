@@ -41,6 +41,10 @@ class ValidationConstants:
     MAX_STEP_SIZE: float = 1.0
     MAX_SUBDIVISIONS: int = 10000
     MIN_SUBDIVISIONS: int = 2
+    MAX_VALUE: float = 1e10  # Valor máximo absoluto para límites
+    MIN_VALUE: float = -1e10  # Valor mínimo absoluto para límites
+    MAX_INTERVAL: float = 1e6  # Intervalo máximo entre a y b
+    MIN_INTERVAL: float = 1e-6  # Intervalo mínimo entre a y b
 
 
 @dataclass
