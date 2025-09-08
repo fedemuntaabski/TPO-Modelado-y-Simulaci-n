@@ -65,8 +65,6 @@ class MathSimulatorApp(ctk.CTk):
             ("ode", "📈 EDOs"),
             ("finite_diff", "🔢 Diferencias Finitas"),
             ("newton_cotes", "📊 Newton-Cotes"),
-            ("interpolation", "🔗 Interpolación"),
-            ("derivatives", "∂ Derivadas")
         ]
 
         self.nav_buttons = {}
@@ -79,14 +77,14 @@ class MathSimulatorApp(ctk.CTk):
                 anchor="w",
                 font=ctk.CTkFont(size=14)
             )
-            btn.grid(row=i+1, column=0, pady=2, padx=20, sticky="ew")
+            btn.grid(row=i+1, column=0, pady=4, padx=20, sticky="ew")
             self.nav_buttons[key] = btn
 
         # Información del desarrollador
         dev_label = ctk.CTkLabel(
             self.sidebar,
-            text="Simulador Modular v4.0\nMetodos Numéricos",
-            font=ctk.CTkFont(size=10),
+            text="Simulador Modular \nMetodos Numéricos",
+            font=ctk.CTkFont(size=12),
             text_color=["gray60", "gray50"]
         )
         dev_label.grid(row=9, column=0, pady=10, padx=20)
