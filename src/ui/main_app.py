@@ -14,6 +14,7 @@ from src.ui.tabs.integration_tab import IntegrationTab
 from src.ui.tabs.ode_tab import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
+from src.ui.components.constants import VALIDATION, UI, PLOT, COLORS
 
 
 logger = logging.getLogger(__name__)
@@ -27,8 +28,8 @@ class MathSimulatorApp(ctk.CTk):
 
         # Configuración de la ventana - más grande para Newton-Cotes
         self.title("🧮 Simulador Matemático v4.0 - Modular")
-        self.geometry("1500x900")  # Aumentado de 1200x800 a 1500x900
-        self.minsize(1400, 850)   # Tamaño mínimo para que todo se vea bien
+        self.geometry(f"{UI.WINDOW_WIDTH}x{UI.WINDOW_HEIGHT}")
+        self.minsize(UI.MIN_WINDOW_WIDTH, UI.MIN_WINDOW_HEIGHT)
 
         # Configurar grid
         self.grid_rowconfigure(0, weight=1)

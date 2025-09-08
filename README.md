@@ -1,6 +1,4 @@
-# 🧮 Simulador Matemático Avanzado v4.0
-
-Un simulador interactivo completo para métodos numéricos con interfaz gráfica moderna, completamente modularizado siguiendo principios SOLID y DRY.
+# 🧮 Simulador Matemático Avanzado 
 
 ## 🚀 Características Principales
 

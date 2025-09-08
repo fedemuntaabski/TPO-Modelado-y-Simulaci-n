@@ -12,6 +12,7 @@ from src.ui.components.base_tab import BaseTab
 from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.core.finite_differences import FiniteDifferences
 from config.settings import NUMERICAL_CONFIG
+from src.ui.components.constants import VALIDATION, UI, PLOT, COLORS
 
 
 class FiniteDiffTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
@@ -161,13 +162,22 @@ Los resultados mostrarán explicaciones paso a paso del proceso de cálculo."""
     def calculate_list_mode(self):
         """Ejecutar cálculo en modo lista"""
         try:
-            # Validar paso h
+            # Validar paso h usando el nuevo sistema
+            h_text = self.h_entry.get().strip()
+            if not h_text:
+                self.show_error("El paso h es requerido")
+                return
+            
             try:
-                h = float(self.h_entry.get())
+                h = float(h_text)
                 if h <= 0:
-                    raise ValueError("El paso h debe ser positivo")
+                    self.show_error("El paso h debe ser un número positivo mayor que cero")
+                    return
+                if h < VALIDATION.MIN_STEP_SIZE or h > VALIDATION.MAX_STEP_SIZE:
+                    self.show_error(f"El paso h debe estar entre {VALIDATION.MIN_STEP_SIZE} y {VALIDATION.MAX_STEP_SIZE}")
+                    return
             except ValueError:
-                self.show_error("Paso h inválido. Ingrese un número positivo.")
+                self.show_error("El paso h debe ser un número válido")
                 return
             
             # Recopilar puntos válidos
@@ -180,17 +190,26 @@ Los resultados mostrarán explicaciones paso a paso del proceso de cálculo."""
                     try:
                         x = float(x_text)
                         fx = float(fx_text)
+                        
+                        # Validar rangos usando constantes
+                        if x < VALIDATION.MIN_X_VALUE or x > VALIDATION.MAX_X_VALUE:
+                            self.show_error(f"Punto {i+1}: x debe estar entre {VALIDATION.MIN_X_VALUE} y {VALIDATION.MAX_X_VALUE}")
+                            return
+                        if fx < VALIDATION.MIN_Y_VALUE or fx > VALIDATION.MAX_Y_VALUE:
+                            self.show_error(f"Punto {i+1}: f(x) debe estar entre {VALIDATION.MIN_Y_VALUE} y {VALIDATION.MAX_Y_VALUE}")
+                            return
+                        
                         data_points.append({
                             "x": x,
                             "h": h,
                             "fx": fx
                         })
                     except ValueError:
-                        self.show_error(f"Error en fila {i+1}: valores numéricos inválidos")
+                        self.show_error(f"Punto {i+1}: valores numéricos inválidos")
                         return
             
-            if len(data_points) < 2:
-                self.show_error("Se necesitan al menos 2 puntos para calcular diferencias finitas")
+            if len(data_points) < VALIDATION.MIN_POINTS:
+                self.show_error(f"Se necesitan al menos {VALIDATION.MIN_POINTS} puntos para calcular diferencias finitas")
                 return
             
             # Calcular usando auto_calculate_list

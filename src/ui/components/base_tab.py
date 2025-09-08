@@ -13,6 +13,8 @@ from typing import Callable, Any, Optional
 import logging
 
 from config.settings import UI_CONFIG, PLOT_CONFIG
+from .constants import UI, PLOT, COLORS, ERROR_MESSAGES, ValidationErrorCodes
+from .error_handler import handle_error, handle_validation_error, ErrorSeverity
 
 logger = logging.getLogger(__name__)
 
@@ -228,58 +230,25 @@ class BaseTab(ctk.CTkFrame):
         
         return True, values, ""
     
-    def show_error(self, message: str):
+    def show_error(self, message: str, severity: ErrorSeverity = ErrorSeverity.ERROR):
         """
-        Mostrar mensaje de error en una ventana modal.
+        Mostrar mensaje de error usando el gestor centralizado.
         Principio DRY: manejo consistente de errores.
         """
-        error_window = ctk.CTkToplevel(self)
-        error_window.title("Error")
-        error_window.geometry("500x200")
-        error_window.grab_set()
-        
-        # Centrar la ventana
-        error_window.transient(self)
-        
-        error_label = ctk.CTkLabel(
-            error_window,
-            text=message,
-            wraplength=450,
-            font=ctk.CTkFont(size=UI_CONFIG["default_font_size"])
+        handle_error(
+            Exception(message),
+            context=self.title,
+            severity=severity,
+            show_dialog=True
         )
-        error_label.pack(pady=20, padx=20)
-        
-        ok_btn = ctk.CTkButton(
-            error_window,
-            text="OK",
-            command=error_window.destroy
-        )
-        ok_btn.pack(pady=10)
     
     def show_success(self, message: str):
         """
-        Mostrar mensaje de éxito.
+        Mostrar mensaje de éxito usando el gestor centralizado.
         Principio DRY: feedback consistente al usuario.
         """
-        success_window = ctk.CTkToplevel(self)
-        success_window.title("Éxito")
-        success_window.geometry("400x150")
-        success_window.grab_set()
-        
-        success_label = ctk.CTkLabel(
-            success_window,
-            text=message,
-            wraplength=350,
-            font=ctk.CTkFont(size=UI_CONFIG["default_font_size"])
-        )
-        success_label.pack(pady=20, padx=20)
-        
-        ok_btn = ctk.CTkButton(
-            success_window,
-            text="OK",
-            command=success_window.destroy
-        )
-        ok_btn.pack(pady=10)
+        from .error_handler import handle_success
+        handle_success("CALCULATION_SUCCESS", custom_message=message, show_dialog=True)
     
     def create_matplotlib_plot(self, plot_frame: ctk.CTkFrame, 
                               clear_existing: bool = True) -> tuple:

@@ -12,6 +12,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from src.ui.components.base_tab import BaseTab
 from config.settings import PLOT_CONFIG
+from .constants import PLOT
 
 
 class InputValidationMixin:
@@ -180,7 +181,7 @@ class PlottingMixin:
             widget.destroy()
 
         # Crear figura con configuración consistente
-        fig = plt.figure(figsize=PLOT_CONFIG["figure_size"], dpi=PLOT_CONFIG["dpi"])
+        fig = plt.figure(figsize=(PLOT.FIGURE_WIDTH, PLOT.FIGURE_HEIGHT), dpi=PLOT.DPI)
         fig.patch.set_facecolor('#2b2b2b')
 
         # Crear canvas
