@@ -16,6 +16,7 @@
 ## 📁 Estructura del Proyecto
 
 ```
+├── demo_refactoring.py            # 🔄 Demo de refactorización
 ├── main_simple.py                 # 🚀 Punto de entrada principal (recomendado)
 ├── README.md                      # 📖 Documentación del proyecto
 ├── requirements_minimal.txt       # 📦 Dependencias mínimas
@@ -35,6 +36,10 @@
 │       ├── main_app.py           # 🏠 Aplicación principal
 │       ├── components/
 │       │   ├── base_tab.py       # 🏗️ Componente base para pestañas
+│       │   ├── constants.py      # 📊 Constantes de la aplicación
+│       │   ├── error_handler.py  # ⚠️ Manejo de errores
+│       │   ├── mixins.py         # 🔧 Mixins reutilizables
+│       │   ├── validation_mixins.py # ✅ Validaciones mixtas
 │       │   └── __init__.py
 │       └── tabs/                 # 📑 Pestañas específicas
 │           ├── newton_cotes_tab.py    # ✨ Newton-Cotes UI
@@ -48,6 +53,7 @@
     ├── test_root_finding.py     # 🎯 Tests raíces
     ├── test_ode_solver.py       # 📈 Tests EDOs
     ├── test_finite_differences.py # 🔢 Tests diferencias
+    ├── check_types.py           # 🔍 Verificación de tipos
     ├── run_tests.py            # ▶️ Ejecutor de tests
     └── __init__.py
 ```

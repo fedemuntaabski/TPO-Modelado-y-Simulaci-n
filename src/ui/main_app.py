@@ -14,6 +14,7 @@ from src.ui.tabs.integration_tab import IntegrationTab
 from src.ui.tabs.ode_tab import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
+from src.ui.components.tab_factory import TabFactory, create_placeholder_tab
 from src.ui.components.constants import VALIDATION, UI, PLOT, COLORS
 
 
@@ -97,79 +98,46 @@ class MathSimulatorApp(ctk.CTk):
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
-        # Crear todas las pestañas
+        # Inicializar diccionario de pestañas (lazy loading)
         self.tabs = {}
-        self.tabs["roots"] = RootsTab(self.main_frame)
-        self.tabs["integration"] = IntegrationTab(self.main_frame)
-        self.tabs["ode"] = ODETab(self.main_frame)
-        self.tabs["finite_diff"] = FiniteDiffTab(self.main_frame)
-        self.tabs["newton_cotes"] = NewtonCotesTab(self.main_frame)
+        self._tab_cache = {}  # Cache para pestañas ya creadas
 
-        # Pestañas placeholder para las demás
-        self.tabs["interpolation"] = self.create_placeholder_tab("🔗 Interpolación",
-                                                                "Métodos de interpolación polinomial y splines")
-        self.tabs["derivatives"] = self.create_placeholder_tab("∂ Derivadas Numéricas",
-                                                              "Cálculo numérico de derivadas de orden superior")
+    def _get_tab(self, tab_id: str):
+        """Obtener pestaña con lazy loading"""
+        if tab_id not in self._tab_cache:
+            if tab_id in TabFactory.get_available_tabs():
+                # Crear pestaña usando factory
+                self._tab_cache[tab_id] = TabFactory.create_tab(tab_id, self.main_frame)
+            elif tab_id in ["interpolation", "derivatives"]:
+                # Crear placeholders
+                if tab_id == "interpolation":
+                    self._tab_cache[tab_id] = create_placeholder_tab(
+                        self.main_frame, "🔗 Interpolación",
+                        "Métodos de interpolación polinomial y splines"
+                    )
+                else:  # derivatives
+                    self._tab_cache[tab_id] = create_placeholder_tab(
+                        self.main_frame, "∂ Derivadas Numéricas",
+                        "Cálculo numérico de derivadas de orden superior"
+                    )
 
-        # Inicialmente ocultar todas las pestañas
-        for tab in self.tabs.values():
-            tab.grid_remove()
-
-    def create_placeholder_tab(self, title, description):
-        """Crear pestaña placeholder para módulos no implementados"""
-        placeholder = ctk.CTkFrame(self.main_frame)
-        placeholder.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
-        placeholder.grid_rowconfigure(1, weight=1)
-        placeholder.grid_columnconfigure(0, weight=1)
-
-        # Título
-        title_label = ctk.CTkLabel(
-            placeholder,
-            text=title,
-            font=ctk.CTkFont(size=28, weight="bold")
-        )
-        title_label.grid(row=0, column=0, pady=(40, 20))
-
-        # Descripción
-        desc_label = ctk.CTkLabel(
-            placeholder,
-            text=description,
-            font=ctk.CTkFont(size=16),
-            text_color=["gray60", "gray50"]
-        )
-        desc_label.grid(row=1, column=0, pady=10)
-
-        # Estado
-        status_frame = ctk.CTkFrame(placeholder)
-        status_frame.grid(row=2, column=0, pady=40)
-
-        status_label = ctk.CTkLabel(
-            status_frame,
-            text="🚧 MÓDULO EN DESARROLLO 🚧",
-            font=ctk.CTkFont(size=18, weight="bold"),
-            text_color=["orange", "yellow"]
-        )
-        status_label.pack(pady=20, padx=40)
-
-        info_label = ctk.CTkLabel(
-            status_frame,
-            text="Este módulo será implementado en la próxima versión.\nUse la estructura modular para acceder a esta funcionalidad.",
-            font=ctk.CTkFont(size=14),
-            justify="center"
-        )
-        info_label.pack(pady=(0, 20), padx=40)
-
-        return placeholder
+        return self._tab_cache.get(tab_id)
 
     def show_tab(self, tab_id):
-        """Mostrar pestaña específica"""
-        # Ocultar todas las pestañas
+        """Mostrar pestaña específica con lazy loading"""
+        # Ocultar todas las pestañas visibles
         for tab in self.tabs.values():
-            tab.grid_remove()
+            if tab is not None:
+                tab.grid_remove()
 
-        # Mostrar pestaña seleccionada
-        if tab_id in self.tabs:
-            self.tabs[tab_id].grid(row=0, column=0, sticky="nsew")
+        # Limpiar diccionario de pestañas visibles
+        self.tabs.clear()
+
+        # Obtener y mostrar la pestaña seleccionada
+        selected_tab = self._get_tab(tab_id)
+        if selected_tab is not None:
+            self.tabs[tab_id] = selected_tab
+            selected_tab.grid(row=0, column=0, sticky="nsew")
 
         # Actualizar apariencia de los botones
         for btn_id, btn in self.nav_buttons.items():

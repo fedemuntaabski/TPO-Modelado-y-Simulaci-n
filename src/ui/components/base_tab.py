@@ -9,12 +9,12 @@ import customtkinter as ctk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
-from typing import Callable, Any, Optional
+from typing import Callable, Optional, Tuple, Dict, Any, Union
 import logging
 
 from config.settings import UI_CONFIG, PLOT_CONFIG
-from .constants import UI, PLOT, COLORS, ERROR_MESSAGES, ValidationErrorCodes
-from .error_handler import handle_error, handle_validation_error, ErrorSeverity
+from .error_handler import handle_error, ErrorSeverity
+from src.core.root_finding import create_function_from_string
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,8 @@ class BaseTab(ctk.CTkFrame):
     def __init__(self, parent, title: str):
         super().__init__(parent)
         self.title = title
+        self._plot_cache = {}  # Cache para gráficos
+        self._last_plot_data = None  # Datos del último gráfico
         self.setup_ui()
     
     def setup_ui(self):
@@ -153,48 +155,8 @@ class BaseTab(ctk.CTkFrame):
         
         return results_frame, text_widget, plot_frame
     
-    def create_function_from_string(self, expr: str) -> Optional[Callable[[float], float]]:
-        """
-        Crea una función evaluable desde una expresión string.
-        Principio DRY: reutilizable en todas las pestañas que necesiten funciones.
-        Principio KISS: implementación simple y segura.
-        """
-        # Lista de funciones matemáticas permitidas
-        allowed_names = {
-            "x": None,  # Variable independiente
-            "t": None,  # Variable de tiempo (para EDOs)
-            "y": None,  # Variable dependiente (para EDOs)
-            "sin": np.sin, "cos": np.cos, "tan": np.tan,
-            "exp": np.exp, "log": np.log, "log10": np.log10,
-            "sqrt": np.sqrt, "abs": abs,
-            "pi": np.pi, "e": np.e,
-            "sinh": np.sinh, "cosh": np.cosh, "tanh": np.tanh,
-            "arcsin": np.arcsin, "arccos": np.arccos, "arctan": np.arctan
-        }
-        
-        def safe_function(*args):
-            # Preparar el namespace seguro
-            namespace = allowed_names.copy()
-            
-            # Asignar variables según el número de argumentos
-            if len(args) == 1:
-                namespace["x"] = args[0]
-                namespace["t"] = args[0]  # Alias para tiempo
-            elif len(args) == 2:
-                namespace["t"] = args[0]
-                namespace["y"] = args[1]
-            
-            try:
-                # Reemplazar notaciones comunes
-                processed_expr = expr.replace('^', '**').replace('sen', 'sin').replace('ln', 'log')
-                return eval(processed_expr, {"__builtins__": {}}, namespace)
-            except Exception as e:
-                logger.warning(f"Error evaluando función '{expr}': {e}")
-                return 0
-        
-        return safe_function
-    
-    def validate_inputs(self, entries: dict, required_fields: list = None) -> tuple:
+    def validate_inputs(self, entries: Dict[str, ctk.CTkEntry], 
+                       required_fields: Optional[list] = None) -> Tuple[bool, Dict[str, Any], str]:
         """
         Valida las entradas del usuario.
         Principio de responsabilidad única: validación centralizada.
@@ -251,14 +213,26 @@ class BaseTab(ctk.CTkFrame):
         handle_success("CALCULATION_SUCCESS", custom_message=message, show_dialog=True)
     
     def create_matplotlib_plot(self, plot_frame: ctk.CTkFrame, 
-                              clear_existing: bool = True) -> tuple:
+                              clear_existing: bool = True,
+                              cache_key: Optional[str] = None) -> Tuple[plt.Figure, FigureCanvasTkAgg]:
         """
-        Crear un gráfico matplotlib embebido.
+        Crear un gráfico matplotlib embebido con soporte para cache.
         Principio DRY: configuración consistente de gráficos.
         
+        Args:
+            plot_frame: Frame donde crear el gráfico
+            clear_existing: Si limpiar widgets existentes
+            cache_key: Clave para cache (opcional)
+            
         Returns:
             Tupla (figure, canvas)
         """
+        # Intentar obtener del cache si se proporciona una clave
+        if cache_key:
+            cached_result = self.get_cached_plot(cache_key, plot_frame)
+            if cached_result:
+                return cached_result
+        
         if clear_existing:
             # Limpiar widgets existentes
             for widget in plot_frame.winfo_children():
@@ -275,7 +249,60 @@ class BaseTab(ctk.CTkFrame):
         canvas = FigureCanvasTkAgg(fig, plot_frame)
         canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
         
+        # Almacenar en cache si se proporciona una clave
+        if cache_key:
+            self.cache_plot(cache_key, fig, canvas)
+        
         return fig, canvas
+    
+    def get_cached_plot(self, cache_key: str, plot_frame: ctk.CTkFrame) -> Optional[Tuple[plt.Figure, FigureCanvasTkAgg]]:
+        """
+        Obtener gráfico del cache si existe y es válido.
+        
+        Args:
+            cache_key: Clave única para identificar el gráfico
+            plot_frame: Frame donde mostrar el gráfico
+            
+        Returns:
+            Tupla (figure, canvas) o None si no está en cache
+        """
+        if cache_key in self._plot_cache:
+            cached_fig, cached_canvas = self._plot_cache[cache_key]
+            # Verificar si el canvas aún es válido
+            try:
+                cached_canvas.get_tk_widget().winfo_exists()
+                return cached_fig, cached_canvas
+            except:
+                # Canvas inválido, remover del cache
+                del self._plot_cache[cache_key]
+        
+        return None
+    
+    def cache_plot(self, cache_key: str, fig: plt.Figure, canvas: FigureCanvasTkAgg) -> None:
+        """
+        Almacenar gráfico en el cache.
+        
+        Args:
+            cache_key: Clave única para el gráfico
+            fig: Figura matplotlib
+            canvas: Canvas del gráfico
+        """
+        # Limitar el tamaño del cache (máximo 5 gráficos por pestaña)
+        if len(self._plot_cache) >= 5:
+            # Remover el primer elemento (FIFO)
+            first_key = next(iter(self._plot_cache))
+            del self._plot_cache[first_key]
+        
+        self._plot_cache[cache_key] = (fig, canvas)
+    
+    def clear_plot_cache(self):
+        """Limpiar el cache de gráficos"""
+        for fig, canvas in self._plot_cache.values():
+            try:
+                plt.close(fig)
+            except:
+                pass
+        self._plot_cache.clear()
     
     def format_result_text(self, title: str, data: dict, 
                           sections: Optional[dict] = None) -> str:

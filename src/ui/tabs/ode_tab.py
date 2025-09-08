@@ -14,6 +14,7 @@ from src.ui.components.base_tab import BaseTab
 from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.ui.components.constants import VALIDATION, DEFAULT_CONFIGS
 from src.core.ode_solver import ODESolver
+from src.core.root_finding import create_function_from_string
 from config.settings import NUMERICAL_CONFIG
 
 
@@ -94,7 +95,7 @@ class ODETab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
                 return
             
             # Crear función f(t, y)
-            f = self.create_function_from_string(values["función_fty"])
+            f = create_function_from_string(values["función_fty"])
             
             # Ejecutar método
             result = self.ode_solver.euler_method(
@@ -129,7 +130,7 @@ class ODETab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
                 return
             
             # Crear función f(t, y)
-            f = self.create_function_from_string(values["función_fty"])
+            f = create_function_from_string(values["función_fty"])
             
             # Ejecutar método
             result = self.ode_solver.runge_kutta_2(
@@ -164,7 +165,7 @@ class ODETab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
                 return
             
             # Crear función f(t, y)
-            f = self.create_function_from_string(values["función_fty"])
+            f = create_function_from_string(values["función_fty"])
             
             # Ejecutar método
             result = self.ode_solver.runge_kutta_4(
@@ -199,7 +200,7 @@ class ODETab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
                 return
             
             # Crear función f(t, y)
-            f = self.create_function_from_string(values["función_fty"])
+            f = create_function_from_string(values["función_fty"])
             
             # Ejecutar todos los métodos
             results = {}

@@ -214,31 +214,45 @@ class RootFinder:
 
 
 # Funciones de utilidad para conversión de funciones (principio KISS)
-def create_function_from_string(expr: str) -> Callable[[float], float]:
+def create_function_from_string(expr: str) -> Callable[..., float]:
     """
     Crea una función evaluable desde una expresión string.
-    Mantiene la simplicidad y seguridad.
+    Soporta múltiples argumentos para diferentes contextos (raíces, integración, EDOs).
+    Principio DRY: versión consolidada y mejorada.
     """
-    # Lista de funciones matemáticas permitidas
+    # Lista completa de funciones matemáticas permitidas
     allowed_names = {
-        "x": None,  # Variable
+        "x": None,  # Variable independiente
+        "t": None,  # Variable de tiempo (para EDOs)
+        "y": None,  # Variable dependiente (para EDOs)
         "sin": np.sin, "cos": np.cos, "tan": np.tan,
         "exp": np.exp, "log": np.log, "log10": np.log10,
         "sqrt": np.sqrt, "abs": abs,
-        "pi": np.pi, "e": np.e
+        "pi": np.pi, "e": np.e,
+        "sinh": np.sinh, "cosh": np.cosh, "tanh": np.tanh,
+        "arcsin": np.arcsin, "arccos": np.arccos, "arctan": np.arctan
     }
-    
-    def safe_eval(x_val: float) -> float:
+
+    def safe_function(*args):
         # Preparar el namespace seguro
         namespace = allowed_names.copy()
-        namespace["x"] = x_val
-        
+
+        # Asignar variables según el número de argumentos
+        if len(args) == 1:
+            namespace["x"] = args[0]
+            namespace["t"] = args[0]  # Alias para tiempo
+        elif len(args) == 2:
+            namespace["t"] = args[0]
+            namespace["y"] = args[1]
+
         try:
-            return eval(expr, {"__builtins__": {}}, namespace)
+            # Reemplazar notaciones comunes
+            processed_expr = expr.replace('^', '**').replace('sen', 'sin').replace('ln', 'log')
+            return eval(processed_expr, {"__builtins__": {}}, namespace)
         except Exception as e:
-            raise ValueError(f"Error evaluando función: {e}")
-    
-    return safe_eval
+            raise ValueError(f"Error evaluando función '{expr}': {e}")
+
+    return safe_function
 
 
 def convert_to_fixed_point(f: Callable[[float], float], 
