@@ -29,6 +29,7 @@ NUMERICAL_CONFIG = {
     "default_tolerance": 1e-6,
     "max_iterations": 1000,
     "default_step_size": 0.1,
+    "ode_default_step": 0.1,
     "precision_digits": 8
 }
 
