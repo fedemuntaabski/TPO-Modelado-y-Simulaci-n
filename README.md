@@ -8,6 +8,7 @@
 - 📊 **Newton-Cotes Avanzado**: 8 métodos con tabla de iteraciones detallada
 - 📈 **EDOs**: Euler, Runge-Kutta (2º y 4º orden), Heun, RK45 adaptativo
 - 🔢 **Diferencias Finitas**: Adelante, atrás, central, 5 puntos, Richardson
+- 🎲 **Monte Carlo**: Simulación estocástica para integración 1D y 2D con análisis estadístico
 - 📋 **Tabla de Iteraciones**: Vista paso a paso de todos los cálculos
 - 🎨 **Interfaz Moderna**: CustomTkinter con diseño responsivo y oscuro
 - 📊 **Visualización**: Gráficos interactivos con Matplotlib
@@ -27,6 +28,7 @@
 │   │   ├── newton_cotes.py       # ✨ Newton-Cotes completo
 │   │   ├── function_parser.py    # 🔒 Parser seguro de funciones
 │   │   ├── integration_validators.py # ✅ Validaciones de integración
+│   │   ├── monte_carlo_engine.py # 🎲 Motor de simulación Monte Carlo
 │   │   ├── root_finding.py       # 🎯 Búsqueda de raíces
 │   │   ├── integration.py        # ∫ Integración básica
 │   │   ├── ode_solver.py         # 📈 Resolución de EDOs
@@ -47,12 +49,14 @@
 │           ├── integration_tab.py     # ∫ Integración UI
 │           ├── ode_tab.py            # 📈 EDOs UI
 │           ├── finite_diff_tab.py    # 🔢 Diferencias UI
+│           ├── monte_carlo_tab.py    # 🎲 Monte Carlo UI
 │           └── __init__.py
 └── tests/                        # 🧪 Tests unitarios
     ├── test_newton_cotes.py     # ✨ Tests Newton-Cotes
     ├── test_root_finding.py     # 🎯 Tests raíces
     ├── test_ode_solver.py       # 📈 Tests EDOs
     ├── test_finite_differences.py # 🔢 Tests diferencias
+    ├── test_monte_carlo.py      # 🎲 Tests Monte Carlo
     ├── check_types.py           # 🔍 Verificación de tipos
     ├── run_tests.py            # ▶️ Ejecutor de tests
     └── __init__.py

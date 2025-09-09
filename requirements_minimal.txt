@@ -11,6 +11,9 @@ matplotlib>=3.5.0
 # Opcional para mayor precisión (recomendado)
 scipy>=1.7.0
 
+# Visualización de fórmulas
+sympy>=1.10.0
+
 # Manejo de imágenes para CustomTkinter
 Pillow>=8.3.0
 

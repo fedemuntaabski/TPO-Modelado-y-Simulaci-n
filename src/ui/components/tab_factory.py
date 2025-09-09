@@ -13,6 +13,7 @@ from src.ui.tabs.integration_tab import IntegrationTab
 from src.ui.tabs.ode_tab import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
+from src.ui.tabs.monte_carlo_tab import MonteCarloTab
 
 
 class TabFactory:
@@ -28,6 +29,7 @@ class TabFactory:
         "ode": ODETab,
         "finite_diff": FiniteDiffTab,
         "newton_cotes": NewtonCotesTab,
+        "monte_carlo": MonteCarloTab,
     }
 
     @classmethod

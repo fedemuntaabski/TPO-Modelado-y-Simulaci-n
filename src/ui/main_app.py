@@ -65,6 +65,7 @@ class MathSimulatorApp(ctk.CTk):
             ("ode", "📈 EDOs"),
             ("finite_diff", "🔢 Diferencias Finitas"),
             ("newton_cotes", "📊 Newton-Cotes"),
+            ("monte_carlo", "🎲 Monte Carlo"),
         ]
 
         self.nav_buttons = {}

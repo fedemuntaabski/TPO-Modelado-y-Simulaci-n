@@ -18,6 +18,7 @@ from tests.test_root_finding import TestRootFinding, TestRootFindingAdvanced
 from tests.test_ode_solver import TestODESolver, TestODESystemSolver, TestODEEdgeCases
 from tests.test_newton_cotes import TestFunctionParser, TestIntegrationValidator, TestNewtonCotes, TestIntegrationAccuracy
 from tests.test_finite_differences import TestFiniteDifferences, TestFiniteDifferencesAdvanced, TestFiniteDifferencesEdgeCases, TestNewFiniteDifferences
+from tests.test_monte_carlo import TestMonteCarlo
 
 
 def create_test_suite():
@@ -44,6 +45,11 @@ def create_test_suite():
     suite.addTest(unittest.makeSuite(TestFiniteDifferencesAdvanced))
     suite.addTest(unittest.makeSuite(TestFiniteDifferencesEdgeCases))
     suite.addTest(unittest.makeSuite(TestNewFiniteDifferences))
+    
+    # Tests de Monte Carlo
+    suite.addTest(unittest.makeSuite(TestMonteCarlo))
+    
+    return suite
     
     return suite
 
@@ -139,7 +145,8 @@ def run_specific_module(module_name):
         'root_finding': [TestRootFinding, TestRootFindingAdvanced],
         'integration': [TestFunctionParser, TestIntegrationValidator, TestNewtonCotes, TestIntegrationAccuracy],
         'ode_solver': [TestODESolver, TestODESystemSolver, TestODEEdgeCases],
-        'finite_differences': [TestFiniteDifferences, TestFiniteDifferencesAdvanced, TestFiniteDifferencesEdgeCases, TestNewFiniteDifferences]
+        'finite_differences': [TestFiniteDifferences, TestFiniteDifferencesAdvanced, TestFiniteDifferencesEdgeCases, TestNewFiniteDifferences],
+        'monte_carlo': [TestMonteCarlo]
     }
     
     if module_name not in module_tests:

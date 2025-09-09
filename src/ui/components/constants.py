@@ -67,7 +67,9 @@ class PlotConstants:
     """Constantes para gráficos"""
     FIGURE_WIDTH: int = 10
     FIGURE_HEIGHT: int = 6
+    FIGSIZE: tuple = (10, 6)
     DPI: int = 100
+    BGCOLOR: str = "#f0f0f0"
     LINE_WIDTH: float = 2.0
     MARKER_SIZE: float = 6.0
     GRID_ALPHA: float = 0.3
@@ -78,7 +80,9 @@ class PlotConstants:
 class ColorConstants:
     """Constantes de colores para la interfaz"""
     PRIMARY: str = "#1f538d"
+    PRIMARY_HOVER: str = "#3d8bff"
     SECONDARY: str = "#2b2b2b"
+    SECONDARY_HOVER: str = "#404040"
     SUCCESS: str = "#28a745"
     WARNING: str = "#ffc107"
     ERROR: str = "#dc3545"
