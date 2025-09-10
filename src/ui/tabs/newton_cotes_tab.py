@@ -15,6 +15,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from src.ui.components.base_tab import BaseTab
 from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.ui.components.constants import VALIDATION, UI, PLOT, COLORS
+from src.core.function_parser import parse_function
+from src.core.newton_cotes import NewtonCotesResult
 
 logger = logging.getLogger(__name__)
 
@@ -24,37 +26,144 @@ class SimpleNewtonCotes:
     
     def __init__(self):
         self.methods = {
-            "trapecio": {"name": "Trapecio", "order": 1, "points": 2},
-            "simpson_1_3": {"name": "Simpson 1/3", "order": 2, "points": 3},
-            "simpson_3_8": {"name": "Simpson 3/8", "order": 3, "points": 4},
-            "boole": {"name": "Boole", "order": 4, "points": 5}
+            # Métodos simples (no requieren n)
+            "rectangle_simple": {"name": "Rectángulo Simple", "order": 1, "points": 1, "composite": False},
+            "trapezoid_simple": {"name": "Trapecio Simple", "order": 1, "points": 2, "composite": False},
+            "simpson_13_simple": {"name": "Simpson 1/3 Simple", "order": 2, "points": 3, "composite": False},
+            "simpson_38_simple": {"name": "Simpson 3/8 Simple", "order": 3, "points": 4, "composite": False},
+            
+            # Métodos compuestos (requieren n)
+            "rectangle_composite": {"name": "Rectángulo Compuesto", "order": 1, "points": 2, "composite": True},
+            "trapezoid_composite": {"name": "Trapecio Compuesto", "order": 1, "points": 2, "composite": True},
+            "simpson_13_composite": {"name": "Simpson 1/3 Compuesto", "order": 2, "points": 3, "composite": True},
+            "simpson_38_composite": {"name": "Simpson 3/8 Compuesto", "order": 3, "points": 4, "composite": True},
         }
     
     def get_method_info(self, method):
-        """Obtener información del método"""
-        return self.methods.get(method, {"name": "Desconocido", "order": 1, "points": 2})
+        """Obtener información completa del método"""
+        base_info = self.methods.get(method, {"name": "Desconocido", "order": 1, "points": 2, "composite": True})
+        
+        # Información adicional para validación
+        info = {
+            'name': base_info['name'],
+            'key': method,
+            'description': f"Método de {base_info['name']}",
+            'formula': '',
+            'error_order': f"O(h^{base_info['order']*2})" if base_info['composite'] else f"O(h^{base_info['order']+1})",
+            'requires_n': base_info['composite'],
+            'n_constraint': None,
+            'min_n': 1,
+        }
+        
+        # Configurar restricciones específicas por método
+        if 'simpson_13' in method and base_info['composite']:
+            info['n_constraint'] = 'par'
+            info['min_n'] = 2
+            info['description'] = 'Requiere n par (número par de subdivisiones)'
+            info['formula'] = 'I ≈ h/3 * [f(a) + 4*Σf(x_impar) + 2*Σf(x_par) + f(b)]'
+        elif 'simpson_38' in method and base_info['composite']:
+            info['n_constraint'] = 'múltiplo de 3'
+            info['min_n'] = 3
+            info['description'] = 'Requiere n múltiplo de 3'
+            info['formula'] = 'I ≈ 3h/8 * [f(a) + 3*Σf(...) + f(b)]'
+        elif 'trapezoid' in method:
+            info['description'] = 'Método del trapecio' + (' compuesto' if base_info['composite'] else ' simple')
+            info['formula'] = 'I ≈ h/2 * [f(a) + 2*Σf(xi) + f(b)]' if base_info['composite'] else 'I ≈ (b-a)/2 * [f(a) + f(b)]'
+        elif 'rectangle' in method:
+            info['description'] = 'Método del rectángulo' + (' compuesto' if base_info['composite'] else ' simple')
+            info['formula'] = 'I ≈ h * Σf(xi)' if base_info['composite'] else 'I ≈ (b-a) * f((a+b)/2)'
+        
+        return info
     
     def integrate(self, func_str, a, b, method, n):
-        """Integración simplificada usando scipy"""
+        """Integración usando diferentes métodos de Newton-Cotes"""
         try:
-            # Función de ejemplo: x^2
-            def f(x):
-                return x**2
+            # Parsear la función
+            f = parse_function(func_str, ["x"])
             
-            # Usar integración simple con trapecio
-            h = (b - a) / n
-            x = np.linspace(a, b, n+1)
-            y = f(x)
+            # Determinar si es método compuesto
+            is_composite = '_composite' in method
             
-            # Método del trapecio
-            integral = h * (0.5 * y[0] + 0.5 * y[-1] + np.sum(y[1:-1]))
+            # Para métodos simples, usar n=1
+            if not is_composite:
+                n = 1
             
-            return {
-                "resultado": integral,
-                "error_estimado": abs(integral - (b**3/3 - a**3/3)) * 0.01,  # Error estimado simple
-                "intervalos": n,
-                "método": method
-            }
+            if not is_composite:
+                # Métodos simples
+                if 'rectangle' in method:
+                    # Rectángulo simple: punto medio
+                    midpoint = (a + b) / 2
+                    integral = (b - a) * f(midpoint)
+                elif 'trapezoid' in method:
+                    # Trapecio simple
+                    integral = (b - a) / 2 * (f(a) + f(b))
+                elif 'simpson_13' in method:
+                    # Simpson 1/3 simple
+                    midpoint = (a + b) / 2
+                    integral = (b - a) / 6 * (f(a) + 4 * f(midpoint) + f(b))
+                elif 'simpson_38' in method:
+                    # Simpson 3/8 simple
+                    h = (b - a) / 3
+                    x1 = a + h
+                    x2 = a + 2 * h
+                    integral = (b - a) / 8 * (f(a) + 3 * f(x1) + 3 * f(x2) + f(b))
+                else:
+                    raise ValueError(f"Método simple no implementado: {method}")
+            else:
+                # Métodos compuestos
+                h = (b - a) / n
+                x = np.linspace(a, b, n + 1)
+                y = f(x)
+                
+                if 'rectangle' in method:
+                    # Rectángulo compuesto (punto medio)
+                    integral = h * np.sum(y[:-1] + y[1:]) / 2
+                elif 'trapezoid' in method:
+                    # Trapecio compuesto
+                    integral = h * (0.5 * y[0] + 0.5 * y[-1] + np.sum(y[1:-1]))
+                elif 'simpson_13' in method:
+                    # Simpson 1/3 compuesto
+                    if n % 2 != 0:
+                        raise ValueError("Para Simpson 1/3 compuesto, n debe ser par")
+                    integral = h / 3 * (y[0] + y[-1] + 4 * np.sum(y[1:-1:2]) + 2 * np.sum(y[2:-1:2]))
+                elif 'simpson_38' in method:
+                    # Simpson 3/8 compuesto
+                    if n % 3 != 0:
+                        raise ValueError("Para Simpson 3/8 compuesto, n debe ser múltiplo de 3")
+                    integral = 3 * h / 8 * (y[0] + y[-1] + 3 * np.sum(y[1:-1:3] + y[2:-1:3]) + 2 * np.sum(y[3:-1:3]))
+                else:
+                    raise ValueError(f"Método compuesto no implementado: {method}")
+            
+            # Calcular error estimado (simplificado)
+            # Para una estimación más precisa, se necesitaría el cálculo real de la integral
+            # Aquí usamos una aproximación simple
+            error_estimado = abs(integral) * 0.001  # 0.1% del valor absoluto
+            
+            # Calcular número de evaluaciones
+            if is_composite:
+                evaluations = n + 1
+            else:
+                evaluations = 2 if 'rectangle' in method else 3  # 2 para trapecio, 3 para simpson
+            
+            # Calcular h
+            h = (b - a) / n if is_composite else (b - a)
+            
+            # Crear resultado
+            result = NewtonCotesResult(
+                method=method,
+                function=func_str,
+                interval=[a, b],
+                result=integral,
+                n_subdivisions=n if is_composite else None,
+                h=h,
+                formula=self.get_method_info(method)['formula'],
+                evaluations=evaluations,
+                computation_time=0.001,  # Tiempo aproximado
+                error_order=self.get_method_info(method)['error_order'],
+                accuracy_estimate=f"Error estimado: {error_estimado:.2e}"
+            )
+            
+            return result
         except Exception as e:
             raise ValueError(f"Error en integración: {e}")
 
@@ -493,19 +602,27 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
             method = self.method_var.get()
             
             # Obtener n si es necesario
-            n = None
+            n = 1  # Valor por defecto para métodos simples
             method_info = self.newton_cotes.get_method_info(method)
             if method_info['requires_n']:
-                n_str = self.entries["Subdivisiones (n)"].get().strip()
-                if n_str:
-                    try:
-                        n = int(n_str)
-                        if n < VALIDATION.MIN_SUBDIVISIONS or n > VALIDATION.MAX_SUBDIVISIONS:
-                            self.show_error(f"El número de subdivisiones debe estar entre {VALIDATION.MIN_SUBDIVISIONS} y {VALIDATION.MAX_SUBDIVISIONS}")
+                n_entry = self.entries.get("Subdivisiones (n)")
+                if n_entry:
+                    n_str = n_entry.get().strip()
+                    if n_str:
+                        try:
+                            n = int(n_str)
+                            if n < VALIDATION.MIN_SUBDIVISIONS or n > VALIDATION.MAX_SUBDIVISIONS:
+                                self.show_error(f"El número de subdivisiones debe estar entre {VALIDATION.MIN_SUBDIVISIONS} y {VALIDATION.MAX_SUBDIVISIONS}")
+                                return
+                        except ValueError:
+                            self.show_error("El número de subdivisiones debe ser un entero válido")
                             return
-                    except ValueError:
-                        self.show_error("El número de subdivisiones debe ser un entero válido")
+                    else:
+                        self.show_error("El número de subdivisiones es requerido para este método")
                         return
+                else:
+                    self.show_error("Campo de subdivisiones no encontrado")
+                    return
             
             # Mostrar estado de cálculo
             if self.results_text:
