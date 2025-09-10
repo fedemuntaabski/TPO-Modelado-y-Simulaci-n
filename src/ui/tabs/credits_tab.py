@@ -30,7 +30,7 @@ class CreditsTab(BaseTab):
         title_label = ctk.CTkLabel(
             credits_frame,
             text="👥 Integrantes del Equipo",
-            font=ctk.CTkFont(size=18, weight="bold")
+            font=ctk.CTkFont(size=24, weight="bold")
         )
         title_label.grid(row=0, column=0, pady=(20, 30), sticky="ew")
 
@@ -46,7 +46,7 @@ class CreditsTab(BaseTab):
             member_label = ctk.CTkLabel(
                 credits_frame,
                 text=f"• {member}",
-                font=ctk.CTkFont(size=16)
+                font=ctk.CTkFont(size=18)
             )
             member_label.grid(row=i+1, column=0, pady=5, sticky="w")
 
@@ -60,7 +60,7 @@ class CreditsTab(BaseTab):
             text="Proyecto: Simulador Matemático \n"
                  "Materia: Modelado y Simulación\n"
                  "Año: 2025\n",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=16),
             text_color=["gray60", "gray50"]
         )
         info_label.grid(row=len(team_members)+2, column=0, pady=(10, 20), sticky="ew")
