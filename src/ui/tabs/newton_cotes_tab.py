@@ -113,7 +113,9 @@ class SimpleNewtonCotes:
                 # Métodos compuestos
                 h = (b - a) / n
                 x = np.linspace(a, b, n + 1)
-                y = f(x)
+                
+                # Evaluar la función para cada punto individualmente para evitar problemas con arrays
+                y = np.array([f(float(xi)) for xi in x])
                 
                 if 'rectangle' in method:
                     # Rectángulo compuesto (punto medio)
