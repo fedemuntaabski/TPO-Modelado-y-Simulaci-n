@@ -132,10 +132,9 @@ class ResultDisplayMixin:
         if not iteration_data:
             return
 
-        table_text = f"\nTABLA DE ITERACIONES - {method_name}\n"
-        table_text += "-" * 50 + "\n"
+        table_text = f"\n\n{'='*60}\nTABLA DE ITERACIONES - {method_name}\n{'='*60}\n"
         table_text += "Iter | Datos de la iteración\n"
-        table_text += "-" * 50 + "\n"
+        table_text += "-" * 60 + "\n"
 
         for i, data in enumerate(iteration_data[:15]):  # Limitar a 15 iteraciones
             iteration = data.get('iteration', i+1)

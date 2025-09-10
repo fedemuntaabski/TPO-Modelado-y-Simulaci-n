@@ -530,6 +530,8 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         # Tabla de iteraciones usando mixin
         if result.iteration_data:
             self.display_iteration_table(self.results_text, result.iteration_data, method_name)
+            # Hacer scroll al final para mostrar la tabla
+            self.results_text.see("end")
 
         # Información del método
         method_info = []
