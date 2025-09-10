@@ -24,6 +24,33 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
     """
     
     def __init__(self, parent):
+        # Atributos para método seleccionado e inputs dinámicos (antes de inicializar)
+        self.selected_method = "Bisección"
+        self.entries = {}
+        self.input_frames = {}
+        self.method_configs = {
+            "Bisección": {
+                "inputs": ["función_fx", "intervalo_a", "intervalo_b", "tolerancia"],
+                "labels": ["Función f(x):", "Intervalo a:", "Intervalo b:", "Tolerancia:"],
+                "defaults": ["x**2 - 4", "1", "3", str(VALIDATION.DEFAULT_TOLERANCE)]
+            },
+            "Newton-Raphson": {
+                "inputs": ["función_fx", "punto_inicial", "tolerancia"],
+                "labels": ["Función f(x):", "Punto inicial:", "Tolerancia:"],
+                "defaults": ["x**2 - 4", "1", str(VALIDATION.DEFAULT_TOLERANCE)]
+            },
+            "Punto Fijo": {
+                "inputs": ["función_fx", "punto_inicial", "tolerancia"],
+                "labels": ["Función f(x):", "Punto inicial:", "Tolerancia:"],
+                "defaults": ["x**2 - 4", "1", str(VALIDATION.DEFAULT_TOLERANCE)]
+            },
+            "Aitken": {
+                "inputs": ["función_fx", "punto_inicial", "tolerancia"],
+                "labels": ["Función f(x):", "Punto inicial:", "Tolerancia:"],
+                "defaults": ["x**2 - 4", "1", str(VALIDATION.DEFAULT_TOLERANCE)]
+            }
+        }
+        
         # Inicializar mixins primero
         InputValidationMixin.__init__(self)
         
@@ -136,35 +163,170 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         )
         desc_label.grid(row=0, column=0, pady=10, padx=20, sticky="ew")
         
-        # Crear sección de entrada
-        input_data = {
-            "Función f(x):": "x**2 - 4",
-            "Intervalo a:": "1",
-            "Intervalo b:": "3",
-            "Tolerancia:": str(VALIDATION.DEFAULT_TOLERANCE)
-        }
-        self.entries = self.create_input_section(input_data)
+        # Selector de método
+        method_frame = ctk.CTkFrame(self.content_frame)
+        method_frame.grid(row=1, column=0, pady=10, padx=20, sticky="ew")
         
-        # Configurar validación en tiempo real
-        validation_config = {
-            "función_fx": {"type": "function"},
-            "intervalo_a": {"type": "numeric"},
-            "intervalo_b": {"type": "numeric"},
-            "tolerancia": {"type": "tolerance"}
-        }
-        self.setup_validation_for_tab(self.entries, validation_config)
+        method_label = ctk.CTkLabel(
+            method_frame,
+            text="Método:",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        method_label.pack(side="left", padx=10)
         
-        # Crear sección de métodos
-        methods = [
-            ("Bisección", self.bisection_method),
-            ("Newton-Raphson", self.newton_raphson_method),
-            ("Punto Fijo", self.fixed_point_method),
-            ("Aitken", self.aitken_method)
-        ]
-        self.create_methods_section(methods)
+        self.method_combobox = ctk.CTkComboBox(
+            method_frame,
+            values=list(self.method_configs.keys()),
+            command=self.on_method_change,
+            width=200
+        )
+        self.method_combobox.set(self.selected_method)
+        self.method_combobox.pack(side="left", padx=10)
+        
+        # Frame para inputs dinámicos
+        self.inputs_container = ctk.CTkFrame(self.content_frame)
+        self.inputs_container.grid(row=2, column=0, pady=10, padx=20, sticky="ew")
+        
+        # Crear inputs iniciales
+        self.create_dynamic_inputs()
+        
+        # Botón ejecutar
+        execute_button = ctk.CTkButton(
+            self.content_frame,
+            text="🚀 Ejecutar Método",
+            command=self.execute_selected_method,
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        execute_button.grid(row=3, column=0, pady=10, padx=20)
         
         # Crear sección de resultados
         self.results_frame, self.results_text, self.plot_frame = self.create_results_section()
+    
+    def create_dynamic_inputs(self):
+        """Crear inputs dinámicos según el método seleccionado"""
+        # Limpiar inputs anteriores
+        for widget in self.inputs_container.winfo_children():
+            widget.destroy()
+        
+        self.entries = {}
+        config = self.method_configs[self.selected_method]
+        
+        for i, (input_key, label, default) in enumerate(zip(
+            config["inputs"], config["labels"], config["defaults"]
+        )):
+            # Frame para cada input
+            input_frame = ctk.CTkFrame(self.inputs_container)
+            input_frame.pack(fill="x", padx=10, pady=5)
+            
+            # Label
+            label_widget = ctk.CTkLabel(
+                input_frame,
+                text=label,
+                font=ctk.CTkFont(size=12)
+            )
+            label_widget.pack(side="left", padx=10)
+            
+            # Entry
+            entry = ctk.CTkEntry(
+                input_frame,
+                placeholder_text=default,
+                width=200
+            )
+            entry.insert(0, default)
+            entry.pack(side="right", padx=10)
+            
+            self.entries[input_key] = entry
+            self.input_frames[input_key] = input_frame
+    
+    def on_method_change(self, method_name):
+        """Manejador para cambio de método"""
+        self.selected_method = method_name
+        self.create_dynamic_inputs()
+    
+    def execute_selected_method(self):
+        """Ejecutar el método seleccionado"""
+        method_map = {
+            "Bisección": self.bisection_method,
+            "Newton-Raphson": self.newton_raphson_method,
+            "Punto Fijo": self.fixed_point_method,
+            "Aitken": self.aitken_method
+        }
+        
+        if self.selected_method in method_map:
+            method_map[self.selected_method]()
+    
+    def is_form_valid(self):
+        """Validación simplificada del formulario según método seleccionado"""
+        errors = {}
+        config = self.method_configs[self.selected_method]
+        
+        # Validar función (siempre presente)
+        if "función_fx" in self.entries:
+            func_text = self.entries["función_fx"].get().strip()
+            if not func_text:
+                errors["función_fx"] = "La función no puede estar vacía"
+        
+        # Validar intervalo a (para bisección)
+        if "intervalo_a" in self.entries:
+            a_text = self.entries["intervalo_a"].get().strip()
+            if not a_text:
+                errors["intervalo_a"] = "El intervalo a no puede estar vacío"
+            else:
+                try:
+                    float(a_text)
+                except ValueError:
+                    errors["intervalo_a"] = "El intervalo a debe ser un número"
+        
+        # Validar intervalo b (para bisección)
+        if "intervalo_b" in self.entries:
+            b_text = self.entries["intervalo_b"].get().strip()
+            if not b_text:
+                errors["intervalo_b"] = "El intervalo b no puede estar vacío"
+            else:
+                try:
+                    float(b_text)
+                except ValueError:
+                    errors["intervalo_b"] = "El intervalo b debe ser un número"
+        
+        # Validar punto inicial (para Newton-Raphson, Punto Fijo, Aitken)
+        if "punto_inicial" in self.entries:
+            x0_text = self.entries["punto_inicial"].get().strip()
+            if not x0_text:
+                errors["punto_inicial"] = "El punto inicial no puede estar vacío"
+            else:
+                try:
+                    float(x0_text)
+                except ValueError:
+                    errors["punto_inicial"] = "El punto inicial debe ser un número"
+        
+        # Validar tolerancia (siempre presente)
+        if "tolerancia" in self.entries:
+            tol_text = self.entries["tolerancia"].get().strip()
+            if not tol_text:
+                errors["tolerancia"] = "La tolerancia no puede estar vacía"
+            else:
+                try:
+                    tol_val = float(tol_text)
+                    if tol_val <= 0:
+                        errors["tolerancia"] = "La tolerancia debe ser positiva"
+                except ValueError:
+                    errors["tolerancia"] = "La tolerancia debe ser un número"
+        
+        return len(errors) == 0, errors
+    
+    def get_validated_values(self):
+        """Obtener valores validados del formulario según método"""
+        values = {}
+        config = self.method_configs[self.selected_method]
+        
+        for input_key in config["inputs"]:
+            if input_key in self.entries:
+                if input_key == "función_fx":
+                    values[input_key] = self.entries[input_key].get().strip()
+                else:
+                    values[input_key] = float(self.entries[input_key].get().strip())
+        
+        return values
     
     def bisection_method(self):
         """Ejecutar método de bisección con validación mejorada"""
@@ -206,61 +368,49 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             self.show_error(f"Error en bisección: {str(e)}")
     
     def newton_raphson_method(self):
-        """Ejecutar método de Newton-Raphson usando mixins"""
-        try:
-            # Validar función usando mixin
-            is_valid_func, function_str, func_error = self.validate_function_input(
-                self.entries, "función_fx"
-            )
-            if not is_valid_func:
-                self.show_error(func_error)
-                return
+        """Ejecutar método de Newton-Raphson con validación mejorada"""
+        # Verificar que el formulario sea válido
+        is_valid, errors = self.is_form_valid()
+        if not is_valid:
+            error_msg = "; ".join(errors.values())
+            self.show_error(f"Por favor corrija los siguientes errores: {error_msg}")
+            return
 
-            # Validar entradas numéricas usando mixin
-            is_valid_num, values, num_error = self.validate_numeric_inputs(
-                self.entries,
-                ["intervalo_a", "tolerancia"]
-            )
-            if not is_valid_num:
-                self.show_error(num_error)
-                return
+        try:
+            # Obtener valores validados
+            values = self.get_validated_values()
+            function_str = values["función_fx"]
 
             # Crear función
             f = create_function_from_string(function_str)
 
             # Ejecutar método (derivada se calcula numéricamente)
             result = self.root_finder.newton_raphson_method(
-                f, None, values["intervalo_a"]  # None = derivada numérica
+                f, None, values["punto_inicial"]  # None = derivada numérica
             )
 
-            # Mostrar resultados usando mixin
+            # Mostrar resultados
             self._display_results(result, "MÉTODO DE NEWTON-RAPHSON")
 
-            # Crear gráfico usando mixin
-            self._plot_newton_raphson(f, values["intervalo_a"], result.root)
+            # Crear gráfico
+            self._plot_newton_raphson(f, values["punto_inicial"], result.root)
 
         except Exception as e:
-            self.show_error(f"Error en Newton-Raphson: {e}")
+            self.show_error(f"Error en Newton-Raphson: {str(e)}")
     
     def fixed_point_method(self):
-        """Ejecutar método de punto fijo usando mixins"""
-        try:
-            # Validar función usando mixin
-            is_valid_func, function_str, func_error = self.validate_function_input(
-                self.entries, "función_fx"
-            )
-            if not is_valid_func:
-                self.show_error(func_error)
-                return
+        """Ejecutar método de punto fijo con validación mejorada"""
+        # Verificar que el formulario sea válido
+        is_valid, errors = self.is_form_valid()
+        if not is_valid:
+            error_msg = "; ".join(errors.values())
+            self.show_error(f"Por favor corrija los siguientes errores: {error_msg}")
+            return
 
-            # Validar entradas numéricas usando mixin
-            is_valid_num, values, num_error = self.validate_numeric_inputs(
-                self.entries,
-                ["intervalo_a", "tolerancia"]
-            )
-            if not is_valid_num:
-                self.show_error(num_error)
-                return
+        try:
+            # Obtener valores validados
+            values = self.get_validated_values()
+            function_str = values["función_fx"]
 
             # Crear función original
             f = create_function_from_string(function_str)
@@ -269,36 +419,30 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             g = lambda x: x + f(x)
 
             # Ejecutar método
-            result = self.root_finder.fixed_point_method(g, values["intervalo_a"])
+            result = self.root_finder.fixed_point_method(g, values["punto_inicial"])
 
-            # Mostrar resultados usando mixin
+            # Mostrar resultados
             self._display_results(result, "MÉTODO DE PUNTO FIJO")
 
-            # Crear gráfico usando mixin
-            self._plot_fixed_point(f, g, values["intervalo_a"], result.root)
+            # Crear gráfico
+            self._plot_fixed_point(f, g, values["punto_inicial"], result.root)
 
         except Exception as e:
-            self.show_error(f"Error en punto fijo: {e}")
+            self.show_error(f"Error en punto fijo: {str(e)}")
     
     def aitken_method(self):
-        """Ejecutar método de aceleración de Aitken usando mixins"""
-        try:
-            # Validar función usando mixin
-            is_valid_func, function_str, func_error = self.validate_function_input(
-                self.entries, "función_fx"
-            )
-            if not is_valid_func:
-                self.show_error(func_error)
-                return
+        """Ejecutar método de aceleración de Aitken con validación mejorada"""
+        # Verificar que el formulario sea válido
+        is_valid, errors = self.is_form_valid()
+        if not is_valid:
+            error_msg = "; ".join(errors.values())
+            self.show_error(f"Por favor corrija los siguientes errores: {error_msg}")
+            return
 
-            # Validar entradas numéricas usando mixin
-            is_valid_num, values, num_error = self.validate_numeric_inputs(
-                self.entries,
-                ["intervalo_a", "tolerancia"]
-            )
-            if not is_valid_num:
-                self.show_error(num_error)
-                return
+        try:
+            # Obtener valores validados
+            values = self.get_validated_values()
+            function_str = values["función_fx"]
 
             # Crear función original
             f = create_function_from_string(function_str)
@@ -307,22 +451,27 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             g = lambda x: x + f(x)
 
             # Ejecutar método de Aitken
-            result = self.root_finder.aitken_acceleration(g, values["intervalo_a"])
+            result = self.root_finder.aitken_acceleration(g, values["punto_inicial"])
 
-            # Mostrar resultados usando mixin
+            # Mostrar resultados
             self._display_results(result, "MÉTODO DE AITKEN")
 
-            # Crear gráfico usando mixin
-            self._plot_aitken(f, g, values["intervalo_a"], result.root)
+            # Crear gráfico
+            self._plot_aitken(f, g, values["punto_inicial"], result.root)
 
         except Exception as e:
-            self.show_error(f"Error en Aitken: {e}")
+            self.show_error(f"Error en Aitken: {str(e)}")
     
     def _display_results(self, result, method_name: str):
         """Mostrar resultados usando mixin ResultDisplayMixin"""
+        # Obtener la función del input correspondiente
+        function_text = ""
+        if "función_fx" in self.entries:
+            function_text = self.entries["función_fx"].get()
+        
         # Datos principales
         main_data = {
-            "Función": self.entries["función_fx"].get(),
+            "Función": function_text,
             "Método": result.method if hasattr(result, 'method') else method_name,
             "Raíz encontrada": f"{result.root:.8f}",
             "Valor de función": f"{result.function_value:.2e}",
