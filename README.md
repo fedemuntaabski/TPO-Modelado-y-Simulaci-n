@@ -52,6 +52,7 @@
 │           ├── ode_tab_new.py       # 📈 EDOs UI (versión nueva)
 │           ├── finite_diff_tab.py    # 🔢 Diferencias UI
 │           ├── monte_carlo_tab.py    # 🎲 Monte Carlo UI
+│           ├── credits_tab.py        # 👥 Créditos del equipo
 │           └── __init__.py
 └── tests/                        # 🧪 Tests unitarios
     ├── test_newton_cotes.py     # ✨ Tests Newton-Cotes
