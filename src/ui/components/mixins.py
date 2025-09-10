@@ -144,10 +144,12 @@ class ResultDisplayMixin:
             # Formatear según el método
             if 'c' in data:  # Bisección
                 table_text += f"a={data['a']:.6f}, b={data['b']:.6f}, c={data['c']:.6f}, error={data['error']:.2e}"
-            elif 'x_n' in data:  # Newton-Raphson
+            elif 'x_n' in data and 'x_n_plus_1' in data:  # Newton-Raphson
                 table_text += f"x_n={data['x_n']:.6f}, x_n+1={data['x_n_plus_1']:.6f}, error={data['error']:.2e}"
             elif 'g_x_n' in data:  # Punto fijo
                 table_text += f"x_n={data['x_n']:.6f}, g(x_n)={data['g_x_n']:.6f}, error={data['error']:.2e}"
+            elif 'x_aitken' in data:  # Aitken
+                table_text += f"x={data['x']:.6f}, x1={data['x1']:.6f}, x2={data['x2']:.6f}, x_aitken={data['x_aitken']:.6f}, error={data['error']:.2e}"
             else:
                 table_text += str(data)
 

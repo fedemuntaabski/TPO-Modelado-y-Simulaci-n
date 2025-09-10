@@ -202,6 +202,69 @@ class RootFinder:
             iteration_data=iterations_data
         )
     
+    def aitken_acceleration(self, g: Callable[[float], float], 
+                           x0: float) -> RootFindingResult:
+        """
+        Método de aceleración de Aitken (Δ²) para mejorar convergencia.
+        
+        Args:
+            g: Función de punto fijo x = g(x)
+            x0: Punto inicial
+            
+        Returns:
+            RootFindingResult con información completa del proceso
+        """
+        iteration_data = []
+        x = x0
+        
+        for i in range(self.max_iterations):
+            # Calcular tres iteraciones de punto fijo
+            x1 = g(x)
+            x2 = g(x1)
+            
+            # Aplicar aceleración de Aitken
+            denominator = x2 - 2*x1 + x
+            
+            if abs(denominator) < 1e-14:
+                # Si el denominador es muy pequeño, usar punto fijo normal
+                x_new = x2
+            else:
+                # Fórmula de Aitken: x_new = x - (x1 - x)²/(x2 - 2*x1 + x)
+                x_new = x - (x1 - x)**2 / denominator
+            
+            error = abs(x_new - x)
+            iteration_data.append({
+                'iteration': i + 1,
+                'x': x,
+                'x1': x1, 
+                'x2': x2,
+                'x_aitken': x_new,
+                'error': error
+            })
+            
+            if error < self.tolerance:
+                logger.info(f"Aitken convergió en {i+1} iteraciones")
+                return RootFindingResult(
+                    root=x_new,
+                    iterations=i + 1,
+                    converged=True,
+                    error=error,
+                    function_value=abs(x_new - g(x_new)),
+                    iteration_data=iteration_data
+                )
+            
+            x = x_new
+        
+        logger.warning(f"Aitken no convergió en {self.max_iterations} iteraciones")
+        return RootFindingResult(
+            root=x,
+            iterations=self.max_iterations,
+            converged=False,
+            error=error,
+            function_value=abs(x - g(x)),
+            iteration_data=iteration_data
+        )
+    
     def _numerical_derivative(self, f: Callable[[float], float], 
                              h: float = 1e-8) -> Callable[[float], float]:
         """
@@ -270,66 +333,3 @@ def convert_to_fixed_point(f: Callable[[float], float],
         return lambda x: x + alpha * f(x)
     else:
         raise ValueError(f"Método de conversión '{method}' no reconocido")
-    
-    def aitken_acceleration(self, g: Callable[[float], float], 
-                           x0: float) -> RootFindingResult:
-        """
-        Método de aceleración de Aitken (Δ²) para mejorar convergencia.
-        
-        Args:
-            g: Función de punto fijo x = g(x)
-            x0: Punto inicial
-            
-        Returns:
-            RootFindingResult con información completa del proceso
-        """
-        iteration_data = []
-        x = x0
-        
-        for i in range(self.max_iterations):
-            # Calcular tres iteraciones de punto fijo
-            x1 = g(x)
-            x2 = g(x1)
-            
-            # Aplicar aceleración de Aitken
-            denominator = x2 - 2*x1 + x
-            
-            if abs(denominator) < 1e-14:
-                # Si el denominador es muy pequeño, usar punto fijo normal
-                x_new = x2
-            else:
-                # Fórmula de Aitken: x_new = x - (x1 - x)²/(x2 - 2*x1 + x)
-                x_new = x - (x1 - x)**2 / denominator
-            
-            error = abs(x_new - x)
-            iteration_data.append({
-                'iteration': i + 1,
-                'x': x,
-                'x1': x1, 
-                'x2': x2,
-                'x_aitken': x_new,
-                'error': error
-            })
-            
-            if error < self.tolerance:
-                logger.info(f"Aitken convergió en {i+1} iteraciones")
-                return RootFindingResult(
-                    root=x_new,
-                    iterations=i + 1,
-                    converged=True,
-                    error=error,
-                    function_value=abs(x_new - g(x_new)),
-                    iteration_data=iteration_data
-                )
-            
-            x = x_new
-        
-        logger.warning(f"Aitken no convergió en {self.max_iterations} iteraciones")
-        return RootFindingResult(
-            root=x,
-            iterations=self.max_iterations,
-            converged=False,
-            error=error,
-            function_value=abs(x - g(x)),
-            iteration_data=iteration_data
-        )

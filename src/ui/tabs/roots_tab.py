@@ -47,6 +47,85 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         self.validation_config = validation_config
         # No configurar validación en tiempo real por simplicidad
     
+    def is_form_valid(self):
+        """Validación simplificada del formulario"""
+        errors = {}
+        
+        # Validar función
+        entry_func = self.entries.get("función_fx")
+        if entry_func is None:
+            errors["función_fx"] = "Campo de función no encontrado"
+        else:
+            func_text = entry_func.get().strip()
+            if not func_text:
+                errors["función_fx"] = "La función no puede estar vacía"
+        
+        # Validar intervalo a
+        entry_a = self.entries.get("intervalo_a")
+        if entry_a is None:
+            errors["intervalo_a"] = "Campo de intervalo a no encontrado"
+        else:
+            a_text = entry_a.get().strip()
+            if not a_text:
+                errors["intervalo_a"] = "El intervalo a no puede estar vacío"
+            else:
+                try:
+                    float(a_text)
+                except ValueError:
+                    errors["intervalo_a"] = "El intervalo a debe ser un número"
+        
+        # Validar intervalo b
+        entry_b = self.entries.get("intervalo_b")
+        if entry_b is None:
+            errors["intervalo_b"] = "Campo de intervalo b no encontrado"
+        else:
+            b_text = entry_b.get().strip()
+            if not b_text:
+                errors["intervalo_b"] = "El intervalo b no puede estar vacío"
+            else:
+                try:
+                    float(b_text)
+                except ValueError:
+                    errors["intervalo_b"] = "El intervalo b debe ser un número"
+        
+        # Validar tolerancia
+        entry_tol = self.entries.get("tolerancia")
+        if entry_tol is None:
+            errors["tolerancia"] = "Campo de tolerancia no encontrado"
+        else:
+            tol_text = entry_tol.get().strip()
+            if not tol_text:
+                errors["tolerancia"] = "La tolerancia no puede estar vacía"
+            else:
+                try:
+                    tol_val = float(tol_text)
+                    if tol_val <= 0:
+                        errors["tolerancia"] = "La tolerancia debe ser positiva"
+                except ValueError:
+                    errors["tolerancia"] = "La tolerancia debe ser un número"
+        
+        return len(errors) == 0, errors
+    
+    def get_validated_values(self):
+        """Obtener valores validados del formulario"""
+        return {
+            "función_fx": self.entries["función_fx"].get().strip(),
+            "intervalo_a": float(self.entries["intervalo_a"].get().strip()),
+            "intervalo_b": float(self.entries["intervalo_b"].get().strip()),
+            "tolerancia": float(self.entries["tolerancia"].get().strip())
+        }
+    
+    def validate_range(self, a_str, b_str):
+        """Validar que el rango sea válido para bisección"""
+        try:
+            a = float(a_str)
+            b = float(b_str)
+            if a >= b:
+                return False, "El intervalo a debe ser menor que b"
+            return True, ""
+        except ValueError:
+            return False, "Los intervalos deben ser números válidos"
+    
     def create_content(self):
         """Crear contenido específico para raíces (Template Method)"""
         # Descripción
@@ -60,7 +139,7 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         # Crear sección de entrada
         input_data = {
             "Función f(x):": "x**2 - 4",
-            "Intervalo a:": "0",
+            "Intervalo a:": "1",
             "Intervalo b:": "3",
             "Tolerancia:": str(VALIDATION.DEFAULT_TOLERANCE)
         }
@@ -79,7 +158,8 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         methods = [
             ("Bisección", self.bisection_method),
             ("Newton-Raphson", self.newton_raphson_method),
-            ("Punto Fijo", self.fixed_point_method)
+            ("Punto Fijo", self.fixed_point_method),
+            ("Aitken", self.aitken_method)
         ]
         self.create_methods_section(methods)
         
@@ -200,6 +280,44 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         except Exception as e:
             self.show_error(f"Error en punto fijo: {e}")
     
+    def aitken_method(self):
+        """Ejecutar método de aceleración de Aitken usando mixins"""
+        try:
+            # Validar función usando mixin
+            is_valid_func, function_str, func_error = self.validate_function_input(
+                self.entries, "función_fx"
+            )
+            if not is_valid_func:
+                self.show_error(func_error)
+                return
+
+            # Validar entradas numéricas usando mixin
+            is_valid_num, values, num_error = self.validate_numeric_inputs(
+                self.entries,
+                ["intervalo_a", "tolerancia"]
+            )
+            if not is_valid_num:
+                self.show_error(num_error)
+                return
+
+            # Crear función original
+            f = create_function_from_string(function_str)
+
+            # Convertir a función de punto fijo: g(x) = x + f(x)
+            g = lambda x: x + f(x)
+
+            # Ejecutar método de Aitken
+            result = self.root_finder.aitken_acceleration(g, values["intervalo_a"])
+
+            # Mostrar resultados usando mixin
+            self._display_results(result, "MÉTODO DE AITKEN")
+
+            # Crear gráfico usando mixin
+            self._plot_aitken(f, g, values["intervalo_a"], result.root)
+
+        except Exception as e:
+            self.show_error(f"Error en Aitken: {e}")
+    
     def _display_results(self, result, method_name: str):
         """Mostrar resultados usando mixin ResultDisplayMixin"""
         # Datos principales
@@ -242,6 +360,14 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
                 "Convergencia depende de |g'(x)| < 1",
                 "Transformación: g(x) = x + f(x)",
                 "Puede requerir diferentes transformaciones"
+            ]
+        elif "aitken" in method_name.lower():
+            method_info = [
+                "Acelera la convergencia de métodos iterativos",
+                "Usa extrapolación de Aitken (Δ²)",
+                "Mejora convergencia de punto fijo",
+                "Requiere 3 iteraciones por paso",
+                "Puede fallar si denominador es cercano a cero"
             ]
 
         if method_info:
@@ -337,6 +463,44 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         self.apply_standard_plot_styling(
             ax,
             title="Método de Punto Fijo",
+            xlabel="x",
+            ylabel="y"
+        )
+        
+        # Actualizar canvas
+        canvas.draw()
+    
+    def _plot_aitken(self, f, g, x0: float, root: float):
+        """Crear gráfico para método de Aitken mostrando el proceso de aceleración"""
+        fig, canvas = self.setup_plot_area(self.plot_frame)
+        ax = fig.add_subplot(111)
+        
+        # Usar mixin para graficar múltiples funciones
+        range_size = max(abs(root - x0), 1)
+        x_range = (x0 - range_size, root + range_size)
+        
+        functions = [
+            (f, 'cyan', 'f(x)'),
+            (g, 'orange', 'g(x) = x + f(x)'),
+            (lambda x: x, 'white', 'y = x')  # línea y=x
+        ]
+        
+        self.plot_multiple_functions(fig, ax, functions, x_range)
+        
+        # Línea de y=0
+        ax.axhline(y=0, color='gray', linestyle=':', alpha=0.5)
+        
+        # Puntos importantes
+        points = [(x0, g(x0)), (root, root)]
+        point_labels = [f'Inicio: x₀ = {x0:.6f}', f'Raíz (Aitken): x = {root:.6f}']
+        
+        for point, label in zip(points, point_labels):
+            ax.plot(point[0], point[1], 'o', markersize=8 if 'Inicio' in label else 10,
+                   color='green' if 'Inicio' in label else 'red', label=label)
+        
+        self.apply_standard_plot_styling(
+            ax,
+            title="Método de Aceleración de Aitken",
             xlabel="x",
             ylabel="y"
         )
