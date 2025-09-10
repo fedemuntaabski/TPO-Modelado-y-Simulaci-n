@@ -51,7 +51,7 @@ class MathSimulatorApp(ctk.CTk):
         """Crear barra lateral de navegación"""
         self.sidebar = ctk.CTkFrame(self, width=250, corner_radius=0)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
-        self.sidebar.grid_rowconfigure(7, weight=1)
+        self.sidebar.grid_rowconfigure(8, weight=1)
 
         # Logo/Título
         title_label = ctk.CTkLabel(
@@ -70,6 +70,7 @@ class MathSimulatorApp(ctk.CTk):
             ("finite_diff", "🔢 Diferencias Finitas"),
             ("newton_cotes", "📊 Newton-Cotes"),
             ("monte_carlo", "🎲 Monte Carlo"),
+            ("credits", "👥 Créditos"),
         ]
 
         self.nav_buttons = {}
