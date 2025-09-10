@@ -123,44 +123,139 @@ class ResultDisplayMixin:
         results_text_widget.delete("0.0", "end")
         results_text_widget.insert("0.0", text)
 
-    def display_iteration_table(self, results_text_widget: ctk.CTkTextbox,
-                               iteration_data: list, method_name: str) -> None:
+    def display_iteration_table_popup(self, parent_widget, iteration_data: list, method_name: str) -> None:
         """
-        Muestra tabla de iteraciones de forma estandarizada.
-        Principio DRY: formato de tablas reutilizable.
+        Muestra tabla de iteraciones en un popup movible y cerrable.
         """
         if not iteration_data:
             return
 
-        table_text = f"\n\n{'='*60}\nTABLA DE ITERACIONES - {method_name}\n{'='*60}\n"
-        table_text += "Iter | Datos de la iteración\n"
-        table_text += "-" * 60 + "\n"
-
-        for i, data in enumerate(iteration_data[:15]):  # Limitar a 15 iteraciones
-            iteration = data.get('iteration', i+1)
-            table_text += f"{iteration:4d} | "
-
-            # Formatear según el método
-            if 'c' in data:  # Bisección
-                table_text += f"a={data['a']:.6f}, b={data['b']:.6f}, c={data['c']:.6f}, error={data['error']:.2e}"
-            elif 'x_n' in data and 'x_n_plus_1' in data:  # Newton-Raphson
-                table_text += f"x_n={data['x_n']:.6f}, x_n+1={data['x_n_plus_1']:.6f}, error={data['error']:.2e}"
-            elif 'g_x_n' in data:  # Punto fijo
-                table_text += f"x_n={data['x_n']:.6f}, g(x_n)={data['g_x_n']:.6f}, error={data['error']:.2e}"
-            elif 'x_aitken' in data:  # Aitken
-                table_text += f"x={data['x']:.6f}, x1={data['x1']:.6f}, x2={data['x2']:.6f}, x_aitken={data['x_aitken']:.6f}, error={data['error']:.2e}"
+        # Crear ventana popup
+        popup = ctk.CTkToplevel(parent_widget)
+        popup.title(f"Tabla de Iteraciones - {method_name}")
+        popup.geometry("800x600")
+        popup.resizable(True, True)
+        
+        # Hacer que sea modal pero movible
+        popup.transient(parent_widget)
+        popup.grab_set()
+        
+        # Frame principal
+        main_frame = ctk.CTkFrame(popup)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Título
+        title_label = ctk.CTkLabel(
+            main_frame,
+            text=f"Tabla de Iteraciones - {method_name}",
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        title_label.pack(pady=10)
+        
+        # Frame para la tabla
+        table_frame = ctk.CTkFrame(main_frame)
+        table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Crear tabla
+        self._create_iteration_table(table_frame, iteration_data, method_name)
+        
+        # Botón cerrar
+        close_button = ctk.CTkButton(
+            main_frame,
+            text="Cerrar",
+            command=popup.destroy,
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        close_button.pack(pady=10)
+        
+        # Centrar la ventana
+        popup.geometry("800x600+100+100")
+    
+    def _create_iteration_table(self, parent_frame, iteration_data: list, method_name: str) -> None:
+        """
+        Crea la tabla de iteraciones como texto en un textbox.
+        """
+        # Crear textbox con scroll
+        text_box = ctk.CTkTextbox(parent_frame, wrap="none")
+        text_box.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Crear tabla como texto
+        table_text = f"TABLA DE ITERACIONES - {method_name}\n"
+        table_text += "=" * 80 + "\n\n"
+        
+        # Headers según el método
+        if method_name.upper().startswith("BISECCIÓN"):
+            headers = ["Iter", "a", "b", "c", "f(c)", "Error"]
+            widths = [4, 10, 10, 10, 10, 12]
+        elif method_name.upper().startswith("NEWTON-RAPHSON"):
+            headers = ["Iter", "x_n", "f(x_n)", "f'(x_n)", "x_n+1", "Error"]
+            widths = [4, 10, 10, 10, 10, 12]
+        elif method_name.upper().startswith("PUNTO FIJO"):
+            headers = ["Iter", "x_n", "g(x_n)", "Error"]
+            widths = [4, 10, 10, 12]
+        elif method_name.upper().startswith("AITKEN"):
+            headers = ["Iter", "x", "x1", "x2", "x_aitken", "Error"]
+            widths = [4, 10, 10, 10, 12, 12]
+        else:
+            headers = ["Iter", "Datos"]
+            widths = [4, 50]
+        
+        # Crear línea de headers
+        header_line = ""
+        for header, width in zip(headers, widths):
+            header_line += f"{header:<{width}}"
+        table_text += header_line + "\n"
+        table_text += "-" * len(header_line) + "\n"
+        
+        # Crear filas de datos
+        for data in iteration_data[:50]:  # Limitar a 50 iteraciones
+            iteration = data.get('iteration', 1)
+            row = f"{iteration:<{widths[0]}}"
+            
+            if method_name.upper().startswith("BISECCIÓN"):
+                values = [
+                    f"{data.get('a', 0):<{widths[1]}.6f}",
+                    f"{data.get('b', 0):<{widths[2]}.6f}",
+                    f"{data.get('c', 0):<{widths[3]}.6f}",
+                    f"{data.get('f_c', 0):<{widths[4]}.6f}",
+                    f"{data.get('error', 0):<{widths[5]}.2e}"
+                ]
+            elif method_name.upper().startswith("NEWTON-RAPHSON"):
+                values = [
+                    f"{data.get('x_n', 0):<{widths[1]}.6f}",
+                    f"{data.get('f_x_n', 0):<{widths[2]}.6f}",
+                    f"{data.get('df_x_n', 0):<{widths[3]}.6f}",
+                    f"{data.get('x_n_plus_1', 0):<{widths[4]}.6f}",
+                    f"{data.get('error', 0):<{widths[5]}.2e}"
+                ]
+            elif method_name.upper().startswith("PUNTO FIJO"):
+                values = [
+                    f"{data.get('x_n', 0):<{widths[1]}.6f}",
+                    f"{data.get('g_x_n', 0):<{widths[2]}.6f}",
+                    f"{data.get('error', 0):<{widths[3]}.2e}"
+                ]
+            elif method_name.upper().startswith("AITKEN"):
+                values = [
+                    f"{data.get('x', 0):<{widths[1]}.6f}",
+                    f"{data.get('x1', 0):<{widths[2]}.6f}",
+                    f"{data.get('x2', 0):<{widths[3]}.6f}",
+                    f"{data.get('x_aitken', 0):<{widths[4]}.6f}",
+                    f"{data.get('error', 0):<{widths[5]}.2e}"
+                ]
             else:
-                table_text += str(data)
-
-            table_text += "\n"
-
-        if len(iteration_data) > 15:
-            table_text += "... (mostrando solo las primeras 15 iteraciones)\n"
-
-        # Agregar al widget existente
-        current_text = results_text_widget.get("0.0", "end")
-        results_text_widget.delete("0.0", "end")
-        results_text_widget.insert("0.0", current_text + table_text)
+                values = [f"{str(data):<{widths[1]}}"]
+            
+            for value in values:
+                row += value
+            table_text += row + "\n"
+        
+        # Mensaje si hay más iteraciones
+        if len(iteration_data) > 50:
+            table_text += f"\n... (mostrando solo las primeras 50 de {len(iteration_data)} iteraciones)\n"
+        
+        # Insertar texto
+        text_box.insert("0.0", table_text)
+        text_box.configure(state="disabled")  # Hacer solo lectura
 
 
 class PlottingMixin:
