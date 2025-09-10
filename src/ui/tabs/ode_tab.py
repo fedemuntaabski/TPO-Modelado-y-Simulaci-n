@@ -10,12 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from typing import Optional, Dict, Any, Tuple, Callable
-from scipy.integrate import solve_ivp
-import time
 
 from src.ui.components.base_tab import BaseTab
-from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin
 from src.ui.components.constants import VALIDATION, DEFAULT_CONFIGS, UI, PLOT, COLORS
+from src.core.ode_runge_kutta import RungeKuttaSolver
 from config.settings import NUMERICAL_CONFIG
 
 
@@ -33,6 +31,10 @@ class ODETab(BaseTab):
         """Parsear entradas del usuario"""
         func_str = self.func_entry.get().strip()
         
+        # Función hardcodeada por ahora (temporal)
+        def func(t, y):
+            return y - t**2 + 1
+        
         # Parsear parámetros numéricos
         t0 = float(self.t0_entry.get().strip())
         tf = float(self.tf_entry.get().strip())
@@ -46,115 +48,7 @@ class ODETab(BaseTab):
         # Tolerancia
         tol = float(self.tol_entry.get().strip())
         
-        return func_str, t0, tf, y0, method, step, tol
-    
-    def _run(self):
-        """Ejecutar la solución de la EDO"""
-        try:
-            # Obtener parámetros
-            func_str, t0, tf, y0, method, step, tol = self._parse_inputs()
-            
-            # Función de ejemplo: y' = y - t^2 + 1
-            def f(t, y):
-                return [y[0] - t**2 + 1]
-            
-            # Mapear métodos a los disponibles en scipy
-            method_map = {
-                "euler": "RK23",  # Scipy no tiene Euler, usamos RK23 como aproximación
-                "heun": "RK23",   # Scipy no tiene Heun, usamos RK23 como aproximación
-                "rk2": "RK23",    # RK23 es una variante de RK2
-                "rk4": "RK45",    # RK45 es una variante de RK4
-                "rk45": "RK45"    # RK45 es el método adaptativo
-            }
-            
-            # Resolver EDO
-            start_time = time.time()
-            sol = solve_ivp(f, [t0, tf], [y0], method=method_map[method], dense_output=True)
-            computation_time = time.time() - start_time
-            
-            # Crear puntos para graficar
-            t_points = np.linspace(t0, tf, 100)
-            y_points = sol.sol(t_points)[0]
-            
-            # Mostrar resultados gráficamente
-            self.ax.clear()
-            self.ax.plot(t_points, y_points)
-            self.ax.set_xlabel("t")
-            self.ax.set_ylabel("y")
-            self.ax.set_title(f"Método: {method} • EDO: y' = y - t² + 1")
-            self.canvas.draw()
-            
-            # Mostrar resultados en tabla
-            self.table.delete("0.0", "end")
-            self.table.insert("end", f"{'t':>12} {'y':>18}\n")
-            self.table.insert("end", "-"*32+"\n")
-            for t, y in zip(t_points[::5], y_points[::5]):  # Mostrar solo algunos puntos
-                self.table.insert("end", f"{t:>12.6f} {y:>18.10f}\n")
-            
-            # Mostrar mensaje con resultados
-            self.msg.configure(text=f"Listo en {computation_time:.3f}s • Pasos: {len(sol.t)}")
-        except Exception as e:
-            self.msg.configure(text=f"Error: {e}")
-    
-    def _labeled_entry(self, parent, label, default=""):
-        """Crear un entry con etiqueta"""
-        frame = ctk.CTkFrame(parent)
-        frame.pack(fill="x", pady=4)
-        ctk.CTkLabel(frame, text=label, width=140, anchor="w").pack(side="left", padx=(4,4))
-        entry = ctk.CTkEntry(frame)
-        entry.insert(0, default)
-        entry.pack(side="left", fill="x", expand=True)
-        return entry
-    
-    def _build_layout(self):
-        """Construir la interfaz de usuario"""
-        # Usar el scroll_frame que proporciona BaseTab
-        container = self.scroll_frame
-        
-        # Panel izquierdo para controles
-        left = ctk.CTkFrame(container, width=300)
-        left.pack(side="left", fill="y", padx=10, pady=10)
-        
-        # Título
-        ctk.CTkLabel(left, text="EDOs • Runge–Kutta", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(0,10))
-        
-        # Entradas de usuario
-        self.func_entry = self._labeled_entry(left, "f(t,y) =", "y - t**2 + 1")
-        self.t0_entry = self._labeled_entry(left, "t0 =", "0.0")
-        self.tf_entry = self._labeled_entry(left, "tf =", "2.0")
-        self.y0_entry = self._labeled_entry(left, "y0 =", "0.5")
-        self.step_entry = self._labeled_entry(left, "Paso h (p/ fijos) =", str(NUMERICAL_CONFIG.get("ode_default_step", 0.1)))
-        self.tol_entry = self._labeled_entry(left, "Tolerancia (RK45) =", "1e-6")
-        
-        # Selector de método
-        self.method_var = ctk.StringVar(value="rk4")
-        ctk.CTkLabel(left, text="Método").pack(pady=(10,0))
-        ctk.CTkOptionMenu(left, variable=self.method_var, values=["euler","heun","rk2","rk4","rk45"]).pack(pady=(0,10), fill="x")
-        
-        # Botón de ejecución
-        ctk.CTkButton(left, text="Ejecutar", command=self._run).pack(pady=10, fill="x")
-        
-        # Mensaje de estado
-        self.msg = ctk.CTkLabel(left, text="", wraplength=280, anchor="w", justify="left")
-        self.msg.pack(pady=(4,10), fill="x")
-        
-        # Panel derecho para visualización
-        right = ctk.CTkFrame(container)
-        right.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-        
-        # Gráfico
-        self.fig = plt.Figure(figsize=(6,4))
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlabel("t")
-        self.ax.set_ylabel("y")
-        
-        self.canvas = FigureCanvasTkAgg(self.fig, master=right)
-        self.canvas.get_tk_widget().pack(fill="both", expand=True)
-        
-        # Tabla de resultados
-        self.table = ctk.CTkTextbox(right, height=180)
-        self.table.configure(font=("Consolas", 11))
-        self.table.pack(fill="x", expand=False, pady=(10,0))
+        return func, t0, tf, y0, method, step, tol, func_str
     
     def _run(self):
         """Ejecutar la solución de la EDO"""

@@ -10,7 +10,7 @@ import customtkinter as ctk
 
 from src.ui.tabs.roots_tab import RootsTab
 from src.ui.tabs.integration_tab import IntegrationTab
-from src.ui.tabs.ode_tab import ODETab
+from src.ui.tabs.ode_tab_new import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
 from src.ui.tabs.monte_carlo_tab import MonteCarloTab

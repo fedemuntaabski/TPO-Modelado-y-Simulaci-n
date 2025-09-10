@@ -27,6 +27,10 @@ class ODETab(BaseTab):
     
     def __init__(self, parent):
         super().__init__(parent, "🔄 Ecuaciones Diferenciales")
+        # No llamar _build_layout aquí, BaseTab lo maneja
+    
+    def create_content(self):
+        """Crear contenido específico del tab ODE"""
         self._build_layout()
     
     def _parse_inputs(self):
@@ -98,12 +102,15 @@ class ODETab(BaseTab):
     
     def _build_layout(self):
         """Construir la interfaz de usuario"""
-        # Usar el scroll_frame que proporciona BaseTab
-        container = self.scroll_frame
+        # Usar el content_frame que proporciona BaseTab
+        container = self.content_frame
+        container.grid_columnconfigure(1, weight=1)
+        container.grid_rowconfigure(0, weight=1)
         
         # Panel izquierdo para controles
         left = ctk.CTkFrame(container, width=300)
-        left.pack(side="left", fill="y", padx=10, pady=10)
+        left.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        left.grid_columnconfigure(0, weight=1)
         
         # Título
         ctk.CTkLabel(left, text="EDOs • Runge–Kutta", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(0,10))
@@ -130,7 +137,7 @@ class ODETab(BaseTab):
         
         # Panel derecho para visualización
         right = ctk.CTkFrame(container)
-        right.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        right.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
         
         # Gráfico
         self.fig = plt.Figure(figsize=(6,4))

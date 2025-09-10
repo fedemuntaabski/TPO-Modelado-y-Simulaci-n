@@ -11,7 +11,7 @@ from typing import Dict, Any
 
 from src.ui.tabs.roots_tab import RootsTab
 from src.ui.tabs.integration_tab import IntegrationTab
-from src.ui.tabs.ode_tab import ODETab
+from src.ui.tabs.ode_tab_new import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
 from src.ui.components.tab_factory import TabFactory, create_placeholder_tab
