@@ -83,7 +83,7 @@
    python main_simple.py
    ```
 
-   > **Nota**: `main_simple.py` instala automáticamente todas las dependencias y ejecuta la aplicación.
+   > **Nota**: `main_simple.py` instala automáticamente todas las dependencias y ejecuta la aplicación. No requiere instalación manual de paquetes.
 
 ### 🔧 Instalación Manual (opcional)
 
@@ -111,10 +111,13 @@ python main_simple.py
   - 🎯 **Ejemplos Interactivos**: Biblioteca completa de casos de prueba
   - ✅ **Validaciones**: Verificación de restricciones (n par para Simpson 1/3, etc.)
 
-### 🎯 **Búsqueda de Raíces**
-- Algoritmos: Bisección, Newton-Raphson, Punto Fijo
-- Validaciones automáticas de intervalos
-- Cálculo de convergencia y errores
+### � **Monte Carlo Avanzado**
+- **Integración 1D y 2D**: Simulación estocástica completa
+- **Análisis Estadístico**: Desviación estándar, intervalos de confianza (95%)
+- **Visualización Interactiva**: Puntos dentro/fuera del dominio
+- **Análisis de Convergencia**: Gráficos de convergencia del método
+- **Reproducibilidad**: Control de semillas para resultados consistentes
+- **Validaciones Automáticas**: Verificación de parámetros y rangos
 
 ### ∫ **Integración Numérica**
 - Métodos: Trapecio, Simpson 1/3, Simpson 3/8
@@ -128,13 +131,24 @@ python main_simple.py
 
 ### 🔢 **Diferencias Finitas**
 - Tipos: Adelante, atrás, central, 5 puntos
-- Extrapolación de Richardson
+- Extrapolación de Richardson para mayor precisión
 - Análisis de precisión y convergencia
+- Cálculo de errores absolutos y relativos
+- Derivadas de primer y segundo orden
+
+### ✅ **Características Adicionales**
+- **Instalación Automática**: `main_simple.py` instala dependencias automáticamente
+- **Manejo de Errores**: Sistema robusto de validaciones y manejo de excepciones
+- **Interfaz Responsiva**: Diseño moderno con tema oscuro
+- **Parser Seguro de Funciones**: Evaluación segura de expresiones matemáticas
+- **Suite de Tests Completa**: Cobertura de pruebas unitarias para todas las funcionalidades
+- **Configuración Centralizada**: Sistema de configuración modular
+- **Logging Integrado**: Sistema de logging para debugging y monitoreo
 
 
 ## 🔧 Tecnologías Utilizadas
 
-- **� Python 3.8+**: Lenguaje principal
+- **🐍 Python 3.8+**: Lenguaje principal
 - **🎨 CustomTkinter**: Interfaz gráfica moderna
 - **🔢 NumPy**: Cálculos numéricos eficientes
 - **📊 Matplotlib**: Visualización de gráficos
@@ -160,4 +174,25 @@ python main_simple.py
 2. Crear interfaz en `src/ui/tabs/`
 3. Agregar tests en `tests/`
 4. Actualizar documentación
+
+## 🏗️ Arquitectura del Proyecto
+
+### **Separación de Responsabilidades**
+- **`src/core/`**: Lógica matemática pura, algoritmos numéricos
+- **`src/ui/`**: Interfaz gráfica, componentes reutilizables
+- **`tests/`**: Pruebas unitarias y de integración
+- **`config/`**: Configuraciones centralizadas
+
+### **Patrones de Diseño Implementados**
+- **Factory Pattern**: Creación de pestañas (`TabFactory`)
+- **Template Method**: Estructura base de pestañas (`BaseTab`)
+- **Mixin Pattern**: Funcionalidades reutilizables (`InputValidationMixin`, `PlottingMixin`)
+- **Strategy Pattern**: Diferentes algoritmos para el mismo problema
+
+### **Principios SOLID Aplicados**
+- ✅ **Single Responsibility**: Cada clase tiene una responsabilidad clara
+- ✅ **Open/Closed**: Extensible sin modificar código existente
+- ✅ **Liskov Substitution**: Subclases intercambiables
+- ✅ **Interface Segregation**: Interfaces específicas y cohesivas
+- ✅ **Dependency Inversion**: Dependencias hacia abstracciones
 
