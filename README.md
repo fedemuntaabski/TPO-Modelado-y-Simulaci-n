@@ -136,16 +136,6 @@ python main_simple.py
 - Cálculo de errores absolutos y relativos
 - Derivadas de primer y segundo orden
 
-### ✅ **Características Adicionales**
-- **Instalación Automática**: `main_simple.py` instala dependencias automáticamente
-- **Manejo de Errores**: Sistema robusto de validaciones y manejo de excepciones
-- **Interfaz Responsiva**: Diseño moderno con tema oscuro
-- **Parser Seguro de Funciones**: Evaluación segura de expresiones matemáticas
-- **Suite de Tests Completa**: Cobertura de pruebas unitarias para todas las funcionalidades
-- **Configuración Centralizada**: Sistema de configuración modular
-- **Logging Integrado**: Sistema de logging para debugging y monitoreo
-
-
 ## 🔧 Tecnologías Utilizadas
 
 - **🐍 Python 3.8+**: Lenguaje principal
