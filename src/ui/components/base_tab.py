@@ -150,8 +150,9 @@ class BaseTab(ctk.CTkFrame):
         results_frame.grid_rowconfigure(0, weight=1)
         
         # Frame para gráfico
-        plot_frame = ctk.CTkFrame(results_frame)
-        plot_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
+        plot_frame = ctk.CTkFrame(results_frame, height=300)  # Altura mínima para el gráfico
+        plot_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+        results_frame.grid_rowconfigure(1, weight=1)  # Permitir expansión vertical
         
         return results_frame, text_widget, plot_frame
     

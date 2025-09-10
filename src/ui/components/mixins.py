@@ -182,13 +182,17 @@ class PlottingMixin:
         for widget in plot_frame.winfo_children():
             widget.destroy()
 
+        # Configurar el plot_frame para expansión
+        plot_frame.grid_rowconfigure(0, weight=1)
+        plot_frame.grid_columnconfigure(0, weight=1)
+
         # Crear figura con configuración consistente
         fig = plt.figure(figsize=(PLOT.FIGURE_WIDTH, PLOT.FIGURE_HEIGHT), dpi=PLOT.DPI)
         fig.patch.set_facecolor('#2b2b2b')
 
         # Crear canvas
         canvas = FigureCanvasTkAgg(fig, plot_frame)
-        canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+        canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         return fig, canvas
 

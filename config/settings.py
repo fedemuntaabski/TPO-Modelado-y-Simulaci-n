@@ -2,6 +2,8 @@
 Configuración del Simulador Matemático
 """
 
+import matplotlib
+matplotlib.use('TkAgg')  # Backend para tkinter
 import matplotlib.pyplot as plt
 import customtkinter as ctk
 

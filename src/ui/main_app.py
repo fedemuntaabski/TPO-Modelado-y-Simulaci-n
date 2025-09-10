@@ -16,6 +16,7 @@ from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
 from src.ui.components.tab_factory import TabFactory, create_placeholder_tab
 from src.ui.components.constants import VALIDATION, UI, PLOT, COLORS
+from config.settings import configure_matplotlib
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,9 @@ class MathSimulatorApp(ctk.CTk):
 
     def __init__(self):
         super().__init__()
+
+        # Configurar matplotlib
+        configure_matplotlib()
 
         # Configuración de la ventana - más grande para Newton-Cotes
         self.title("🧮 Simulador Matemático v4.0 - Modular")
