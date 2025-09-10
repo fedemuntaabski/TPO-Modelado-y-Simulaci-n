@@ -194,64 +194,12 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         )
         execute_button.pack(side="left", padx=10)
         
-        # Botón mostrar gráfico
-        plot_button = ctk.CTkButton(
-            buttons_frame,
-            text="📊 Mostrar Gráfico",
-            command=self.show_plot,
-            font=ctk.CTkFont(size=12, weight="bold")
-        )
-        plot_button.pack(side="left", padx=10)
-        
         # Crear sección de resultados
         self.results_frame, self.results_text, self.plot_frame = self.create_results_section()
         
         # Ajustar la fila del results_frame para que no choque con los botones
         self.results_frame.grid(row=4, column=0, sticky="nsew", padx=20, pady=10)
         self.content_frame.grid_rowconfigure(4, weight=1)
-        
-        # Almacenar el último resultado para el botón de gráfico
-        self.last_result = None
-        self.last_function = None
-        self.last_params = None
-    
-    def show_plot(self):
-        """Mostrar el gráfico del último resultado calculado"""
-        if self.last_result is None:
-            self.show_error("Primero debe ejecutar un método para mostrar el gráfico")
-            return
-        
-        try:
-            method = self.last_params["method"]
-            if method == "bisection":
-                self._plot_function_and_root(
-                    self.last_function,
-                    self.last_params["a"],
-                    self.last_params["b"],
-                    self.last_result.root
-                )
-            elif method == "newton":
-                self._plot_newton_raphson(
-                    self.last_function,
-                    self.last_params["x0"],
-                    self.last_result.root
-                )
-            elif method == "fixed_point":
-                self._plot_fixed_point(
-                    self.last_function,
-                    self.last_function,
-                    self.last_params["x0"],
-                    self.last_result.root
-                )
-            elif method == "aitken":
-                self._plot_aitken(
-                    self.last_function,
-                    self.last_function,
-                    self.last_params["x0"],
-                    self.last_result.root
-                )
-        except Exception as e:
-            self.show_error(f"Error al mostrar el gráfico: {str(e)}")
     
     def create_dynamic_inputs(self):
         """Crear inputs dinámicos según el método seleccionado"""
@@ -436,15 +384,6 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             # Mostrar resultados
             self._display_results(result, "MÉTODO DE BISECCIÓN")
 
-            # Almacenar resultado para el botón de gráfico
-            self.last_result = result
-            self.last_function = f
-            self.last_params = {
-                "method": "bisection",
-                "a": values["intervalo_a"],
-                "b": values["intervalo_b"]
-            }
-
             # Crear gráfico
             self._plot_function_and_root(f, values["intervalo_a"], values["intervalo_b"], result.root)
 
@@ -484,14 +423,6 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             # Mostrar resultados
             self._display_results(result, "MÉTODO DE NEWTON-RAPHSON")
 
-            # Almacenar resultado para el botón de gráfico
-            self.last_result = result
-            self.last_function = f
-            self.last_params = {
-                "method": "newton",
-                "x0": values["punto_inicial"]
-            }
-
             # Crear gráfico
             self._plot_newton_raphson(f, values["punto_inicial"], result.root)
 
@@ -527,14 +458,6 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             # Mostrar resultados
             self._display_results(result, "MÉTODO DE PUNTO FIJO")
 
-            # Almacenar resultado para el botón de gráfico
-            self.last_result = result
-            self.last_function = g
-            self.last_params = {
-                "method": "fixed_point",
-                "x0": values["punto_inicial"]
-            }
-
             # Crear gráfico
             self._plot_fixed_point(g, g, values["punto_inicial"], result.root)
 
@@ -569,14 +492,6 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
 
             # Mostrar resultados
             self._display_results(result, "MÉTODO DE AITKEN")
-
-            # Almacenar resultado para el botón de gráfico
-            self.last_result = result
-            self.last_function = g
-            self.last_params = {
-                "method": "aitken",
-                "x0": values["punto_inicial"]
-            }
 
             # Crear gráfico
             self._plot_aitken(g, g, values["punto_inicial"], result.root)
