@@ -41,8 +41,13 @@ class ValidationConstants:
     MAX_STEP_SIZE: float = 1.0
     MAX_SUBDIVISIONS: int = 10000
     MIN_SUBDIVISIONS: int = 2
+    MIN_POINTS: int = 2  # Número mínimo de puntos para diferencias finitas
     MAX_VALUE: float = 1e10  # Valor máximo absoluto para límites
     MIN_VALUE: float = -1e10  # Valor mínimo absoluto para límites
+    MAX_X_VALUE: float = 1e10  # Valor máximo para coordenada X
+    MIN_X_VALUE: float = -1e10  # Valor mínimo para coordenada X
+    MAX_Y_VALUE: float = 1e10  # Valor máximo para coordenada Y
+    MIN_Y_VALUE: float = -1e10  # Valor mínimo para coordenada Y
     MAX_INTERVAL: float = 1e6  # Intervalo máximo entre a y b
     MIN_INTERVAL: float = 1e-6  # Intervalo mínimo entre a y b
 
