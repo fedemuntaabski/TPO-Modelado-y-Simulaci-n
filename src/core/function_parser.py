@@ -33,9 +33,11 @@ def parse_function(func_str: str, variables: list) -> Callable:
         "tan": math.tan,
         "exp": math.exp,
         "log": math.log,
+        "ln": math.log,  # Alias para log natural
         "sqrt": math.sqrt,
         "pi": math.pi,
         "e": math.e,
+        "abs": abs,  # Agregar la función abs
     }
 
     # Agregar variables
@@ -66,3 +68,64 @@ class FunctionParser:
 
     def parse(self, func_str: str) -> Callable:
         return parse_function(func_str, ["x"])
+        
+    def parse_and_evaluate(self, func_str: str, x: float) -> float:
+        """
+        Parsear y evaluar una función en un punto
+        
+        Args:
+            func_str: String de la función
+            x: Valor donde evaluar
+            
+        Returns:
+            Resultado de evaluar la función en x
+        """
+        try:
+            func = self.parse(func_str)
+            return func(x)
+        except Exception as e:
+            raise FunctionParserError(f"Error evaluating function '{func_str}' at x={x}: {e}")
+            
+    def validate_function(self, func_str: str, x_range=None):
+        """
+        Validar que una función sea parseable y evaluable
+        
+        Args:
+            func_str: String de la función
+            x_range: Rango de valores x para validar (min, max)
+            
+        Returns:
+            (bool, str): Tupla con (es_válida, mensaje_error)
+        """
+        # Lista de funciones permitidas
+        allowed_functions = ["sin", "cos", "tan", "exp", "log", "ln", "sqrt", "abs"]
+        
+        # Verificar funciones desconocidas
+        import re
+        function_pattern = r'([a-zA-Z_][a-zA-Z0-9_]*)\s*\('
+        matches = re.findall(function_pattern, func_str)
+        
+        for match in matches:
+            if match not in allowed_functions and match != "x":
+                return False, f"Función desconocida: {match}"
+        
+        try:
+            # Intentar parsear
+            func = self.parse(func_str)
+            
+            # Validar en puntos específicos si se proporciona rango
+            if x_range:
+                x_min, x_max = x_range
+                # Probar en límites y algunos puntos intermedios
+                test_points = [x_min, x_max, (x_min + x_max) / 2]
+                for x in test_points:
+                    try:
+                        result = func(x)
+                        if math.isnan(result) or math.isinf(result):
+                            return False, f"La función no se puede evaluar correctamente en x={x}"
+                    except Exception as e:
+                        return False, f"La función no se puede evaluar en x={x}: {e}"
+            
+            return True, ""
+        except Exception as e:
+            return False, f"Función inválida: {str(e)}"

@@ -33,6 +33,7 @@ class CreditsTab(BaseTab):
             font=ctk.CTkFont(size=24, weight="bold")
         )
         title_label.grid(row=0, column=0, pady=(20, 30), sticky="ew")
+        title_label.configure(anchor="center")  # Centrar el título
 
         # Lista de integrantes (placeholders - reemplazar con nombres reales)
         team_members = [
@@ -45,10 +46,11 @@ class CreditsTab(BaseTab):
         for i, member in enumerate(team_members):
             member_label = ctk.CTkLabel(
                 credits_frame,
-                text=f"• {member}",
+                text=member,  # Quitar el punto para mejor centrado
                 font=ctk.CTkFont(size=18)
             )
-            member_label.grid(row=i+1, column=0, pady=5, sticky="w")
+            member_label.grid(row=i+1, column=0, pady=10, sticky="ew")  # Aumentar padding vertical
+            member_label.configure(anchor="center")  # Centrar el texto dentro del label
 
         # Espacio adicional
         spacer = ctk.CTkLabel(credits_frame, text="")
@@ -64,3 +66,4 @@ class CreditsTab(BaseTab):
             text_color=["gray60", "gray50"]
         )
         info_label.grid(row=len(team_members)+2, column=0, pady=(10, 20), sticky="ew")
+        info_label.configure(anchor="center")  # Centrar la información adicional

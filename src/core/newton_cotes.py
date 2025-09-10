@@ -635,8 +635,21 @@ class NewtonCotes:
         self.validator.validate_function_string(func_str)
         self.validator.validate_interval(a, b)
         
-        # Validar función con parser
-        is_valid, message = self.parser.validate_function(func_str)
+        # Detectar funciones con restricciones de dominio
+        if 'sqrt(' in func_str or 'log(' in func_str or 'ln(' in func_str or '1/' in func_str:
+            # Realizar verificaciones adicionales para funciones con dominios restringidos
+            test_points = [a, b, (a + b) / 2]
+            if a < 0 and 'sqrt(' in func_str:
+                raise NewtonCotesError("La función sqrt(x) no está definida para x < 0")
+            if (a <= 0 or b <= 0) and ('log(' in func_str or 'ln(' in func_str):
+                raise NewtonCotesError("La función logaritmo no está definida para x ≤ 0")
+            if '1/' in func_str:
+                # Verificar si 0 está en el intervalo [a, b]
+                if a <= 0 and b >= 0:
+                    raise NewtonCotesError("La función 1/x no está definida para x = 0")
+        
+        # Validar función con parser, incluyendo prueba en el intervalo
+        is_valid, message = self.parser.validate_function(func_str, (a, b))
         if not is_valid:
             raise NewtonCotesError(f"Función inválida: {message}")
     
@@ -682,7 +695,6 @@ def demo_newton_cotes() -> None:
             print(f"{result.method}:")
             print(f"  Resultado: {result.result:.8f}")
             print(f"  Error: {error:.2e}")
-            print(f"  Tiempo: {result.computation_time:.4f}s")
             print(f"  Evaluaciones: {result.evaluations}")
             print()
         except Exception as e:

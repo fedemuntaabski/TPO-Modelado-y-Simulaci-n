@@ -431,7 +431,7 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         info_frame.grid(row=3, column=0, pady=15, padx=20, sticky="ew")
         
         # Labels de información
-        info_items = ["Resultado", "Tiempo", "Evaluaciones", "Error"]
+        info_items = ["Resultado", "Evaluaciones"]
         for i, item in enumerate(info_items):
             label = ctk.CTkLabel(
                 info_frame,
@@ -674,9 +674,7 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
             output += f"🔢 Subdivisiones (n): {result.n_subdivisions}\n"
         if result.h:
             output += f"📏 Paso (h): {result.h:.8f}\n"
-        output += f"⚡ Evaluaciones: {result.evaluations}\n"
-        output += f"⏱️ Tiempo: {result.computation_time:.6f} segundos\n"
-        output += f"�� Orden de error: {result.error_order}\n\n"
+        output += f"⚡ Evaluaciones: {result.evaluations}\n\n"
         
         # Fórmula utilizada
         if result.formula:
@@ -686,7 +684,7 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         # Estimación de precisión
         output += "📈 ESTIMACIÓN DE PRECISIÓN:\n"
         output += "-" * 25 + "\n"
-        output += f"�� {result.accuracy_estimate}\n"
+        output += f" {result.accuracy_estimate}\n"
         
         # Mostrar en el textbox
         self.results_text.insert("1.0", output)
@@ -776,14 +774,8 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         self.info_labels["Resultado"].configure(
             text=f"Resultado: {result.result:.8f}"
         )
-        self.info_labels["Tiempo"].configure(
-            text=f"Tiempo: {result.computation_time:.4f}s"
-        )
         self.info_labels["Evaluaciones"].configure(
             text=f"Evaluaciones: {result.evaluations}"
-        )
-        self.info_labels["Error"].configure(
-            text=f"Error: {result.error_order}"
         )
         
     def show_error(self, message: str):
