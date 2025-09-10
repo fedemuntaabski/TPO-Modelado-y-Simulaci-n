@@ -48,6 +48,11 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
                 "inputs": ["función_g", "punto_inicial", "tolerancia", "max_iter"],
                 "labels": ["Función g(x):", "Punto inicial:", "Tolerancia:", "Máx. iteraciones:"],
                 "defaults": ["x + (x**2 - 4)", "1", str(VALIDATION.DEFAULT_TOLERANCE), "100"]
+            },
+            "Secante": {
+                "inputs": ["función_f", "punto_inicial_1", "punto_inicial_2", "tolerancia", "max_iter"],
+                "labels": ["Función f(x):", "Punto inicial 1:", "Punto inicial 2:", "Tolerancia:", "Máx. iteraciones:"],
+                "defaults": ["x**2 - 4", "1", "3", str(VALIDATION.DEFAULT_TOLERANCE), "100"]
             }
         }
         
@@ -248,7 +253,8 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             "Bisección": self.bisection_method,
             "Newton-Raphson": self.newton_raphson_method,
             "Punto Fijo": self.fixed_point_method,
-            "Aitken": self.aitken_method
+            "Aitken": self.aitken_method,
+            "Secante": self.secant_method
         }
         
         if self.selected_method in method_map:
@@ -300,6 +306,31 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
                     float(x0_text)
                 except ValueError:
                     errors["punto_inicial"] = "El punto inicial debe ser un número"
+        
+        # Validar puntos iniciales para secante
+        if "punto_inicial_1" in self.entries:
+            x0_1_text = self.entries["punto_inicial_1"].get().strip()
+            if not x0_1_text:
+                errors["punto_inicial_1"] = "El punto inicial 1 no puede estar vacío"
+            else:
+                try:
+                    float(x0_1_text)
+                except ValueError:
+                    errors["punto_inicial_1"] = "El punto inicial 1 debe ser un número"
+        
+        if "punto_inicial_2" in self.entries:
+            x0_2_text = self.entries["punto_inicial_2"].get().strip()
+            if not x0_2_text:
+                errors["punto_inicial_2"] = "El punto inicial 2 no puede estar vacío"
+            else:
+                try:
+                    x0_2_val = float(x0_2_text)
+                    if "punto_inicial_1" in self.entries:
+                        x0_1_val = float(self.entries["punto_inicial_1"].get().strip())
+                        if abs(x0_2_val - x0_1_val) < 1e-12:
+                            errors["punto_inicial_2"] = "Los puntos iniciales deben ser distintos"
+                except ValueError:
+                    errors["punto_inicial_2"] = "El punto inicial 2 debe ser un número"
         
         # Validar tolerancia (siempre presente)
         if "tolerancia" in self.entries:
@@ -499,6 +530,43 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         except Exception as e:
             self.show_error(f"Error en Aitken: {str(e)}")
     
+    def secant_method(self):
+        """Ejecutar método de la secante con validación mejorada"""
+        # Verificar que el formulario sea válido
+        is_valid, errors = self.is_form_valid()
+        if not is_valid:
+            error_msg = "; ".join(errors.values())
+            self.show_error(f"Por favor corrija los siguientes errores: {error_msg}")
+            return
+
+        try:
+            # Obtener valores validados
+            values = self.get_validated_values()
+            function_str = values["función_f"]
+
+            # Crear función
+            f = create_function_from_string(function_str)
+
+            # Crear instancia de RootFinder con los parámetros especificados
+            root_finder = RootFinder(
+                tolerance=values["tolerancia"],
+                max_iterations=values["max_iter"]
+            )
+
+            # Ejecutar método de la secante
+            result = root_finder.secant_method(
+                f, values["punto_inicial_1"], values["punto_inicial_2"]
+            )
+
+            # Mostrar resultados
+            self._display_results(result, "MÉTODO DE LA SECANTE")
+
+            # Crear gráfico
+            self._plot_secant(f, values["punto_inicial_1"], values["punto_inicial_2"], result.root)
+
+        except Exception as e:
+            self.show_error(f"Error en método de la secante: {str(e)}")
+    
     def _display_results(self, result, method_name: str):
         """Mostrar resultados usando mixin ResultDisplayMixin"""
         # Obtener la función del input correspondiente
@@ -561,6 +629,14 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
                 "Mejora convergencia de punto fijo",
                 "Requiere 3 iteraciones por paso",
                 "Puede fallar si denominador es cercano a cero"
+            ]
+        elif "secante" in method_name.lower():
+            method_info = [
+                "No requiere cálculo de derivadas",
+                "Usa aproximación de derivada finita",
+                "Convergencia superlineal",
+                "Requiere dos puntos iniciales",
+                "Más robusto que Newton-Raphson en algunos casos"
             ]
 
         if method_info:
@@ -696,6 +772,43 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             title="Método de Aceleración de Aitken",
             xlabel="x",
             ylabel="y"
+        )
+        
+        # Actualizar canvas
+        canvas.draw()
+    
+    def _plot_secant(self, f, x0: float, x1: float, root: float):
+        """Crear gráfico para método de la secante mostrando el proceso de aproximación"""
+        fig, canvas = self.setup_plot_area(self.plot_frame)
+        ax = fig.add_subplot(111)
+        
+        # Usar mixin para graficar función
+        range_size = max(abs(root - min(x0, x1)), abs(root - max(x0, x1)), 1)
+        x_range = (min(x0, x1) - range_size, max(x0, x1) + range_size)
+        points = [(x0, f(x0)), (x1, f(x1)), (root, f(root))]
+        point_labels = [f'Inicio 1: x₀ = {x0:.6f}', f'Inicio 2: x₁ = {x1:.6f}', f'Raíz: x = {root:.6f}']
+        
+        self.plot_function_with_points(fig, ax, f, x_range, points, point_labels)
+        
+        # Línea de y=0
+        ax.axhline(y=0, color='white', linestyle='--', alpha=0.7, label='y = 0')
+        
+        # Mostrar línea secante entre los puntos iniciales
+        if abs(x1 - x0) > 1e-12:
+            # Calcular la línea secante
+            slope = (f(x1) - f(x0)) / (x1 - x0)
+            intercept = f(x0) - slope * x0
+            
+            x_secant = np.linspace(min(x0, x1) - 0.5, max(x0, x1) + 0.5, 100)
+            y_secant = slope * x_secant + intercept
+            
+            ax.plot(x_secant, y_secant, 'r--', alpha=0.7, label='Línea secante inicial')
+        
+        self.apply_standard_plot_styling(
+            ax,
+            title="Método de la Secante",
+            xlabel="x",
+            ylabel="f(x)"
         )
         
         # Actualizar canvas

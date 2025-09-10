@@ -68,7 +68,13 @@ class TestRootFinding(unittest.TestCase):
         self.assertTrue(result.converged)
         self.assertAlmostEqual(result.root, 2.0, places=3)  # Menos precisión para punto fijo
     
-    def test_create_function_from_string(self):
+    def test_secant_method_quadratic(self):
+        """Test método de la secante con función cuadrática"""
+        result = self.finder.secant_method(self.quadratic_func, 1.0, 3.0)
+        
+        self.assertTrue(result.converged)
+        self.assertAlmostEqual(result.root, 2.0, places=5)
+        self.assertLess(abs(result.function_value), 1e-6)
         """Test creación de función desde string"""
         f = create_function_from_string("x**2 - 4")
         
@@ -109,6 +115,16 @@ class TestRootFindingAdvanced(unittest.TestCase):
         self.assertAlmostEqual(root1.root, 1.0, places=6)
         self.assertAlmostEqual(root2.root, 2.0, places=6)
         self.assertAlmostEqual(root3.root, 3.0, places=6)
+    
+    def test_secant_transcendental(self):
+        """Test método de la secante con función trascendental"""
+        transcendental = lambda x: np.exp(x) - 2
+        
+        result = self.finder.secant_method(transcendental, 0.5, 0.7)
+        expected_root = np.log(2)
+        
+        self.assertTrue(result.converged)
+        self.assertAlmostEqual(result.root, expected_root, places=6)
     
     def test_transcendental_function(self):
         """Test con función trascendental"""
