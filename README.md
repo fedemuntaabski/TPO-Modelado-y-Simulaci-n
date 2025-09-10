@@ -17,7 +17,6 @@
 ## 📁 Estructura del Proyecto
 
 ```
-├── demo_refactoring.py            # 🔄 Demo de refactorización
 ├── main_simple.py                 # 🚀 Punto de entrada principal (recomendado)
 ├── README.md                      # 📖 Documentación del proyecto
 ├── requirements_minimal.txt       # 📦 Dependencias mínimas
@@ -32,6 +31,7 @@
 │   │   ├── root_finding.py       # 🎯 Búsqueda de raíces
 │   │   ├── integration.py        # ∫ Integración básica
 │   │   ├── ode_solver.py         # 📈 Resolución de EDOs
+│   │   ├── ode_runge_kutta.py    # 📈 Métodos Runge-Kutta para EDOs
 │   │   ├── finite_differences.py # 🔢 Diferencias finitas
 │   │   └── __init__.py
 │   └── ui/                       # 🎨 Interfaz gráfica
@@ -41,6 +41,7 @@
 │       │   ├── constants.py      # 📊 Constantes de la aplicación
 │       │   ├── error_handler.py  # ⚠️ Manejo de errores
 │       │   ├── mixins.py         # 🔧 Mixins reutilizables
+│       │   ├── tab_factory.py    # 🏭 Factory para creación de pestañas
 │       │   ├── validation_mixins.py # ✅ Validaciones mixtas
 │       │   └── __init__.py
 │       └── tabs/                 # 📑 Pestañas específicas
@@ -48,6 +49,7 @@
 │           ├── roots_tab.py           # 🎯 Raíces UI
 │           ├── integration_tab.py     # ∫ Integración UI
 │           ├── ode_tab.py            # 📈 EDOs UI
+│           ├── ode_tab_new.py       # 📈 EDOs UI (versión nueva)
 │           ├── finite_diff_tab.py    # 🔢 Diferencias UI
 │           ├── monte_carlo_tab.py    # 🎲 Monte Carlo UI
 │           └── __init__.py
