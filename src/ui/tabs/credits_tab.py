@@ -38,8 +38,8 @@ class CreditsTab(BaseTab):
         team_members = [
             "Federico Muntaabski",
             "Nicolas Llousas",
-            "Integrante 3",
-            "Integrante 4"
+            "Sebastian Prior",
+            "Santiago Oteiza"
         ]
 
         for i, member in enumerate(team_members):
