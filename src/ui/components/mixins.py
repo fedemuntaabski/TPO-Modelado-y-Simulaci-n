@@ -7,6 +7,7 @@ Permite composición de funcionalidades sin herencia múltiple compleja.
 
 from typing import Dict, Any, Optional, Callable
 import customtkinter as ctk
+from customtkinter import CTkScrollableFrame
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -123,17 +124,23 @@ class ResultDisplayMixin:
         results_text_widget.delete("0.0", "end")
         results_text_widget.insert("0.0", text)
 
-    def display_iteration_table_popup(self, parent_widget, iteration_data: list, method_name: str) -> None:
+    def display_iteration_table_popup(self, parent_widget, iteration_data, method_name: str) -> None:
         """
         Muestra tabla de iteraciones en un popup movible y cerrable.
+        Implementa una interfaz moderna y legible.
         """
+        # Verificar si hay datos de iteración
         if not iteration_data:
             return
-
+            
+        # Convertir a lista si es un solo diccionario
+        if isinstance(iteration_data, dict):
+            iteration_data = [iteration_data]
+            
         # Crear ventana popup
         popup = ctk.CTkToplevel(parent_widget)
         popup.title(f"Tabla de Iteraciones - {method_name}")
-        popup.geometry("800x600")
+        popup.geometry("900x650")
         popup.resizable(True, True)
         
         # Hacer que sea modal pero movible
@@ -148,114 +155,293 @@ class ResultDisplayMixin:
         title_label = ctk.CTkLabel(
             main_frame,
             text=f"Tabla de Iteraciones - {method_name}",
-            font=ctk.CTkFont(size=16, weight="bold")
+            font=ctk.CTkFont(size=18, weight="bold")
         )
-        title_label.pack(pady=10)
+        title_label.pack(pady=(15, 10))
         
-        # Frame para la tabla
-        table_frame = ctk.CTkFrame(main_frame)
-        table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # Descripción del método
+        description = ""
+        if method_name.upper().startswith("BISECCIÓN"):
+            description = "Método de búsqueda de raíces que divide el intervalo repetidamente"
+        elif method_name.upper().startswith("NEWTON-RAPHSON"):
+            description = "Método iterativo que utiliza la derivada para aproximar raíces"
+        elif method_name.upper().startswith("PUNTO FIJO"):
+            description = "Método que convierte f(x)=0 a x=g(x) y resuelve iterativamente"
+        elif method_name.upper().startswith("AITKEN"):
+            description = "Método de aceleración que mejora la convergencia de punto fijo"
+        elif method_name.upper().startswith("SECANTE"):
+            description = "Método que aproxima la derivada con dos puntos consecutivos"
+            
+        if description:
+            desc_label = ctk.CTkLabel(
+                main_frame,
+                text=description,
+                font=ctk.CTkFont(size=13)
+            )
+            desc_label.pack(pady=(0, 15))
+        
+        # Frame para la tabla con scroll
+        table_container = ctk.CTkFrame(main_frame)
+        table_container.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Crear tabla
-        self._create_iteration_table(table_frame, iteration_data, method_name)
+        self._create_iteration_table(table_container, iteration_data, method_name)
         
-        # Botón cerrar
+        # Información adicional
+        if len(iteration_data) > 0:
+            info_frame = ctk.CTkFrame(main_frame)
+            info_frame.pack(fill="x", padx=10, pady=(5, 10))
+            
+            # Mostrar resultado final
+            last_iter = iteration_data[-1]
+            
+            # Determinar si convergió (basado en número de iteraciones o flag de convergencia)
+            if isinstance(last_iter, dict) and 'converged' in last_iter:
+                converged = last_iter['converged']
+            else:
+                # Aproximación basada en número de iteraciones máximas
+                max_iterations = 100  # Valor predeterminado
+                converged = len(iteration_data) < max_iterations
+            
+            # Obtener error final
+            error_final = last_iter.get('error', 0) if isinstance(last_iter, dict) else 0
+            
+            result_label = ctk.CTkLabel(
+                info_frame,
+                text=f"Resultado final: {len(iteration_data)} iteraciones | " + 
+                     f"Error final: {error_final:.2e} | " +
+                     f"Estado: {'✓ Convergió' if converged else '⚠ Alcanzó máximo de iteraciones'}",
+                font=ctk.CTkFont(size=13)
+            )
+            result_label.pack(pady=10, padx=20)
+        
+        # Botones
+        buttons_frame = ctk.CTkFrame(main_frame)
+        buttons_frame.pack(fill="x", padx=10, pady=10)
+        
         close_button = ctk.CTkButton(
-            main_frame,
+            buttons_frame,
             text="Cerrar",
             command=popup.destroy,
-            font=ctk.CTkFont(size=12, weight="bold")
+            font=ctk.CTkFont(size=13, weight="bold"),
+            width=120
         )
-        close_button.pack(pady=10)
+        close_button.pack(side="right", padx=20, pady=10)
         
         # Centrar la ventana
-        popup.geometry("800x600+100+100")
+        popup.geometry("900x650+100+100")
     
-    def _create_iteration_table(self, parent_frame, iteration_data: list, method_name: str) -> None:
+    def _create_iteration_table(self, parent_frame, iteration_data, method_name: str) -> None:
         """
-        Crea la tabla de iteraciones como texto en un textbox.
+        Crea una tabla de iteraciones visualmente mejorada usando un enfoque basado en grid.
         """
-        # Crear textbox con scroll
-        text_box = ctk.CTkTextbox(parent_frame, wrap="none")
-        text_box.pack(fill="both", expand=True, padx=10, pady=10)
+        # Asegurar que iteration_data sea una lista
+        if isinstance(iteration_data, dict):
+            iteration_data = [iteration_data]
+            
+        # Crear frame con scroll para la tabla
+        table_canvas = ctk.CTkScrollableFrame(parent_frame)
+        table_canvas.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Crear tabla como texto
-        table_text = f"TABLA DE ITERACIONES - {method_name}\n"
-        table_text += "=" * 80 + "\n\n"
-        
-        # Headers según el método
+        # Definir los headers según el método
         if method_name.upper().startswith("BISECCIÓN"):
             headers = ["Iter", "a", "b", "c", "f(c)", "Error"]
-            widths = [4, 10, 10, 10, 10, 12]
         elif method_name.upper().startswith("NEWTON-RAPHSON"):
-            headers = ["Iter", "x_n", "f(x_n)", "f'(x_n)", "x_n+1", "Error"]
-            widths = [4, 10, 10, 10, 10, 12]
+            headers = ["Iter", "xₙ", "f(xₙ)", "f'(xₙ)", "xₙ₊₁", "Error"]
         elif method_name.upper().startswith("PUNTO FIJO"):
-            headers = ["Iter", "x_n", "g(x_n)", "Error"]
-            widths = [4, 10, 10, 12]
+            headers = ["Iter", "xₙ", "g(xₙ)", "Error"]
         elif method_name.upper().startswith("AITKEN"):
-            headers = ["Iter", "x", "x1", "x2", "x_aitken", "Error"]
-            widths = [4, 10, 10, 10, 12, 12]
+            headers = ["Iter", "x", "x₁", "x₂", "x_aitken", "Error"]
+        elif method_name.upper().startswith("SECANTE"):
+            headers = ["Iter", "xₙ₋₁", "xₙ", "xₙ₊₁", "f(xₙ)", "Error"]
         else:
-            headers = ["Iter", "Datos"]
-            widths = [4, 50]
+            # Para métodos no reconocidos, intentar derivar los headers del diccionario
+            if iteration_data and isinstance(iteration_data[0], dict):
+                # Si el primer elemento es un diccionario, usar sus claves como headers
+                if len(iteration_data[0]) <= 8:  # Si hay pocas claves, usar todas
+                    headers = ["Iter"] + list(iteration_data[0].keys())
+                    if "iteration" in headers:
+                        headers.remove("iteration")  # Ya tenemos la columna Iter
+                else:
+                    # Si hay muchas claves, usar columna genérica
+                    headers = ["Iter", "Datos"]
+            else:
+                # Default genérico
+                headers = ["Iter", "Datos"]
         
-        # Crear línea de headers
-        header_line = ""
-        for header, width in zip(headers, widths):
-            header_line += f"{header:<{width}}"
-        table_text += header_line + "\n"
-        table_text += "-" * len(header_line) + "\n"
+        # Configurar ancho de columnas
+        col_width = 115
+        iter_width = 60
+        error_width = 130
         
-        # Crear filas de datos
-        for data in iteration_data[:50]:  # Limitar a 50 iteraciones
-            iteration = data.get('iteration', 1)
-            row = f"{iteration:<{widths[0]}}"
+        # Color para headers y filas alternadas
+        header_bg = "#1a1a2e"
+        alt_row_bg = "#2a2a3e"
+        
+        # Configurar el grid para que las columnas se distribuyan adecuadamente
+        for i in range(len(headers)):
+            table_canvas.grid_columnconfigure(i, weight=1)
+        
+        # Crear headers
+        for col, header in enumerate(headers):
+            width = iter_width if col == 0 else error_width if header == "Error" else col_width
+            frame = ctk.CTkFrame(table_canvas, fg_color=header_bg, corner_radius=0)
+            frame.grid(row=0, column=col, sticky="nsew", padx=1, pady=1)
             
-            if method_name.upper().startswith("BISECCIÓN"):
+            label = ctk.CTkLabel(
+                frame, 
+                text=header,
+                font=ctk.CTkFont(size=13, weight="bold"),
+                anchor="center",
+                width=width,
+                height=30
+            )
+            label.pack(fill="both", expand=True)
+        
+            # Mostrar datos (limitar a 100 para mejorar rendimiento)
+        max_rows = min(len(iteration_data), 100)
+        for row, data in enumerate(iteration_data[:max_rows], start=1):
+            row_bg = alt_row_bg if row % 2 == 0 else None
+            
+            # Columna de iteración
+            iter_frame = ctk.CTkFrame(table_canvas, fg_color=row_bg, corner_radius=0)
+            iter_frame.grid(row=row, column=0, sticky="nsew", padx=1, pady=1)
+            
+            # Usar el valor de iteración si existe, o el índice si no
+            iter_value = data.get('iteration', row) if isinstance(data, dict) else row
+            
+            iter_label = ctk.CTkLabel(
+                iter_frame,
+                text=str(iter_value),
+                font=ctk.CTkFont(size=12),
+                anchor="center",
+                width=iter_width
+            )
+            iter_label.pack(fill="both")
+            
+            # Extraer datos según el método
+            if not isinstance(data, dict):
+                # Si no es un diccionario, mostrar como texto en una sola columna
+                values = [str(data)]
+            elif method_name.upper().startswith("BISECCIÓN"):
                 values = [
-                    f"{data.get('a', 0):<{widths[1]}.6f}",
-                    f"{data.get('b', 0):<{widths[2]}.6f}",
-                    f"{data.get('c', 0):<{widths[3]}.6f}",
-                    f"{data.get('f_c', 0):<{widths[4]}.6f}",
-                    f"{data.get('error', 0):<{widths[5]}.2e}"
+                    f"{data.get('a', 0):.6f}",
+                    f"{data.get('b', 0):.6f}",
+                    f"{data.get('c', 0):.6f}",
+                    f"{data.get('f_c', 0):.6f}",
+                    f"{data.get('error', 0):.2e}"
                 ]
             elif method_name.upper().startswith("NEWTON-RAPHSON"):
                 values = [
-                    f"{data.get('x_n', 0):<{widths[1]}.6f}",
-                    f"{data.get('f_x_n', 0):<{widths[2]}.6f}",
-                    f"{data.get('df_x_n', 0):<{widths[3]}.6f}",
-                    f"{data.get('x_n_plus_1', 0):<{widths[4]}.6f}",
-                    f"{data.get('error', 0):<{widths[5]}.2e}"
+                    f"{data.get('x_n', 0):.6f}",
+                    f"{data.get('f_x_n', 0):.6f}",
+                    f"{data.get('df_x_n', 0):.6f}",
+                    f"{data.get('x_n_plus_1', 0):.6f}",
+                    f"{data.get('error', 0):.2e}"
                 ]
             elif method_name.upper().startswith("PUNTO FIJO"):
                 values = [
-                    f"{data.get('x_n', 0):<{widths[1]}.6f}",
-                    f"{data.get('g_x_n', 0):<{widths[2]}.6f}",
-                    f"{data.get('error', 0):<{widths[3]}.2e}"
+                    f"{data.get('x_n', 0):.6f}",
+                    f"{data.get('g_x_n', 0):.6f}",
+                    f"{data.get('error', 0):.2e}"
                 ]
             elif method_name.upper().startswith("AITKEN"):
                 values = [
-                    f"{data.get('x', 0):<{widths[1]}.6f}",
-                    f"{data.get('x1', 0):<{widths[2]}.6f}",
-                    f"{data.get('x2', 0):<{widths[3]}.6f}",
-                    f"{data.get('x_aitken', 0):<{widths[4]}.6f}",
-                    f"{data.get('error', 0):<{widths[5]}.2e}"
+                    f"{data.get('x', 0):.6f}",
+                    f"{data.get('x1', 0):.6f}",
+                    f"{data.get('x2', 0):.6f}",
+                    f"{data.get('x_aitken', 0):.6f}",
+                    f"{data.get('error', 0):.2e}"
+                ]
+            elif method_name.upper().startswith("SECANTE"):
+                values = [
+                    f"{data.get('x_prev', 0):.6f}",
+                    f"{data.get('x_curr', 0):.6f}",
+                    f"{data.get('x_new', 0):.6f}",
+                    f"{data.get('f_curr', 0):.6f}",
+                    f"{data.get('error', 0):.2e}"
                 ]
             else:
-                values = [f"{str(data):<{widths[1]}}"]
+                # Para casos genéricos o no reconocidos
+                if isinstance(data, dict):
+                    # Si tenemos headers específicos, usarlos para extraer valores
+                    if len(headers) > 2:  # Más allá de solo "Iter" y "Datos"
+                        values = []
+                        for header in headers[1:]:  # Saltamos el header "Iter"
+                            if header in data:
+                                val = data[header]
+                                if isinstance(val, (int, float)):
+                                    if header == "error" or abs(val) < 0.0001 or abs(val) > 100000:
+                                        values.append(f"{val:.2e}")
+                                    else:
+                                        values.append(f"{val:.6f}")
+                                else:
+                                    values.append(str(val))
+                            else:
+                                values.append("N/A")
+                    else:
+                        # Formato genérico: todos los datos en una columna
+                        formatted_items = []
+                        for k, v in data.items():
+                            if k == "iteration":
+                                continue  # Saltamos la iteración que ya mostramos
+                            if isinstance(v, (int, float)):
+                                if k == 'error' or abs(v) < 0.0001 or abs(v) > 100000:
+                                    formatted_items.append(f"{k}: {v:.2e}")
+                                else:
+                                    formatted_items.append(f"{k}: {v:.6f}")
+                            else:
+                                formatted_items.append(f"{k}: {v}")
+                        values = [", ".join(formatted_items)]
+                else:
+                    values = [str(data)]
+                    
+            # Asegurar que tengamos suficientes valores para todas las columnas
+            expected_cols = len(headers) - 1  # -1 porque la columna "Iter" ya está manejada
+            if len(values) < expected_cols:
+                values.extend([""] * (expected_cols - len(values)))
+            elif len(values) > expected_cols and expected_cols > 0:
+                # Si hay más valores que columnas, concatenar los extras en la última columna
+                extra_values = values[expected_cols-1:]
+                values = values[:expected_cols-1] + [", ".join(extra_values)]
             
-            for value in values:
-                row += value
-            table_text += row + "\n"
+            # Mostrar valores
+            for col, value in enumerate(values, start=1):
+                width = error_width if col == len(values) else col_width
+                cell_frame = ctk.CTkFrame(table_canvas, fg_color=row_bg, corner_radius=0)
+                cell_frame.grid(row=row, column=col, sticky="nsew", padx=1, pady=1)
+                
+                # Si el texto es demasiado largo, agregar ellipsis
+                if len(value) > 20:
+                    display_value = value[:17] + "..."
+                else:
+                    display_value = value
+                
+                cell_label = ctk.CTkLabel(
+                    cell_frame,
+                    text=display_value,
+                    font=ctk.CTkFont(size=12),
+                    anchor="center",
+                    width=width
+                )
+                cell_label.pack(fill="both", expand=True)
+                
+                # Agregar tooltip para valores largos
+                if len(value) > 20:
+                    cell_label._tooltip_label = value  # Almacenar valor completo para tooltip
         
         # Mensaje si hay más iteraciones
-        if len(iteration_data) > 50:
-            table_text += f"\n... (mostrando solo las primeras 50 de {len(iteration_data)} iteraciones)\n"
-        
-        # Insertar texto
-        text_box.insert("0.0", table_text)
-        text_box.configure(state="disabled")  # Hacer solo lectura
+        if len(iteration_data) > max_rows:
+            note_frame = ctk.CTkFrame(table_canvas)
+            note_frame.grid(row=max_rows+1, column=0, columnspan=len(headers), 
+                           sticky="ew", padx=5, pady=10)
+            
+            note_label = ctk.CTkLabel(
+                note_frame,
+                text=f"Mostrando {max_rows} de {len(iteration_data)} iteraciones",
+                font=ctk.CTkFont(size=12, slant="italic")
+            )
+            note_label.pack(pady=5)
 
 
 class PlottingMixin:
