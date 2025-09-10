@@ -10,7 +10,6 @@ import logging
 from typing import Dict, Any
 
 from src.ui.tabs.roots_tab import RootsTab
-from src.ui.tabs.integration_tab import IntegrationTab
 from src.ui.tabs.ode_tab_new import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
@@ -65,7 +64,6 @@ class MathSimulatorApp(ctk.CTk):
         # Botones de navegación
         nav_buttons = [
             ("roots", "🎯 Búsqueda de Raíces"),
-            ("integration", "∫ Integración"),
             ("ode", "📈 EDOs"),
             ("finite_diff", "🔢 Diferencias Finitas"),
             ("newton_cotes", "📊 Newton-Cotes"),
