@@ -30,24 +30,24 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         self.input_frames = {}
         self.method_configs = {
             "Bisección": {
-                "inputs": ["función_fx", "intervalo_a", "intervalo_b", "tolerancia"],
-                "labels": ["Función f(x):", "Intervalo a:", "Intervalo b:", "Tolerancia:"],
-                "defaults": ["x**2 - 4", "1", "3", str(VALIDATION.DEFAULT_TOLERANCE)]
+                "inputs": ["función_f", "intervalo_a", "intervalo_b", "tolerancia", "max_iter"],
+                "labels": ["Función f(x):", "Intervalo a:", "Intervalo b:", "Tolerancia:", "Máx. iteraciones:"],
+                "defaults": ["x**2 - 4", "1", "3", str(VALIDATION.DEFAULT_TOLERANCE), "100"]
             },
             "Newton-Raphson": {
-                "inputs": ["función_fx", "punto_inicial", "tolerancia"],
-                "labels": ["Función f(x):", "Punto inicial:", "Tolerancia:"],
-                "defaults": ["x**2 - 4", "1", str(VALIDATION.DEFAULT_TOLERANCE)]
+                "inputs": ["función_f", "derivada_df", "punto_inicial", "tolerancia", "max_iter"],
+                "labels": ["Función f(x):", "Derivada f'(x):", "Punto inicial:", "Tolerancia:", "Máx. iteraciones:"],
+                "defaults": ["x**2 - 4", "2*x", "1", str(VALIDATION.DEFAULT_TOLERANCE), "100"]
             },
             "Punto Fijo": {
-                "inputs": ["función_fx", "punto_inicial", "tolerancia"],
-                "labels": ["Función f(x):", "Punto inicial:", "Tolerancia:"],
-                "defaults": ["x**2 - 4", "1", str(VALIDATION.DEFAULT_TOLERANCE)]
+                "inputs": ["función_g", "punto_inicial", "tolerancia", "max_iter"],
+                "labels": ["Función g(x):", "Punto inicial:", "Tolerancia:", "Máx. iteraciones:"],
+                "defaults": ["x + (x**2 - 4)", "1", str(VALIDATION.DEFAULT_TOLERANCE), "100"]
             },
             "Aitken": {
-                "inputs": ["función_fx", "punto_inicial", "tolerancia"],
-                "labels": ["Función f(x):", "Punto inicial:", "Tolerancia:"],
-                "defaults": ["x**2 - 4", "1", str(VALIDATION.DEFAULT_TOLERANCE)]
+                "inputs": ["función_g", "punto_inicial", "tolerancia", "max_iter"],
+                "labels": ["Función g(x):", "Punto inicial:", "Tolerancia:", "Máx. iteraciones:"],
+                "defaults": ["x + (x**2 - 4)", "1", str(VALIDATION.DEFAULT_TOLERANCE), "100"]
             }
         }
         
@@ -132,15 +132,6 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
                     errors["tolerancia"] = "La tolerancia debe ser un número"
         
         return len(errors) == 0, errors
-    
-    def get_validated_values(self):
-        """Obtener valores validados del formulario"""
-        return {
-            "función_fx": self.entries["función_fx"].get().strip(),
-            "intervalo_a": float(self.entries["intervalo_a"].get().strip()),
-            "intervalo_b": float(self.entries["intervalo_b"].get().strip()),
-            "tolerancia": float(self.entries["tolerancia"].get().strip())
-        }
     
     def validate_range(self, a_str, b_str):
         """Validar que el rango sea válido para bisección"""
@@ -260,11 +251,14 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         errors = {}
         config = self.method_configs[self.selected_method]
         
-        # Validar función (siempre presente)
-        if "función_fx" in self.entries:
-            func_text = self.entries["función_fx"].get().strip()
-            if not func_text:
-                errors["función_fx"] = "La función no puede estar vacía"
+        # Validar función (siempre presente, puede ser f, g, o ambas)
+        func_fields = ["función_f", "función_g", "derivada_df"]
+        for field in func_fields:
+            if field in self.entries:
+                func_text = self.entries[field].get().strip()
+                if not func_text:
+                    field_name = "función" if "función" in field else "derivada"
+                    errors[field] = f"La {field_name} no puede estar vacía"
         
         # Validar intervalo a (para bisección)
         if "intervalo_a" in self.entries:
@@ -312,6 +306,19 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
                 except ValueError:
                     errors["tolerancia"] = "La tolerancia debe ser un número"
         
+        # Validar máximo de iteraciones (siempre presente)
+        if "max_iter" in self.entries:
+            max_iter_text = self.entries["max_iter"].get().strip()
+            if not max_iter_text:
+                errors["max_iter"] = "El máximo de iteraciones no puede estar vacío"
+            else:
+                try:
+                    max_iter_val = int(max_iter_text)
+                    if max_iter_val <= 0:
+                        errors["max_iter"] = "El máximo de iteraciones debe ser positivo"
+                except ValueError:
+                    errors["max_iter"] = "El máximo de iteraciones debe ser un número entero"
+        
         return len(errors) == 0, errors
     
     def get_validated_values(self):
@@ -321,8 +328,10 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         
         for input_key in config["inputs"]:
             if input_key in self.entries:
-                if input_key == "función_fx":
+                if input_key in ["función_f", "función_g", "derivada_df"]:
                     values[input_key] = self.entries[input_key].get().strip()
+                elif input_key == "max_iter":
+                    values[input_key] = int(self.entries[input_key].get().strip())
                 else:
                     values[input_key] = float(self.entries[input_key].get().strip())
         
@@ -340,7 +349,7 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         try:
             # Obtener valores validados
             values = self.get_validated_values()
-            function_str = values["función_fx"]
+            function_str = values["función_f"]
 
             # Validar rango específico para bisección
             is_valid_range, range_error = self.validate_range(
@@ -353,8 +362,14 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             # Crear función
             f = create_function_from_string(function_str)
 
+            # Crear instancia de RootFinder con los parámetros especificados
+            root_finder = RootFinder(
+                tolerance=values["tolerancia"],
+                max_iterations=values["max_iter"]
+            )
+
             # Ejecutar método
-            result = self.root_finder.bisection_method(
+            result = root_finder.bisection_method(
                 f, values["intervalo_a"], values["intervalo_b"]
             )
 
@@ -379,14 +394,22 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         try:
             # Obtener valores validados
             values = self.get_validated_values()
-            function_str = values["función_fx"]
+            function_str = values["función_f"]
+            derivative_str = values["derivada_df"]
 
-            # Crear función
+            # Crear funciones
             f = create_function_from_string(function_str)
+            df = create_function_from_string(derivative_str)
 
-            # Ejecutar método (derivada se calcula numéricamente)
-            result = self.root_finder.newton_raphson_method(
-                f, None, values["punto_inicial"]  # None = derivada numérica
+            # Crear instancia de RootFinder con los parámetros especificados
+            root_finder = RootFinder(
+                tolerance=values["tolerancia"],
+                max_iterations=values["max_iter"]
+            )
+
+            # Ejecutar método
+            result = root_finder.newton_raphson_method(
+                f, df, values["punto_inicial"]
             )
 
             # Mostrar resultados
@@ -410,22 +433,25 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         try:
             # Obtener valores validados
             values = self.get_validated_values()
-            function_str = values["función_fx"]
+            function_str = values["función_g"]
 
-            # Crear función original
-            f = create_function_from_string(function_str)
+            # Crear función de iteración g(x)
+            g = create_function_from_string(function_str)
 
-            # Convertir a función de punto fijo: g(x) = x + f(x)
-            g = lambda x: x + f(x)
+            # Crear instancia de RootFinder con los parámetros especificados
+            root_finder = RootFinder(
+                tolerance=values["tolerancia"],
+                max_iterations=values["max_iter"]
+            )
 
             # Ejecutar método
-            result = self.root_finder.fixed_point_method(g, values["punto_inicial"])
+            result = root_finder.fixed_point_method(g, values["punto_inicial"])
 
             # Mostrar resultados
             self._display_results(result, "MÉTODO DE PUNTO FIJO")
 
             # Crear gráfico
-            self._plot_fixed_point(f, g, values["punto_inicial"], result.root)
+            self._plot_fixed_point(g, g, values["punto_inicial"], result.root)
 
         except Exception as e:
             self.show_error(f"Error en punto fijo: {str(e)}")
@@ -442,22 +468,25 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         try:
             # Obtener valores validados
             values = self.get_validated_values()
-            function_str = values["función_fx"]
+            function_str = values["función_g"]
 
-            # Crear función original
-            f = create_function_from_string(function_str)
+            # Crear función de iteración g(x)
+            g = create_function_from_string(function_str)
 
-            # Convertir a función de punto fijo: g(x) = x + f(x)
-            g = lambda x: x + f(x)
+            # Crear instancia de RootFinder con los parámetros especificados
+            root_finder = RootFinder(
+                tolerance=values["tolerancia"],
+                max_iterations=values["max_iter"]
+            )
 
             # Ejecutar método de Aitken
-            result = self.root_finder.aitken_acceleration(g, values["punto_inicial"])
+            result = root_finder.aitken_acceleration(g, values["punto_inicial"])
 
             # Mostrar resultados
             self._display_results(result, "MÉTODO DE AITKEN")
 
             # Crear gráfico
-            self._plot_aitken(f, g, values["punto_inicial"], result.root)
+            self._plot_aitken(g, g, values["punto_inicial"], result.root)
 
         except Exception as e:
             self.show_error(f"Error en Aitken: {str(e)}")
@@ -466,8 +495,15 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
         """Mostrar resultados usando mixin ResultDisplayMixin"""
         # Obtener la función del input correspondiente
         function_text = ""
-        if "función_fx" in self.entries:
-            function_text = self.entries["función_fx"].get()
+        func_fields = ["función_f", "función_g", "derivada_df"]
+        for field in func_fields:
+            if field in self.entries:
+                func_value = self.entries[field].get().strip()
+                if func_value:
+                    if function_text:
+                        function_text += f", {field}: {func_value}"
+                    else:
+                        function_text += f"{field}: {func_value}"
         
         # Datos principales
         main_data = {
