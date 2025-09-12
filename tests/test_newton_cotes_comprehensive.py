@@ -6,12 +6,19 @@ con múltiples fórmulas, valores de n y límites de integración.
 Los resultados se verifican contra valores conocidos.
 """
 
+import os
+import sys
 import unittest
 import math
 import logging
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from src.core.newton_cotes import NewtonCotes, NewtonCotesError, NewtonCotesResult
 from src.core.function_parser import FunctionParser
 from src.core.integration_validators import IntegrationValidator, IntegrationValidationError
+
+
 
 # Configurar logging para errores
 logging.basicConfig(filename='newton_cotes_test_errors.log', 

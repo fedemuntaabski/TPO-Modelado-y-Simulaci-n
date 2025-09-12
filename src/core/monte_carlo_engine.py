@@ -24,14 +24,14 @@ class MonteCarloEngine:
         self._last_results = None
         self._cache = {}  # Caché para resultados previos
     
-    def simulate(self, 
+    def simular(self, 
                 func: Callable,
-                n_samples: int,
-                seed: Optional[int] = None,
-                max_error: float = 0.05,
-                dimensions: int = 1,
-                x_range: Tuple[float, float] = (0, 1),
-                y_range: Optional[Tuple[float, float]] = None) -> Dict:
+                n: int,
+                semilla: Optional[int] = None,
+                error_maximo: float = 0.05,
+                dimensiones: int = 1,
+                rango_x: Tuple[float, float] = (0, 1),
+                rango_y: Optional[Tuple[float, float]] = None) -> Dict:
         """
         Ejecuta simulación Monte Carlo para estimar una integral.
         
@@ -48,109 +48,117 @@ class MonteCarloEngine:
             Diccionario con todos los resultados de la simulación
         """
         # Validaciones básicas
-        if n_samples <= 0:
+        if n <= 0:
             raise ValueError("El número de muestras debe ser positivo")
         
-        if dimensions not in [1, 2]:
+        if dimensiones not in [1, 2]:
             raise ValueError("Solo se admiten integraciones 1D o 2D")
         
-        if dimensions == 2 and y_range is None:
+        if dimensiones == 2 and rango_y is None:
             raise ValueError("Para integraciones 2D se requiere el rango y")
         
         # Establecer semilla si se proporciona
-        if seed is not None:
-            np.random.seed(seed)
+        if semilla is not None:
+            np.random.seed(semilla)
         
         # Calcular volumen del dominio
-        volume = self._calculate_volume(dimensions, x_range, y_range)
+        volumen = self._calcular_volumen(dimensiones, rango_x, rango_y)
         
         # Generar puntos aleatorios
-        points, values = self._generate_points(func, n_samples, dimensions, x_range, y_range)
+        puntos, valores_puntos = self._generar_puntos(func, n, dimensiones, rango_x, rango_y)
         
         # Calcular el resultado de la integración
-        integration_result = self._calculate_integration(values, volume)
+        resultado_integracion = self._calcular_integracion(valores_puntos, volumen)
         
         # Calcular estadísticas
-        std_dev, std_error, confidence_interval = self._calculate_statistics(values, volume, max_error)
+        desviacion_estandar, error_estandar, intervalo_de_confianza = self._calcular_estadisticas(valores_puntos, volumen, error_maximo)
         
         # Generar datos para visualización de convergencia
-        convergence_data = self._calculate_convergence(func, n_samples, dimensions, x_range, volume, y_range)
+        convergence_data = self._calcular_convergencia(func, n, dimensiones, rango_x, volumen, rango_y)
         
         # Separar puntos para visualización
-        points_inside, points_outside = self._classify_points(points, values, dimensions)
+        puntos_exito, puntos_fracaso = self._clasificar_puntos_exito_fracaso(puntos, valores_puntos, dimensiones)
         
         # Guardar resultados
         self._last_results = {
-            'desviacion_estandar': std_dev,
-            'error_estandar': std_error,
-            'intervalo_confianza': confidence_interval,
-            'volumen': volume,
-            'resultado_integracion': integration_result,
-            'puntos_dentro': points_inside,
-            'puntos_fuera': points_outside,
+            'desviacion_estandar': desviacion_estandar,
+            'error_estandar': error_estandar,
+            'intervalo_confianza': intervalo_de_confianza,
+            'volumen': volumen,
+            'resultado_integracion': resultado_integracion,
+            'puntos_dentro': puntos_exito,
+            'puntos_fuera': puntos_fracaso,
             'convergencia': convergence_data
         }
         
         return self._last_results
     
-    def _calculate_volume(self, dimensions: int, x_range: Tuple[float, float], 
-                          y_range: Optional[Tuple[float, float]] = None) -> float:
+    def _calcular_volumen(self, dimension: int, rango_x: Tuple[float, float], 
+                          rango_y: Optional[Tuple[float, float]] = None) -> float:
         """Calcula el volumen del dominio de integración"""
-        x_volume = x_range[1] - x_range[0]
+        volumen_x = rango_x[1] - rango_x[0]
         
-        if dimensions == 1:
-            return x_volume
+        if dimension == 1:
+            return volumen_x
         else:
-            y_volume = y_range[1] - y_range[0]
-            return x_volume * y_volume
+            volumen_y = rango_y[1] - rango_y[0]
+            return volumen_x * volumen_y
     
-    def _generate_points(self, func: Callable, n_samples: int, dimensions: int,
-                        x_range: Tuple[float, float], 
-                        y_range: Optional[Tuple[float, float]] = None) -> Tuple[np.ndarray, np.ndarray]:
+    def _generar_puntos(self, func: Callable, n: int, dimension: int,
+                        rango_x: Tuple[float, float], 
+                        rango_y: Optional[Tuple[float, float]] = None) -> Tuple[np.ndarray, np.ndarray]:
         """Genera puntos aleatorios y evalúa la función en ellos"""
-        if dimensions == 1:
+        if dimension == 1:
             # Generar puntos aleatorios 1D
-            x = np.random.uniform(x_range[0], x_range[1], n_samples)
-            points = x.reshape(-1, 1)
-            values = np.array([func(xi) for xi in x])
+            x = np.random.uniform(rango_x[0], rango_x[1], n)
+            puntos = x.reshape(-1, 1)
+            valores = np.array([func(xi) for xi in x])
             
         else:
             # Generar puntos aleatorios 2D
-            x = np.random.uniform(x_range[0], x_range[1], n_samples)
-            y = np.random.uniform(y_range[0], y_range[1], n_samples)
-            points = np.column_stack((x, y))
-            values = np.array([func(xi, yi) for xi, yi in zip(x, y)])
+            x = np.random.uniform(rango_x[0], rango_x[1], n)
+            y = np.random.uniform(rango_y[0], rango_y[1], n)
+            puntos = np.column_stack((x, y))
+            valores = np.array([func(xi, yi) for xi, yi in zip(x, y)])
         
-        return points, values
+        return puntos, valores
     
-    def _calculate_integration(self, values: np.ndarray, volume: float) -> float:
+    def _calcular_integracion(self, valores: np.ndarray, volumen: float) -> float:
         """Calcula el resultado de la integración mediante Monte Carlo"""
-        return volume * np.mean(values)
+        return volumen * np.mean(valores)
     
-    def _calculate_statistics(self, values: np.ndarray, volume: float, 
-                             max_error: float) -> Tuple[float, float, Tuple[float, float]]:
+    def _calcular_estadisticas(self, valores: np.ndarray, volumen: float, 
+                             error_maximo: float) -> Tuple[float, float, Tuple[float, float]]:
         """Calcula estadísticas de la simulación"""
         # Desviación estándar
-        std_dev = np.std(values, ddof=1)
+        std_dev = np.std(valores, ddof=1)
         
         # Error estándar
-        n = len(values)
+        n = len(valores)
         std_error = std_dev / np.sqrt(n)
         
-        # Intervalo de confianza (95%)
-        z_value = stats.norm.ppf(0.975)  # Valor z para IC 95%
-        margin_error = z_value * std_error
-        mean_value = np.mean(values)
+        # Intervalo de confianza adaptado al error máximo
+        # Convertir error_maximo a nivel de confianza
+        # Por ejemplo, error_maximo=0.05 corresponde a 95% de confianza (1-0.05)
+        nivel_confianza = 1 - error_maximo
+        
+        # Calcular el valor z para el nivel de confianza deseado
+        # Ejemplo: Para 95% de confianza (error_maximo=0.05), z_value ≈ 1.96
+        # Para 99% de confianza (error_maximo=0.01), z_value ≈ 2.58
+        z_value = stats.norm.ppf(1 - error_maximo/2)
+        
+        margen_de_error = z_value * std_error
+        mean_value = np.mean(valores)
         
         # Ajustar el resultado por el volumen
-        adjusted_error = volume * margin_error
-        adjusted_mean = volume * mean_value
+        adjusted_error = volumen * margen_de_error
+        adjusted_mean = volumen * mean_value
         
-        confidence_interval = (adjusted_mean - adjusted_error, adjusted_mean + adjusted_error)
+        intervalo_de_confianza = (adjusted_mean - adjusted_error, adjusted_mean + adjusted_error)
         
-        return std_dev, std_error * volume, confidence_interval
+        return std_dev, std_error * volumen, intervalo_de_confianza
     
-    def _calculate_convergence(self, func: Callable, n_samples: int, dimensions: int,
+    def _calcular_convergencia(self, func: Callable, n_samples: int, dimensions: int,
                               x_range: Tuple[float, float], volume: float,
                               y_range: Optional[Tuple[float, float]] = None) -> np.ndarray:
         """Calcula datos de convergencia del método"""
@@ -165,13 +173,13 @@ class MonteCarloEngine:
         results = []
         
         for n in sample_points:
-            points, values = self._generate_points(func, n, dimensions, x_range, y_range)
+            points, values = self._generar_puntos(func, n, dimensions, x_range, y_range)
             result = volume * np.mean(values)
             results.append((n, result))
         
         return np.array(results)
     
-    def _classify_points(self, points: np.ndarray, values: np.ndarray, dimensions: int) -> Tuple[np.ndarray, np.ndarray]:
+    def _clasificar_puntos_exito_fracaso(self, points: np.ndarray, values: np.ndarray, dimensions: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Clasifica puntos para visualización según si están dentro o fuera
         del dominio de éxito (valores positivos vs negativos)

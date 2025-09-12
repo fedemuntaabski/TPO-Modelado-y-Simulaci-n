@@ -6,8 +6,12 @@ Verifica la correcta implementación del motor de simulación Monte Carlo.
 
 import unittest
 import numpy as np
-import math
 from typing import Callable
+import sys
+import os
+
+# Añadir el directorio raíz del proyecto al path para poder importar desde src
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.core.monte_carlo_engine import MonteCarloEngine
 
@@ -38,12 +42,13 @@ class TestMonteCarlo(unittest.TestCase):
     def test_monte_carlo_1d(self):
         """Test para integración 1D"""
         # Ejecutar simulación con un número moderado de muestras
-        results = self.mc_engine.simulate(
+        results = self.mc_engine.simular(
             func=self.test_func_1d,
-            n_samples=10000,
-            seed=self.seed,
-            dimensions=1,
-            x_range=(0, 1)
+            n=10000,
+            semilla=self.seed,
+            error_maximo=0.01,  # Usar un nivel de confianza más alto (99%)
+            dimensiones=1,
+            rango_x=(0, 1)
         )
         
         # Verificar que el resultado está cerca del valor exacto (tolerancia 5%)
@@ -61,13 +66,14 @@ class TestMonteCarlo(unittest.TestCase):
     def test_monte_carlo_2d(self):
         """Test para integración 2D"""
         # Ejecutar simulación con un número moderado de muestras
-        results = self.mc_engine.simulate(
+        results = self.mc_engine.simular(
             func=self.test_func_2d,
-            n_samples=10000,
-            seed=self.seed,
-            dimensions=2,
-            x_range=(0, 1),
-            y_range=(0, 1)
+            n=10000,
+            semilla=self.seed,
+            error_maximo=0.01,  # Usar un nivel de confianza más alto (99%)
+            dimensiones=2,
+            rango_x=(0, 1),
+            rango_y=(0, 1)
         )
         
         # Verificar que el resultado está cerca del valor exacto (tolerancia 5%)
@@ -89,12 +95,13 @@ class TestMonteCarlo(unittest.TestCase):
         errors = []
         
         for n_samples in sample_sizes:
-            results = self.mc_engine.simulate(
+            results = self.mc_engine.simular(
                 func=self.test_func_1d,
-                n_samples=n_samples,
-                seed=self.seed,
-                dimensions=1,
-                x_range=(0, 1)
+                n=n_samples,
+                semilla=self.seed,
+                error_maximo=0.01,  # Usar un nivel de confianza más alto (99%)
+                dimensiones=1,
+                rango_x=(0, 1)
             )
             
             error = abs(results['resultado_integracion'] - self.exact_integral_1d)
@@ -108,41 +115,41 @@ class TestMonteCarlo(unittest.TestCase):
     def test_volume_calculation(self):
         """Test para el cálculo del volumen del dominio"""
         # 1D
-        volume_1d = self.mc_engine._calculate_volume(1, (0, 2))
+        volume_1d = self.mc_engine._calcular_volumen(1, (0, 2))
         self.assertEqual(volume_1d, 2, "Volumen 1D incorrecto")
         
         # 2D
-        volume_2d = self.mc_engine._calculate_volume(2, (0, 2), (0, 3))
+        volume_2d = self.mc_engine._calcular_volumen(2, (0, 2), (0, 3))
         self.assertEqual(volume_2d, 6, "Volumen 2D incorrecto")
     
     def test_invalid_inputs(self):
         """Test para entradas inválidas"""
         # Probar número negativo de muestras
         with self.assertRaises(ValueError):
-            self.mc_engine.simulate(
+            self.mc_engine.simular(
                 func=self.test_func_1d,
-                n_samples=-100,
-                dimensions=1,
-                x_range=(0, 1)
+                n=-100,
+                dimensiones=1,
+                rango_x=(0, 1)
             )
         
         # Probar dimensión inválida
         with self.assertRaises(ValueError):
-            self.mc_engine.simulate(
+            self.mc_engine.simular(
                 func=self.test_func_1d,
-                n_samples=100,
-                dimensions=3,  # Solo se admiten 1 y 2
-                x_range=(0, 1)
+                n=100,
+                dimensiones=3,  # Solo se admiten 1 y 2
+                rango_x=(0, 1)
             )
         
         # Probar integración 2D sin rango y
         with self.assertRaises(ValueError):
-            self.mc_engine.simulate(
+            self.mc_engine.simular(
                 func=self.test_func_2d,
-                n_samples=100,
-                dimensions=2,
-                x_range=(0, 1),
-                y_range=None  # Falta rango y para 2D
+                n=100,
+                dimensiones=2,
+                rango_x=(0, 1),
+                rango_y=None  # Falta rango y para 2D
             )
 
 

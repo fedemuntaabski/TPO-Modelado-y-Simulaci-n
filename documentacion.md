@@ -3,8 +3,19 @@
 Este documento proporciona una descripción detallada de los métodos principales implementados en los módulos core del Simulador Matemático.
 
 ## Índice
-1. [Function Parser](#function-parser)
-2. [Root Finding (Búsqueda de Raíces)](#root-finding)
+1. [Function Parser](#function-parse#### `simular(func: Callable, n_samples: int, seed: Optional[int], error_maximo: float, dimensions: int, x_range: Tuple[float, float], y_range: Optional[Tuple[float, float]] = None) -> Dict`
+- **Descripción**: Ejecuta una simulación Monte Carlo para estimar una integral
+- **Parámetros**:
+  - `func`: Función a integrar
+  - `n_samples`: Número de muestras aleatorias
+  - `seed`: Semilla para reproducibilidad (opcional)
+  - `error_maximo`: Error máximo aceptable para el nivel de confianza (e.g., 0.05 para 95% de confianza)
+  - `dimensions`: Dimensiones de integración (1 o 2)
+  - `x_range`: Rango en eje x (a, b)
+  - `y_range`: Rango en eje y (c, d) para integrales 2D
+- **Retorna**: Diccionario con resultados, estadísticas y datos para visualización
+- **Método**: Genera puntos aleatorios, evalúa la función y estima la integral
+- **Complejidad**: O(N) donde N es el número de muestrasFinding (Búsqueda de Raíces)](#root-finding)
 3. [Newton-Cotes (Integración Numérica)](#newton-cotes)
 4. [Monte Carlo Engine](#monte-carlo-engine)
 5. [ODE Solver (Ecuaciones Diferenciales)](#ode-solver)
@@ -214,9 +225,39 @@ Módulo: `src/core/monte_carlo_engine.py`
 
 Implementa métodos de integración y simulación estocástica mediante técnicas de Monte Carlo.
 
+### Fundamentos Teóricos
+
+El método de Monte Carlo es una técnica estocástica para estimar integrales y resolver problemas numéricos mediante números aleatorios. La base matemática de este método para estimar una integral es:
+
+$$ I = \int_a^b f(x) dx \approx (b-a) \cdot \frac{1}{N} \sum_{i=1}^{N} f(x_i) $$
+
+Donde:
+- $I$ es el valor de la integral
+- $[a,b]$ es el intervalo de integración
+- $N$ es el número de muestras aleatorias
+- $x_i$ son puntos aleatorios distribuidos uniformemente en $[a,b]$
+
+Para integrales bidimensionales, la fórmula se extiende a:
+
+$$ I = \int_a^b \int_c^d f(x,y) dy dx \approx (b-a)(d-c) \cdot \frac{1}{N} \sum_{i=1}^{N} f(x_i, y_i) $$
+
+La convergencia del método es del orden $O(1/\sqrt{N})$, lo que significa que para reducir el error a la mitad, se necesita cuadruplicar el número de muestras.
+
+### Estimación del Error
+
+El error estándar en las estimaciones Monte Carlo se calcula como:
+
+$$ \sigma = \frac{s}{\sqrt{N}} $$
+
+Donde $s$ es la desviación estándar de los valores de la función evaluados en los puntos aleatorios. El intervalo de confianza al 95% se calcula como:
+
+$$ IC_{95\%} = \hat{I} \pm 1.96 \cdot \sigma $$
+
+Donde $\hat{I}$ es la estimación de la integral.
+
 ### Métodos Principales
 
-#### `simulate(func: Callable, n_samples: int, seed: Optional[int], max_error: float, dimensions: int, x_range: Tuple[float, float], y_range: Optional[Tuple[float, float]]) -> Dict`
+#### `simular(func: Callable, n_samples: int, seed: Optional[int], max_error: float, dimensions: int, x_range: Tuple[float, float], y_range: Optional[Tuple[float, float]]) -> Dict`
 - **Descripción**: Ejecuta una simulación Monte Carlo para estimar una integral
 - **Parámetros**:
   - `func`: Función a integrar
@@ -228,44 +269,144 @@ Implementa métodos de integración y simulación estocástica mediante técnica
   - `y_range`: Rango en eje y (c, d) para integrales 2D
 - **Retorna**: Diccionario con resultados, estadísticas y datos para visualización
 - **Método**: Genera puntos aleatorios, evalúa la función y estima la integral
+- **Complejidad**: O(N) donde N es el número de muestras
 
-#### `_calculate_volume(dimensions: int, x_range: Tuple[float, float], y_range: Optional[Tuple[float, float]]) -> float`
+#### `_generar_puntos(func: Callable, n_samples: int, dimensions: int, x_range: Tuple[float, float], y_range: Optional[Tuple[float, float]]) -> Tuple[np.ndarray, np.ndarray]`
+- **Descripción**: Genera puntos aleatorios y evalúa la función en ellos
+- **Parámetros**:
+  - `func`: Función a evaluar
+  - `n_samples`: Número de puntos aleatorios
+  - `dimensions`: Dimensiones (1 o 2)
+  - `x_range`: Rango en eje x
+  - `y_range`: Rango en eje y (solo para 2D)
+- **Retorna**: Tupla (puntos, valores) con los puntos generados y las evaluaciones de la función
+
+#### `_calcular_volumen(dimensions: int, x_range: Tuple[float, float], y_range: Optional[Tuple[float, float]]) -> float`
 - **Descripción**: Calcula el volumen del dominio de integración
 - **Parámetros**:
   - `dimensions`: Dimensiones (1 o 2)
   - `x_range`: Rango en eje x
   - `y_range`: Rango en eje y (solo para 2D)
 - **Retorna**: Volumen del dominio
+- **Fórmula**: Para 1D: b-a, Para 2D: (b-a)*(d-c)
 
-#### `_calculate_statistics(values: np.ndarray, volume: float, max_error: float) -> Tuple[float, float, Tuple[float, float]]`
+#### `_calcular_integracion(values: np.ndarray, volume: float) -> float`
+- **Descripción**: Calcula el resultado de la integración Monte Carlo
+- **Parámetros**:
+  - `values`: Valores de la función evaluada en puntos aleatorios
+  - `volume`: Volumen del dominio
+- **Retorna**: Resultado de la integración
+- **Fórmula**: volume * np.mean(values)
+
+#### `_calcular_estadisticas(values: np.ndarray, volume: float, error_maximo: float) -> Tuple[float, float, Tuple[float, float]]`
 - **Descripción**: Calcula estadísticas de la simulación
 - **Parámetros**:
   - `values`: Valores de las evaluaciones
   - `volume`: Volumen del dominio
-  - `max_error`: Error máximo aceptable
+  - `error_maximo`: Error máximo aceptable (determina el nivel de confianza)
 - **Retorna**: Tupla (desviación estándar, error estándar, intervalo de confianza)
+- **Intervalo de Confianza**: Utiliza distribución normal con z calculado dinámicamente usando `error_maximo`
+- **Nota importante**: Un valor mayor de `error_maximo` produce intervalos de confianza más estrechos, ya que representa una menor exigencia de confianza estadística
 
-#### `_calculate_convergence(func: Callable, n_samples: int, dimensions: int, x_range: Tuple[float, float], volume: float, y_range: Optional[Tuple[float, float]]) -> List[Dict]`
+#### `_calculate_convergence(func: Callable, n_samples: int, dimensions: int, x_range: Tuple[float, float], volume: float, y_range: Optional[Tuple[float, float]]) -> np.ndarray`
 - **Descripción**: Genera datos para visualizar la convergencia del método
-- **Parámetros**: Similar a `simulate`
-- **Retorna**: Lista de diccionarios con datos de convergencia para diferentes tamaños de muestra
+- **Parámetros**: Similar a `simular`
+- **Retorna**: Array con datos de convergencia para diferentes tamaños de muestra
+- **Método**: Toma puntos logarítmicamente espaciados para mostrar la evolución de la convergencia
 
-#### `integrate_1d(func: Callable, a: float, b: float, n_samples: int) -> Dict`
-- **Descripción**: Implementa integración Monte Carlo 1D (método simplificado)
+#### `_classify_points(points: np.ndarray, values: np.ndarray, dimensions: int) -> Tuple[np.ndarray, np.ndarray]`
+- **Descripción**: Clasifica puntos para visualización según valores positivos/negativos
 - **Parámetros**:
-  - `func`: Función a integrar
-  - `a, b`: Límites de integración
-  - `n_samples`: Número de muestras
-- **Retorna**: Diccionario con resultado y estadísticas
+  - `points`: Coordenadas de los puntos generados
+  - `values`: Valores de la función en esos puntos
+  - `dimensions`: Dimensiones (1 o 2)
+- **Retorna**: Tupla (puntos_dentro, puntos_fuera) para visualización
 
-#### `integrate_2d(func: Callable, a: float, b: float, c: float, d: float, n_samples: int) -> Dict`
-- **Descripción**: Implementa integración Monte Carlo 2D
-- **Parámetros**:
-  - `func`: Función a integrar
-  - `a, b`: Límites en x
-  - `c, d`: Límites en y
-  - `n_samples`: Número de muestras
-- **Retorna**: Diccionario con resultado y estadísticas
+### Funciones Predeterminadas
+
+El módulo incluye un conjunto de funciones predefinidas para pruebas y demostraciones:
+
+#### Funciones 1D
+- `sin(x)`: Función seno
+- `x²`: Función cuadrática
+- `e^(-x²)`: Función gaussiana
+- `sqrt(1-x²)`: Semicircunferencia (útil para aproximar π/4)
+
+#### Funciones 2D
+- `x² + y²`: Función cuadrática bidimensional
+- `sin(x)cos(y)`: Producto de funciones trigonométricas
+- `e^(-(x²+y²))`: Función gaussiana bidimensional
+
+### Interfaz de Usuario
+
+El módulo `monte_carlo_tab.py` implementa una interfaz gráfica completa que permite:
+
+1. **Seleccionar dimensionalidad**: 1D o 2D
+2. **Ingresar función**: Mediante expresión matemática personalizada
+3. **Configurar parámetros**:
+   - Número de muestras
+   - Semilla para reproducibilidad
+   - Error máximo aceptable
+   - Rangos de integración
+4. **Visualizar resultados**:
+   - Valor estimado de la integral
+   - Estadísticas de error
+   - Intervalos de confianza
+   - Gráficos de puntos y convergencia
+
+### Ejemplo de Uso desde Código
+
+```python
+from src.core.monte_carlo_engine import MonteCarloEngine
+import numpy as np
+
+# Crear instancia del motor
+mc_engine = MonteCarloEngine()
+
+# Definir función a integrar
+def my_function(x):
+    return x**2 * np.sin(x)
+
+# Ejecutar simulación con un 95% de confianza (error_maximo = 0.05)
+results = mc_engine.simular(
+    func=my_function,
+    n_samples=100000,
+    semilla=42,
+    error_maximo=0.05,  # 95% de confianza
+    dimensiones=1,
+    rango_x=(0, np.pi)
+)
+
+# Acceder a resultados
+valor_integral = results['resultado_integracion']
+intervalo_confianza = results['intervalo_confianza']
+error_estandar = results['error_estandar']
+
+print(f"Valor estimado: {valor_integral}")
+print(f"Intervalo de confianza (95%): {intervalo_confianza}")
+print(f"Error estándar: {error_estandar}")
+
+# Ejemplo con otro nivel de confianza (99%)
+results_high_conf = mc_engine.simular(
+    func=my_function,
+    n_samples=100000,
+    semilla=42,
+    error_maximo=0.01,  # 99% de confianza
+    dimensiones=1,
+    rango_x=(0, np.pi)
+)
+
+print(f"Intervalo de confianza (99%): {results_high_conf['intervalo_confianza']}")
+```
+
+### Limitaciones y Consideraciones
+
+- La convergencia es del orden O(1/√N), relativamente lenta
+- El número de muestras debe ser suficientemente grande para resultados precisos
+- El método es sensible a la calidad del generador de números aleatorios
+- Para funciones muy oscilatorias, puede requerir un número muy alto de muestras
+- Se recomienda usar una semilla para garantizar reproducibilidad en pruebas
+- El parámetro `error_maximo` controla el nivel de confianza: valores más pequeños (por ejemplo, 0.01) producen intervalos de confianza más amplios pero con mayor confianza estadística
 
 ---
 

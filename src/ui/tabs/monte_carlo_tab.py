@@ -19,7 +19,7 @@ from src.ui.components.constants import VALIDATION, DEFAULT_CONFIGS, UI, PLOT, C
 from config.settings import NUMERICAL_CONFIG
 
 
-class SimpleMonteCarloEngine:
+class MonteCarloEngine:
     """Implementación simplificada de Monte Carlo para evitar problemas de importación"""
     
     def simulate(self, func, n_samples, seed=42, dimensions=2, x_range=(0,1), y_range=(0,1), max_error=0.05):
@@ -48,11 +48,15 @@ class SimpleMonteCarloEngine:
             std_dev = np.std(f_values)
             std_error = std_dev / np.sqrt(n_samples)
             
+            # Calcular el valor z para el nivel de confianza basado en max_error
+            from scipy import stats
+            z_value = stats.norm.ppf(1 - max_error/2)
+            
             return {
                 'resultado_integracion': integral,
                 'desviacion_estandar': std_dev,
                 'error_estandar': std_error,
-                'intervalo_confianza': (integral - 1.96*std_error, integral + 1.96*std_error),
+                'intervalo_confianza': (integral - z_value*std_error, integral + z_value*std_error),
                 'puntos_dentro': points_inside_xy,
                 'puntos_fuera': points_outside_xy,
                 'volumen': x_range[1] - x_range[0],
@@ -85,6 +89,10 @@ class SimpleMonteCarloEngine:
             std_dev = np.std(f_values * area)
             std_error = std_dev / np.sqrt(n_samples)
             
+            # Calcular el valor z para el nivel de confianza basado en max_error
+            from scipy import stats
+            z_value = stats.norm.ppf(1 - max_error/2)
+            
             # Separar puntos dentro y fuera
             points_inside = np.column_stack([x_points[inside], y_points[inside]])
             points_outside = np.column_stack([x_points[~inside], y_points[~inside]])
@@ -93,7 +101,7 @@ class SimpleMonteCarloEngine:
                 'resultado_integracion': integral,
                 'desviacion_estandar': std_dev,
                 'error_estandar': std_error,
-                'intervalo_confianza': (integral - 1.96*std_error, integral + 1.96*std_error),
+                'intervalo_confianza': (integral - z_value*std_error, integral + z_value*std_error),
                 'puntos_dentro': points_inside_xyz,
                 'puntos_fuera': points_outside_xyz,
                 'volumen': area,
@@ -119,10 +127,10 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
         InputValidationMixin.__init__(self)
         
         super().__init__(parent, "🎲 Simulación Monte Carlo")
-        self.mc_engine = SimpleMonteCarloEngine()
+        self.mc_engine = MonteCarloEngine()
         self.setup_tooltips()
     
-    def _create_function_1d(self, expression):
+    def _crear_funcion_1d(self, expression):
         """Crear función 1D de manera segura"""
         import math
         import numpy as np
@@ -153,7 +161,7 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
         
         return lambda x_val: safe_eval(expression, x_val)
     
-    def _create_function_2d(self, expression):
+    def _create_funcion_2d(self, expression):
         """Crear función 2D de manera segura"""
         import math
         import numpy as np
@@ -511,9 +519,9 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
             # Parsear función personalizada usando eval seguro
             try:
                 if dimension == "1D":
-                    func = self._create_function_1d(custom_func)
+                    func = self._crear_funcion_1d(custom_func)
                 else:
-                    func = self._create_function_2d(custom_func)
+                    func = self._create_funcion_2d(custom_func)
             except Exception as e:
                 self.show_error_message(f"Error al parsear función: {str(e)}")
                 return
