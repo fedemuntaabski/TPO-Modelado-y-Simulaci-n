@@ -8,6 +8,7 @@ siguiendo principios SOLID y DRY.
 import customtkinter as ctk
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 from typing import Optional, Dict, Callable, Any, Tuple
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -259,7 +260,8 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
         # Label de ayuda para ecuaciones cónicas
         help_label = ctk.CTkLabel(input_frame, 
                                  text="💡 Ecuaciones cónicas: x**2 + y**2 = 1 (círculo), x**2/4 + y**2/9 = 1 (elipse)\n" +
-                                      "Para área entre curvas, usa integración: sqrt(x) - x**2",
+                                      "Para área entre curvas, usa integración: sqrt(x) - x**2\n" +
+                                      "En rangos se acepta: pi, sin(1), cos(0), sqrt(2), etc.",
                                  font=ctk.CTkFont(size=11),
                                  text_color="gray")
         help_label.grid(row=1, column=2, padx=10, pady=10, sticky="w")
@@ -629,10 +631,30 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
                     if value <= 0:
                         return False, {}, "El número de muestras debe ser positivo"
                 else:
-                    value = float(value_str)
+                    # Para rangos (x_min, x_max, y_min, y_max), permitir expresiones con pi, sin, cos
+                    if field in ["x_min", "x_max", "y_min", "y_max"]:
+                        # Crear contexto seguro para evaluar expresiones matemáticas
+                        safe_dict = {
+                            "__builtins__": {},
+                            "pi": math.pi,
+                            "e": math.e,
+                            "sin": math.sin,
+                            "cos": math.cos,
+                            "tan": math.tan,
+                            "sqrt": math.sqrt,
+                            "exp": math.exp,
+                            "log": math.log,
+                            "abs": abs,
+                            "pow": pow
+                        }
+                        value = eval(value_str, safe_dict, {})
+                    else:
+                        value = float(value_str)
                 values[field] = value
             except ValueError:
                 return False, {}, f"Valor inválido en '{field}': debe ser un número"
+            except Exception:
+                return False, {}, f"Expresión inválida en '{field}': use expresiones como pi, sin(1), etc."
         
         # Validar semilla (opcional)
         seed_str = self.entries["seed"].get().strip()
