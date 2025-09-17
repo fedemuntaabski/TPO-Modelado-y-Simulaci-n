@@ -253,8 +253,16 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
         func_label = ctk.CTkLabel(input_frame, text="Función:")
         func_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
         
-        self.custom_func_entry = ctk.CTkEntry(input_frame, placeholder_text="Ej: x**2, exp(x), sin(x)")
+        self.custom_func_entry = ctk.CTkEntry(input_frame, placeholder_text="Ej: x**2 + y**2 = 1, x**2, exp(x), sin(x)")
         self.custom_func_entry.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
+        
+        # Label de ayuda para ecuaciones cónicas
+        help_label = ctk.CTkLabel(input_frame, 
+                                 text="💡 Ecuaciones cónicas: x**2 + y**2 = 1 (círculo), x**2/4 + y**2/9 = 1 (elipse)\n" +
+                                      "Para área entre curvas, usa integración: sqrt(x) - x**2",
+                                 font=ctk.CTkFont(size=11),
+                                 text_color="gray")
+        help_label.grid(row=1, column=2, padx=10, pady=10, sticky="w")
         
         # Parámetros de la simulación
         self.entries = {}
@@ -516,12 +524,36 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
                 self.show_error_message("Ingrese una función válida")
                 return
             
-            # Parsear función personalizada usando eval seguro
+            # Detectar si es una ecuación cónica (contiene '=')
+            is_conic_equation = '=' in custom_func
+            
+            # Parsear función personalizada
             try:
-                if dimension == "1D":
-                    func = self._crear_funcion_1d(custom_func)
+                if is_conic_equation:
+                    # Importar el parser de ecuaciones cónicas
+                    from src.core.function_parser import parse_conic_equation, detect_conic_type
+                    
+                    # Detectar tipo de cónica para informar al usuario
+                    conic_type = detect_conic_type(custom_func)
+                    self.update_status(f"Detectada ecuación cónica: {conic_type}")
+                    
+                    # Forzar 2D para ecuaciones cónicas
+                    if dimension == "1D":
+                        self.dimension_var.set("2D")
+                        dimension = "2D"
+                        self.show_error_message("Las ecuaciones cónicas requieren 2D. Cambiando automáticamente a 2D.")
+                        # Dar tiempo al usuario para ver el mensaje
+                        self.master.after(2000, lambda: self.clear_error_message())
+                    
+                    func = parse_conic_equation(custom_func)
+                    
                 else:
-                    func = self._create_funcion_2d(custom_func)
+                    # Función tradicional
+                    if dimension == "1D":
+                        func = self._crear_funcion_1d(custom_func)
+                    else:
+                        func = self._create_funcion_2d(custom_func)
+                        
             except Exception as e:
                 self.show_error_message(f"Error al parsear función: {str(e)}")
                 return
@@ -531,6 +563,12 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
             x_range = (values["x_min"], values["x_max"])
             y_range = (values["y_min"], values["y_max"]) if dimension == "2D" else None
             
+            # Sugerencias de rangos
+            if is_conic_equation and x_range == (0, 1) and y_range == (0, 1):
+                # Sugerir rango [-2, 2] para ecuaciones cónicas típicas
+                self.show_error_message("Sugerencia: Para ecuaciones cónicas como círculos, considera usar rangos como [-2, 2]")
+                self.master.after(3000, lambda: self.clear_error_message())
+            
             # Convertir seed a None si está vacío
             seed = values.get("seed")
             if seed == "" or seed is None:
@@ -539,7 +577,10 @@ class MonteCarloTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingM
                 seed = int(seed)
             
             # Ejecutar simulación
-            self.update_status("Ejecutando simulación Monte Carlo...")
+            status_msg = "Ejecutando simulación Monte Carlo..."
+            if is_conic_equation:
+                status_msg += f" para ecuación cónica ({conic_type})"
+            self.update_status(status_msg)
             
             results = self.mc_engine.simulate(
                 func=func,

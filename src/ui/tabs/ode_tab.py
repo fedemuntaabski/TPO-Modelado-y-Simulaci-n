@@ -74,10 +74,49 @@ class ODETab(BaseTab):
             
             # Mostrar resultados en tabla
             self.table.delete("0.0", "end")
-            self.table.insert("end", f"{'t':>12} {'y':>18}\n")
-            self.table.insert("end", "-"*32+"\n")
-            for ti, yi in zip(res.t, res.y.squeeze()):
-                self.table.insert("end", f"{ti:>12.6f} {yi:>18.10f}\n")
+            
+            if method == "rk4" and res.k1_values is not None:
+                # Tabla extendida para RK4 con k1, k2, k3, k4, y n+1
+                self.table.insert("end", f"{'t':>10} {'y':>12} {'k1':>12} {'k2':>12} {'k3':>12} {'k4':>12} {'y n+1':>12}\n")
+                self.table.insert("end", "-"*82+"\n")
+                
+                # Mostrar filas con los valores k1, k2, k3, k4, y n+1
+                for i in range(len(res.k1_values)):
+                    # Los valores k1, k2, k3, k4 del paso i se calculan en t[i], y[i] para obtener y[i+1]
+                    ti, yi = res.t[i], res.y[i].squeeze()
+                    k1i = res.k1_values[i].squeeze()
+                    k2i = res.k2_values[i].squeeze()
+                    k3i = res.k3_values[i].squeeze()
+                    k4i = res.k4_values[i].squeeze()
+                    y_nexti = res.y_next_values[i].squeeze()
+                    self.table.insert("end", f"{ti:>10.6f} {yi:>12.6f} {k1i:>12.6f} {k2i:>12.6f} {k3i:>12.6f} {k4i:>12.6f} {y_nexti:>12.6f}\n")
+                
+                # Última fila (resultado final sin k values)
+                if len(res.t) > len(res.k1_values):
+                    final_t, final_y = res.t[-1], res.y[-1].squeeze()
+                    self.table.insert("end", f"{final_t:>10.6f} {final_y:>12.6f} {'-':>12} {'-':>12} {'-':>12} {'-':>12} {'-':>12}\n")
+            elif method == "euler" and res.y_next_values is not None:
+                # Tabla extendida para Euler con y n+1
+                self.table.insert("end", f"{'t':>12} {'y':>15} {'y n+1':>15}\n")
+                self.table.insert("end", "-"*44+"\n")
+                
+                # Mostrar filas con los valores y n+1
+                for i in range(len(res.y_next_values)):
+                    # El valor y_next del paso i se calcula en t[i], y[i] para obtener y[i+1]
+                    ti, yi = res.t[i], res.y[i].squeeze()
+                    y_nexti = res.y_next_values[i].squeeze()
+                    self.table.insert("end", f"{ti:>12.6f} {yi:>15.6f} {y_nexti:>15.6f}\n")
+                
+                # Última fila (resultado final sin y_next)
+                if len(res.t) > len(res.y_next_values):
+                    final_t, final_y = res.t[-1], res.y[-1].squeeze()
+                    self.table.insert("end", f"{final_t:>12.6f} {final_y:>15.6f} {'-':>15}\n")
+            else:
+                # Tabla simple para otros métodos (Heun)
+                self.table.insert("end", f"{'t':>12} {'y':>18}\n")
+                self.table.insert("end", "-"*32+"\n")
+                for ti, yi in zip(res.t, res.y.squeeze()):
+                    self.table.insert("end", f"{ti:>12.6f} {yi:>18.10f}\n")
             
             # Mostrar mensaje con resultados
             extra = f" • error máx. estimado ≈ {res.max_error_estimate:.2e}" if res.max_error_estimate is not None else ""
@@ -113,12 +152,12 @@ class ODETab(BaseTab):
         self.tf_entry = self._labeled_entry(left, "tf =", "2.0")
         self.y0_entry = self._labeled_entry(left, "y0 =", "0.5")
         self.step_entry = self._labeled_entry(left, "Paso h (p/ fijos) =", str(NUMERICAL_CONFIG.get("ode_default_step", 0.1)))
-        self.tol_entry = self._labeled_entry(left, "Tolerancia (RK45) =", "1e-6")
+        self.tol_entry = self._labeled_entry(left, "Tolerancia =", "1e-6")
         
         # Selector de método
         self.method_var = ctk.StringVar(value="rk4")
         ctk.CTkLabel(left, text="Método").pack(pady=(10,0))
-        ctk.CTkOptionMenu(left, variable=self.method_var, values=["euler","heun","rk2","rk4","rk45"]).pack(pady=(0,10), fill="x")
+        ctk.CTkOptionMenu(left, variable=self.method_var, values=["euler","heun","rk4"]).pack(pady=(0,10), fill="x")
         
         # Botón de ejecución
         ctk.CTkButton(left, text="Ejecutar", command=self._run).pack(pady=10, fill="x")
