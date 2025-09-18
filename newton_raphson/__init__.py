@@ -1,0 +1,3 @@
+"""
+Newton-Raphson package initialization.
+"""
