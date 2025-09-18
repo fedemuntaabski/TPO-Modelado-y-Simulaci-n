@@ -16,6 +16,27 @@ from config.settings import PLOT_CONFIG
 from .constants import PLOT
 
 
+def format_decimal_number(value, decimal_places=8):
+    """
+    Formatea un número para mostrar decimales en lugar de notación científica.
+    
+    Args:
+        value: Número a formatear
+        decimal_places: Número de decimales a mostrar
+        
+    Returns:
+        String formateado sin notación científica
+    """
+    if abs(value) == 0:
+        return "0.00000000"
+    elif abs(value) >= 0.0001:
+        # Para números >= 0.0001, usar formato decimal normal
+        return f"{value:.{decimal_places}f}"
+    else:
+        # Para números muy pequeños, usar más decimales
+        return f"{value:.{decimal_places + 4}f}"
+
+
 class InputValidationMixin:
     """
     Mixin para validación de entradas de usuario.
@@ -98,10 +119,7 @@ class ResultDisplayMixin:
         # Datos principales
         for key, value in main_data.items():
             if isinstance(value, (int, float)):
-                if abs(value) < 1e-3 or abs(value) > 1e6:
-                    text += f"{key}: {value:.2e}\n"
-                else:
-                    text += f"{key}: {value:.8f}\n"
+                text += f"{key}: {format_decimal_number(value, 8)}\n"
             else:
                 text += f"{key}: {value}\n"
 
@@ -209,7 +227,7 @@ class ResultDisplayMixin:
             result_label = ctk.CTkLabel(
                 info_frame,
                 text=f"Resultado final: {len(iteration_data)} iteraciones | " + 
-                     f"Error final: {error_final:.2e} | " +
+                     f"Error final: {format_decimal_number(error_final, 8)} | " +
                      f"Estado: {'✓ Convergió' if converged else '⚠ Alcanzó máximo de iteraciones'}",
                 font=ctk.CTkFont(size=13)
             )
@@ -329,7 +347,7 @@ class ResultDisplayMixin:
                     f"{data.get('b', 0):.6f}",
                     f"{data.get('c', 0):.6f}",
                     f"{data.get('f_c', 0):.6f}",
-                    f"{data.get('error', 0):.2e}"
+                    format_decimal_number(data.get('error', 0), 8)
                 ]
             elif method_name.upper().startswith("NEWTON-RAPHSON"):
                 values = [
@@ -337,13 +355,13 @@ class ResultDisplayMixin:
                     f"{data.get('f_x_n', 0):.6f}",
                     f"{data.get('df_x_n', 0):.6f}",
                     f"{data.get('x_n_plus_1', 0):.6f}",
-                    f"{data.get('error', 0):.2e}"
+                    format_decimal_number(data.get('error', 0), 8)
                 ]
             elif method_name.upper().startswith("PUNTO FIJO"):
                 values = [
                     f"{data.get('x_n', 0):.6f}",
                     f"{data.get('g_x_n', 0):.6f}",
-                    f"{data.get('error', 0):.2e}"
+                    format_decimal_number(data.get('error', 0), 8)
                 ]
             elif method_name.upper().startswith("AITKEN"):
                 values = [
@@ -351,7 +369,7 @@ class ResultDisplayMixin:
                     f"{data.get('x1', 0):.6f}",
                     f"{data.get('x2', 0):.6f}",
                     f"{data.get('x_aitken', 0):.6f}",
-                    f"{data.get('error', 0):.2e}"
+                    format_decimal_number(data.get('error', 0), 8)
                 ]
             elif method_name.upper().startswith("SECANTE"):
                 values = [
@@ -359,7 +377,7 @@ class ResultDisplayMixin:
                     f"{data.get('x_curr', 0):.6f}",
                     f"{data.get('x_new', 0):.6f}",
                     f"{data.get('f_curr', 0):.6f}",
-                    f"{data.get('error', 0):.2e}"
+                    format_decimal_number(data.get('error', 0), 8)
                 ]
             else:
                 # Para casos genéricos o no reconocidos
@@ -371,8 +389,8 @@ class ResultDisplayMixin:
                             if header in data:
                                 val = data[header]
                                 if isinstance(val, (int, float)):
-                                    if header == "error" or abs(val) < 0.0001 or abs(val) > 100000:
-                                        values.append(f"{val:.2e}")
+                                    if header == "error":
+                                        values.append(format_decimal_number(val, 8))
                                     else:
                                         values.append(f"{val:.6f}")
                                 else:
@@ -386,8 +404,8 @@ class ResultDisplayMixin:
                             if k == "iteration":
                                 continue  # Saltamos la iteración que ya mostramos
                             if isinstance(v, (int, float)):
-                                if k == 'error' or abs(v) < 0.0001 or abs(v) > 100000:
-                                    formatted_items.append(f"{k}: {v:.2e}")
+                                if k == 'error':
+                                    formatted_items.append(f"{k}: {format_decimal_number(v, 8)}")
                                 else:
                                     formatted_items.append(f"{k}: {v:.6f}")
                             else:

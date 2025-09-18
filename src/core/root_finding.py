@@ -56,15 +56,11 @@ class RootFinder:
             raise ValueError("El intervalo debe tener a < b")
         
         iterations_data = []
-        prev_c = None
         
         for i in range(self.max_iterations):
             c = (a + b) / 2
             fc = f(c)
             error = abs(b - a) / 2
-            
-            # Calcular error absoluto si tenemos una aproximación previa
-            abs_error = abs(c - prev_c) if prev_c is not None else error
             
             iterations_data.append({
                 'iteration': i + 1,
@@ -72,8 +68,7 @@ class RootFinder:
                 'b': b, 
                 'c': c,
                 'f_c': fc,
-                'error': error,
-                'abs_error': abs_error
+                'error': error
             })
             
             # Criterio de convergencia mejorado
@@ -107,8 +102,6 @@ class RootFinder:
                 b = c
             else:
                 a = c
-            
-            prev_c = c
         
         # No convergió
         c = (a + b) / 2

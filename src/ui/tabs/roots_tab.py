@@ -17,6 +17,27 @@ from src.core.root_finding import RootFinder, create_function_from_string
 from config.settings import NUMERICAL_CONFIG
 
 
+def format_decimal_number(value, decimal_places=8):
+    """
+    Formatea un número para mostrar decimales en lugar de notación científica.
+    
+    Args:
+        value: Número a formatear
+        decimal_places: Número de decimales a mostrar
+        
+    Returns:
+        String formateado sin notación científica
+    """
+    if abs(value) == 0:
+        return "0.00000000"
+    elif abs(value) >= 0.0001:
+        # Para números >= 0.0001, usar formato decimal normal
+        return f"{value:.{decimal_places}f}"
+    else:
+        # Para números muy pequeños, usar más decimales
+        return f"{value:.{decimal_places + 4}f}"
+
+
 class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin):
     """
     Pestaña para búsqueda de raíces.
@@ -586,10 +607,10 @@ class RootsTab(BaseTab, InputValidationMixin, ResultDisplayMixin, PlottingMixin)
             "Función": function_text,
             "Método": result.method if hasattr(result, 'method') else method_name,
             "Raíz encontrada": f"{result.root:.8f}",
-            "Valor de función": f"{result.function_value:.2e}",
+            "Valor de función": format_decimal_number(result.function_value, 8),
             "Iteraciones": result.iterations,
             "Convergió": "Sí" if result.converged else "No",
-            "Error final": f"{result.error:.2e}"
+            "Error final": format_decimal_number(result.error, 8)
         }
 
         # Secciones adicionales
