@@ -16,7 +16,7 @@ from src.ui.components.base_tab import BaseTab
 from src.ui.components.mixins import InputValidationMixin, ResultDisplayMixin, PlottingMixin
 from src.ui.components.constants import VALIDATION, UI, PLOT, COLORS
 from src.core.function_parser import parse_function
-from src.core.newton_cotes import NewtonCotesResult
+from src.core.newton_cotes import NewtonCotesResult, NewtonCotes
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +267,7 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
             "función_fx": {"type": "function"},
             "límite_inferior_a": {"type": "numeric"},
             "límite_superior_b": {"type": "numeric"},
-            "subdivisiones_n": {"type": "integer", "params": {"min_val": VALIDATION.MIN_SUBDIVISIONS, "max_val": VALIDATION.MAX_SUBDIVISIONS}}
+            "subdivisiones_n": {"type": "integer", "params": {"min_val": VALIDATION.MIN_SUBDIVISIONS}}
         }
         self.setup_validation_for_tab(self.entries, validation_config)
         
@@ -532,8 +532,8 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
                 
                 try:
                     n_val = int(n_entry.get().strip())
-                    if n_val < VALIDATION.MIN_SUBDIVISIONS or n_val > VALIDATION.MAX_SUBDIVISIONS:
-                        self.show_error(f"El número de subdivisiones debe estar entre {VALIDATION.MIN_SUBDIVISIONS} y {VALIDATION.MAX_SUBDIVISIONS}")
+                    if n_val < VALIDATION.MIN_SUBDIVISIONS:
+                        self.show_error(f"El número de subdivisiones debe ser al menos {VALIDATION.MIN_SUBDIVISIONS}")
                         return False
                 except ValueError:
                     self.show_error("El número de subdivisiones debe ser un entero válido")
@@ -589,6 +589,9 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
             if self.results_text:
                 self.results_text.delete("1.0", "end")
             
+            # NUEVO: Limpiar caché de resultados
+            self.current_result = None
+            
             # Validar formulario completo
             if not self.is_form_valid():
                 return
@@ -613,8 +616,8 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
                     if n_str:
                         try:
                             n = int(n_str)
-                            if n < VALIDATION.MIN_SUBDIVISIONS or n > VALIDATION.MAX_SUBDIVISIONS:
-                                self.show_error(f"El número de subdivisiones debe estar entre {VALIDATION.MIN_SUBDIVISIONS} y {VALIDATION.MAX_SUBDIVISIONS}")
+                            if n < VALIDATION.MIN_SUBDIVISIONS:
+                                self.show_error(f"El número de subdivisiones debe ser al menos {VALIDATION.MIN_SUBDIVISIONS}")
                                 return
                         except ValueError:
                             self.show_error("El número de subdivisiones debe ser un entero válido")
@@ -631,8 +634,9 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
                 self.results_text.insert("end", "⏳ Calculando...\n")
                 self.results_text.update()
             
-            # Realizar integración
-            result = self.newton_cotes.integrate(values["función_fx"], values["límite_inferior_a"], values["límite_superior_b"], method, n)
+            # Realizar integración - NUEVA instancia cada vez
+            newton_cotes_fresh = NewtonCotes()  # Nueva instancia para evitar caché
+            result = newton_cotes_fresh.integrate(values["función_fx"], values["límite_inferior_a"], values["límite_superior_b"], method, n)
             self.current_result = result
             
             # Mostrar resultados
@@ -686,6 +690,12 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         output += "-" * 25 + "\n"
         output += f" {result.accuracy_estimate}\n"
         
+        # Información sobre tabla de iteraciones
+        if hasattr(result, 'iteration_details') and result.iteration_details:
+            total_iterations = len(result.iteration_details)
+            if total_iterations > 50:
+                output += f"\n📋 NOTA: La tabla mostrará las primeras 50 de {total_iterations} iteraciones.\n"
+        
         # Mostrar en el textbox
         self.results_text.insert("1.0", output)
         
@@ -729,9 +739,27 @@ class NewtonCotesTab(BaseTab, InputValidationMixin, ResultDisplayMixin, Plotting
         if hasattr(self, 'table_frame'):
             self.table_frame.grid()
         
+        # Limitar a máximo 50 iteraciones para rendimiento
+        MAX_ITERATIONS_DISPLAY = 50
+        total_iterations = len(iteration_details)
+        display_iterations = iteration_details[:MAX_ITERATIONS_DISPLAY]
+        
+        # Mostrar mensaje si hay más iteraciones
+        if total_iterations > MAX_ITERATIONS_DISPLAY:
+            info_label = ctk.CTkLabel(
+                self.table_scrollable,
+                text=f"📋 Mostrando primeras {MAX_ITERATIONS_DISPLAY} de {total_iterations} iteraciones",
+                font=ctk.CTkFont(size=10),
+                text_color="gray"
+            )
+            info_label.grid(row=1, column=0, columnspan=4, pady=5, padx=10, sticky="w")
+            start_row = 2  # Comenzar desde la fila 2
+        else:
+            start_row = 1  # Comenzar desde la fila 1
+        
         # Agregar filas de datos
-        for i, detail in enumerate(iteration_details):
-            row = i + 1
+        for i, detail in enumerate(display_iterations):
+            row = start_row + i
             
             # Columna i
             i_label = ctk.CTkLabel(
