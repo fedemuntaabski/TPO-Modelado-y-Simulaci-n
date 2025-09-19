@@ -67,7 +67,8 @@ class MathSimulatorApp(ctk.CTk):
             ("ode", "📈 EDOs"),
             ("finite_diff", "🔢 Diferencias Finitas"),
             ("newton_cotes", "📊 Newton-Cotes"),
-            ("monte_carlo", "🎲 Monte Carlo"),
+            ("monte_carlo", "🎲 Monte Carlo 2D"),
+            ("monte_carlo_3d", "🧊 Monte Carlo 3D"),
             ("credits", "👥 Créditos"),
         ]
 

@@ -14,6 +14,7 @@ from src.ui.tabs.ode_tab_new import ODETab
 from src.ui.tabs.finite_diff_tab import FiniteDiffTab
 from src.ui.tabs.newton_cotes_tab import NewtonCotesTab
 from src.ui.tabs.monte_carlo_tab import MonteCarloTab
+from src.ui.tabs.monte_carlo_3d_tab import MonteCarlo3DTab
 from src.ui.tabs.credits_tab import CreditsTab
 
 
@@ -31,6 +32,7 @@ class TabFactory:
         "finite_diff": FiniteDiffTab,
         "newton_cotes": NewtonCotesTab,
         "monte_carlo": MonteCarloTab,
+        "monte_carlo_3d": MonteCarlo3DTab,
         "credits": CreditsTab,
     }
 
