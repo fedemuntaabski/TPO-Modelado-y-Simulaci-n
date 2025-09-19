@@ -105,18 +105,18 @@ class ODETab(BaseTab):
                     # El valor y_next del paso i se calcula en t[i], y[i] para obtener y[i+1]
                     ti, yi = res.t[i], res.y[i].squeeze()
                     y_nexti = res.y_next_values[i].squeeze()
-                    self.table.insert("end", f"{ti:>12.6f} {yi:>15.6f} {y_nexti:>15.6f}\n")
+                    self.table.insert("end", f"{ti:>12.8f} {yi:>15.8f} {y_nexti:>15.8f}\n")
                 
                 # Última fila (resultado final sin y_next)
                 if len(res.t) > len(res.y_next_values):
                     final_t, final_y = res.t[-1], res.y[-1].squeeze()
-                    self.table.insert("end", f"{final_t:>12.6f} {final_y:>15.6f} {'-':>15}\n")
+                    self.table.insert("end", f"{final_t:>12.8f} {final_y:>15.8f} {'-':>15}\n")
             else:
                 # Tabla simple para otros métodos (Heun)
                 self.table.insert("end", f"{'t':>12} {'y':>18}\n")
                 self.table.insert("end", "-"*32+"\n")
                 for ti, yi in zip(res.t, res.y.squeeze()):
-                    self.table.insert("end", f"{ti:>12.6f} {yi:>18.10f}\n")
+                    self.table.insert("end", f"{ti:>12.8f} {yi:>18.10f}\n")
             
             # Mostrar mensaje con resultados
             extra = f" • error máx. estimado ≈ {res.max_error_estimate:.2e}" if res.max_error_estimate is not None else ""
